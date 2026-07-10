@@ -1,56 +1,44 @@
-# Welcome to your Expo app 👋
+# 1000人生総選挙
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+AIが勝手に「1000人生総選挙」を開催し、あなたに近い1000人の「小さな一歩」を開票速報風に見せることで、ライフデザインの心理的ハードルを下げるアプリ。
 
-## Get started
+実装計画は [docs/implementation-plan.md](docs/implementation-plan.md) を参照。
 
-1. Install dependencies
+## 技術スタック
 
-   ```bash
-   npm install
-   ```
+- Expo (SDK 57) / React Native / TypeScript
+- Expo Router（ファイルベースルーティング）
+- NativeWind v5 + Tailwind CSS v4（`src/tw` のラッパー経由で `className` を使用）
+- Firebase（Firestore + 匿名認証、未設定時はローカル保存にフォールバック）
+- Gemini API（未設定時はモックデータにフォールバック）
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## セットアップ
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env   # 必要に応じてAPIキーを設定（空でも起動可）
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## 起動
 
-### Other setup steps
+```bash
+npx expo start
+```
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+iOSシミュレータは `i`、Androidエミュレータは `a`、実機は Expo Go でQRコードを読み取り。
 
-## Learn more
+## ディレクトリ構成
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```
+src/
+├── app/          # Expo Router のルート（画面）
+├── components/   # 汎用UIコンポーネント（ui/ と選挙演出系 election/）
+├── features/     # 機能単位のロジック＋専用コンポーネント
+├── services/     # firebase/（認証・Firestore） ai/（Gemini・モック）
+├── stores/       # Zustand ストア
+├── hooks/        # 共有フック
+├── types/        # 型定義
+├── constants/    # 選択肢マスタ・定数
+├── utils/
+└── tw/           # NativeWind 用コンポーネントラッパー
+```
