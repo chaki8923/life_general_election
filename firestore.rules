@@ -1,0 +1,27 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 本人のデータ（悩み・総選挙結果・wishなど）は本人のみ読み書き可
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // 過去の悩みランキング: 全認証ユーザー読み取り可、書き込みはcountのincrementのみ
+    match /themeStats/{themeId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.count == 1;
+      allow update: if request.auth != null
+        && request.resource.data.count == resource.data.count + 1;
+    }
+
+    // KPIイベント: 認証ユーザーの作成のみ可（読み取り不可）
+    match /events/{eventId} {
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+  }
+}

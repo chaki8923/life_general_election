@@ -54,6 +54,15 @@ export type AvatarState = {
   exp: number;
 };
 
+/** ユーザーが入力・選択した悩み（総選挙の開催テーマ） */
+export type Worry = {
+  id: string;
+  text: string;
+  category: string;
+  source: "preset" | "custom";
+  createdAt: number;
+};
+
 /** 過去の悩みランキングの1行 */
 export type ThemeStat = {
   themeId: string;

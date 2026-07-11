@@ -1,5 +1,7 @@
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-const MODEL = process.env.EXPO_PUBLIC_GEMINI_MODEL ?? "gemini-2.5-flash";
+// ||: .envで空文字定義されている場合もデフォルトへフォールバックさせる
+const MODEL = process.env.EXPO_PUBLIC_GEMINI_MODEL || "gemini-2.5-flash";
+const TIMEOUT_MS = 30_000;
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 export const isGeminiConfigured = Boolean(API_KEY);
@@ -10,9 +12,12 @@ export const isGeminiConfigured = Boolean(API_KEY);
  */
 export async function generateJson<T>(prompt: string): Promise<T | null> {
   if (!API_KEY) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(`${ENDPOINT}?key=${API_KEY}`, {
       method: "POST",
+      signal: controller.signal,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
@@ -34,5 +39,7 @@ export async function generateJson<T>(prompt: string): Promise<T | null> {
   } catch (e) {
     if (__DEV__) console.warn("[gemini]", e);
     return null;
+  } finally {
+    clearTimeout(timer);
   }
 }

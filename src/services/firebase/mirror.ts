@@ -16,6 +16,7 @@ import type {
   KpiEventType,
   UserProfile,
   Wish,
+  Worry,
 } from "@/types";
 import { getDb } from "./config";
 import { getCurrentUid } from "./auth";
@@ -36,6 +37,19 @@ export function mirrorProfile(profile: UserProfile) {
       { profile, updatedAt: serverTimestamp() },
       { merge: true }
     )
+  );
+}
+
+/** ユーザーが入力・選択した悩みを保存 */
+export function mirrorWorry(worry: Worry) {
+  const db = getDb();
+  const uid = getCurrentUid();
+  if (!db || !uid) return;
+  safeCall(() =>
+    setDoc(doc(db, "users", uid, "worries", worry.id), {
+      ...worry,
+      savedAt: serverTimestamp(),
+    })
   );
 }
 
