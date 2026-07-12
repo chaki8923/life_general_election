@@ -33,6 +33,21 @@
           "imageWidth": 76
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "ポスターに使う写真を選ぶためにフォトライブラリを使用します。",
+          "cameraPermission": "ポスター用の写真を撮影するためにカメラを使用します。",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "savePhotosPermission": "作成したポスターを写真に保存するために使用します。",
+          "granularPermissions": ["photo"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

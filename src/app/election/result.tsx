@@ -9,18 +9,23 @@ import {
 import { Pressable, ScrollView, Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { generateElection } from "@/features/election/generate";
-import { mirrorElection } from "@/services/firebase/mirror";
+import { mirrorElection, mirrorWish } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
+import { useWishStore } from "@/stores/wishes";
 import type { Candidate } from "@/types";
 
 function VoteBar({
   candidate,
   maxVotes,
   rank,
+  committed,
+  onCommit,
 }: {
   candidate: Candidate;
   maxVotes: number;
   rank: number;
+  committed: boolean;
+  onCommit: () => void;
 }) {
   const progress = useSharedValue(0);
 
@@ -97,6 +102,22 @@ function VoteBar({
           👟 今日の一歩: {candidate.action}
         </Text>
       </View>
+
+      <Pressable
+        onPress={onCommit}
+        disabled={committed}
+        className={`mt-3 items-center rounded-full py-2.5 ${
+          committed ? "bg-election-gold/20" : "bg-election-gold"
+        }`}
+      >
+        <Text
+          className={`text-sm font-bold ${
+            committed ? "text-election-ink/50" : "text-election-ink"
+          }`}
+        >
+          {committed ? "✅ 公約にした" : "🔥 これをやるぞ"}
+        </Text>
+      </Pressable>
     </View>
   );
 }
@@ -106,8 +127,11 @@ export default function ElectionResultScreen() {
   const worry = useElectionStore((s) => s.worry);
   const election = useElectionStore((s) => s.election);
   const setElection = useElectionStore((s) => s.setElection);
+  const wishes = useWishStore((s) => s.wishes);
+  const addWish = useWishStore((s) => s.addWish);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [lastWishId, setLastWishId] = useState<string | null>(null);
 
   // 注意: setElectionによるzustandの同期flushでこのeffectのクリーンアップが
   // .finallyより先に走るため、「loading state + cancelledガード」方式はデッドロックする。
@@ -177,6 +201,21 @@ export default function ElectionResultScreen() {
 
   const maxVotes = election.candidates[0]?.votes ?? 0;
 
+  const commitCandidate = (candidate: Candidate) => {
+    const wish = addWish({
+      text: candidate.label,
+      sourceElectionId: election.id,
+    });
+    mirrorWish(wish); // DBへ保存(Firebase未設定時はスキップ)
+    setLastWishId(wish.id);
+  };
+
+  // 画面再訪時もこの総選挙で公約化済みならポスター導線を有効にする(wishesは新しい順)
+  const posterWishId =
+    lastWishId ??
+    wishes.find((w) => w.sourceElectionId === election.id)?.id ??
+    null;
+
   return (
     <View className="flex-1 bg-election-cream">
       <ScrollView contentContainerClassName="px-6 pb-16 pt-16">
@@ -192,13 +231,49 @@ export default function ElectionResultScreen() {
 
         <View className="mt-6 gap-3">
           {election.candidates.map((c, i) => (
-            <VoteBar key={c.id} candidate={c} maxVotes={maxVotes} rank={i} />
+            <VoteBar
+              key={c.id}
+              candidate={c}
+              maxVotes={maxVotes}
+              rank={i}
+              committed={wishes.some(
+                (w) =>
+                  w.sourceElectionId === election.id && w.text === c.label
+              )}
+              onCommit={() => commitCandidate(c)}
+            />
           ))}
         </View>
 
         <Pressable
+          onPress={() =>
+            posterWishId &&
+            router.push({
+              pathname: "/poster",
+              params: { wishId: posterWishId },
+            })
+          }
+          disabled={!posterWishId}
+          className={`mt-8 items-center rounded-full py-4 ${
+            posterWishId ? "bg-election-gold" : "bg-election-ink/20"
+          }`}
+        >
+          <Text
+            className={`text-lg font-bold ${
+              posterWishId ? "text-election-ink" : "text-white"
+            }`}
+          >
+            🪧 この公約でポスターをつくる
+          </Text>
+        </Pressable>
+        {!posterWishId && (
+          <Text className="mt-2 text-center text-xs text-election-ink/50">
+            候補の「これをやるぞ」を押すと公約になります
+          </Text>
+        )}
+        <Pressable
           onPress={() => router.replace("/election")}
-          className="mt-8 items-center rounded-full bg-election-red py-4"
+          className="mt-3 items-center rounded-full bg-election-red py-4"
         >
           <Text className="text-lg font-bold text-white">
             別の悩みで開催する
