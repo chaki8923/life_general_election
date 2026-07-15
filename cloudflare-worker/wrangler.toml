@@ -1,0 +1,6 @@
+name = "teams-to-github"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[vars]
+GITHUB_REPO = "chaki8923/life_general_election"
