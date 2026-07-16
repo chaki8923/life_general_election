@@ -126,11 +126,13 @@ export default function WorrySelectScreen() {
         <Pressable
           onPress={handleSubmit}
           disabled={!canSubmit}
-          className={`items-center rounded-full py-4 ${
-            canSubmit ? "bg-election-red" : "bg-election-ink/20"
+          className={`items-center rounded-full border-2 py-4 shadow-lg ${
+            canSubmit
+              ? "border-election-gold bg-election-red shadow-election-red/50 active:bg-election-red-dark"
+              : "border-transparent bg-election-ink/20 shadow-none"
           }`}
         >
-          <Text className="text-lg font-bold text-white">
+          <Text className="text-lg font-bold tracking-wide text-white">
             🗳️ 総選挙を開催する
           </Text>
         </Pressable>
