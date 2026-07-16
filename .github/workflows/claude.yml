@@ -43,12 +43,27 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-5"
-          allowed_tools: "Bash(npm run lint),Bash(npx tsc --noEmit),Bash(npm ci),Bash(npm test)"
+          allowed_tools: "Bash(npm run lint),Bash(npx tsc --noEmit),Bash(npm ci),Bash(npm test),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh label create:*),Bash(gh label list:*)"
           custom_instructions: |
             このプロジェクトは Expo v54 + Expo Router のアプリです。
             AGENTS.md の指示に従い、https://docs.expo.dev/versions/v57.0.0/ の
             バージョン別ドキュメントを必ず参照してください。
             返答は日本語で行ってください。
-            実装後は npx tsc --noEmit と npm run lint を必ず実行し、
-            通過を確認してから PR を作成してください。
-            PR には `auto-merge` ラベルを付与してください(自動マージ対象)。
+
+            **PR 作成手順(必須)**:
+            1. 実装完了後、`npx tsc --noEmit` と `npm run lint` を実行して通過を確認
+            2. `git add`, `git commit`, `git push origin <ブランチ名>` で変更をプッシュ
+            3. **手動PR作成リンクの案内は禁止**。必ず `gh pr create` コマンドで自分でPRを作成すること:
+               ```
+               gh pr create \
+                 --base main \
+                 --head <現在のブランチ名> \
+                 --title "<タイトル>" \
+                 --body "<PR説明>" \
+                 --label auto-merge
+               ```
+            4. もし `auto-merge` ラベルが存在しない場合は先に作成する:
+               ```
+               gh label create auto-merge --color "0E8A16" --description "CI通過後に自動マージ" || true
+               ```
+            5. PR作成後、URLをコメントで報告する
