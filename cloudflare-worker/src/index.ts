@@ -78,7 +78,7 @@ export default {
       );
     }
 
-    const issue = await ghResponse.json<{ html_url: string; number: number }>();
+    const issue = (await ghResponse.json()) as { html_url: string; number: number };
     return json({
       ok: true,
       issue_url: issue.html_url,
