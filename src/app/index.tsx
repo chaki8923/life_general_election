@@ -11,7 +11,7 @@ export default function HomeScreen() {
       </Text>
       <Link
         href="/election"
-        className="mt-10 rounded-full bg-election-red px-10 py-4 text-lg font-bold text-white"
+        className="mt-10 rounded-full border-2 border-election-gold bg-election-red px-10 py-4 text-lg font-bold tracking-wide text-white shadow-lg shadow-election-red/50 active:bg-election-red-dark"
       >
         🗳️ 総選挙をはじめる
       </Link>
