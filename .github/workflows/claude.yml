@@ -42,6 +42,7 @@ jobs:
         uses: anthropics/claude-code-action@beta
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          model: "claude-sonnet-5"
           allowed_tools: "Bash(npm run lint),Bash(npx tsc --noEmit),Bash(npm ci),Bash(npm test)"
           custom_instructions: |
             このプロジェクトは Expo v54 + Expo Router のアプリです。
