@@ -1,0 +1,18 @@
+2026-07-17T00:12:47.584Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2026-07-17T00:12:47.589Z | connection_pool_recreate_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:12:47.590Z | health_check_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:17:47.586Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2026-07-17T00:17:47.590Z | connection_pool_recreate_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:17:47.590Z | health_check_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:22:47.588Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2026-07-17T00:22:47.591Z | connection_pool_recreate_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:22:47.592Z | health_check_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:27:47.588Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2026-07-17T00:27:47.592Z | connection_pool_recreate_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:27:47.593Z | health_check_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:32:47.593Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2026-07-17T00:32:47.597Z | connection_pool_recreate_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:32:47.597Z | health_check_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:37:47.592Z | connection_pool_closed | {} | SUCCESS | RESPONSE: {"status":"closed"}
+2026-07-17T00:37:47.594Z | connection_pool_recreate_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
+2026-07-17T00:37:47.594Z | health_check_error | {"error":"connect ECONNREFUSED 127.0.0.1:13306"} | connect ECONNREFUSED 127.0.0.1:13306 | RESPONSE: null
