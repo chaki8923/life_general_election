@@ -13,6 +13,9 @@
  * トンネルURLの取得は expo の stdout パースではなく ngrok のローカルAPI
  * (http://127.0.0.1:4040/api/tunnels) のポーリングで行う。stdout を pipe すると
  * Expo CLI が非対話モードになり、キー操作・QR・URL表示がすべて消えるため。
+ *
+ * Ctrl+C 等での停止時にも停止カードを送る（起動通知を送ったセッションのみ）。
+ * kill -9 やターミナル強制終了ではプロセスが即死するため停止通知は送れない。
  */
 
 const { spawn } = require('node:child_process');
@@ -29,6 +32,7 @@ const NGROK_API_URL = 'http://127.0.0.1:4040/api/tunnels';
 let webhookUrl = null;
 let pollTimer = null;
 let notified = false;
+let tunnelUrl = null;
 
 function main() {
   // .env はシェルで export 済みの値を上書きしない。不存在は正常系（CI等）
@@ -55,8 +59,14 @@ function main() {
   process.on('SIGINT', () => {});
   process.on('SIGTERM', () => child.kill('SIGTERM'));
 
-  child.on('close', (code, signal) => {
+  child.on('close', async (code, signal) => {
     stopPolling();
+    // 起動通知を送ったセッションのみ停止も通知する（トンネル未確立での終了はノイズになるため）
+    if (notified && webhookUrl) {
+      console.log('[teams-notify] 停止を Teams へ通知します');
+      // Ctrl+C 後にユーザーを待たせないよう起動時より短いタイムアウト
+      await sendTeamsNotification(buildStopPayload(tunnelUrl), 5000);
+    }
     process.exit(signal ? 130 : code ?? 0);
   });
 
@@ -124,18 +134,18 @@ async function poll() {
 
   notified = true;
   stopPolling();
-  const expUrl = `exp://${new URL(hit.public_url).hostname}`;
-  console.log(`\n[teams-notify] トンネルURL検出: ${expUrl} → Teams へ通知します`);
-  await sendTeamsNotification(expUrl);
+  tunnelUrl = `exp://${new URL(hit.public_url).hostname}`;
+  console.log(`\n[teams-notify] トンネルURL検出: ${tunnelUrl} → Teams へ通知します`);
+  await sendTeamsNotification(buildPayload(tunnelUrl), 10_000);
 }
 
-async function sendTeamsNotification(expUrl) {
+async function sendTeamsNotification(payload, timeoutMs) {
   try {
     const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildPayload(expUrl)),
-      signal: AbortSignal.timeout(10_000),
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (res.ok) {
       console.log('[teams-notify] Teams への通知に成功しました');
@@ -170,7 +180,7 @@ function buildPayload(expUrl) {
               type: 'TextBlock',
               size: 'Medium',
               weight: 'Bolder',
-              text: 'Expo 開発サーバー起動（tunnel）',
+              text: '今から開発します!その間は下のQRコードからアプリを開けます!',
             },
             {
               type: 'TextBlock',
@@ -197,8 +207,44 @@ function buildPayload(expUrl) {
   };
 }
 
+// Ctrl+C 等でサーバーを停止したときに送る簡易カード（QRなし）
+function buildStopPayload(expUrl) {
+  const starter = process.env.TEAMS_NOTIFY_NAME || os.userInfo().username;
+  const stoppedAt = new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' });
+  return {
+    type: 'message',
+    attachments: [
+      {
+        contentType: 'application/vnd.microsoft.card.adaptive',
+        contentUrl: null,
+        content: {
+          $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+          type: 'AdaptiveCard',
+          version: '1.4',
+          msteams: { width: 'Full' },
+          body: [
+            {
+              type: 'TextBlock',
+              size: 'Medium',
+              weight: 'Bolder',
+              text: '開発を終了しました！アプリへの接続は停止しています',
+            },
+            {
+              type: 'TextBlock',
+              isSubtle: true,
+              wrap: true,
+              text: `起動者: ${starter} / ${stoppedAt}`,
+            },
+            { type: 'TextBlock', wrap: true, fontType: 'Monospace', text: expUrl ?? '' },
+          ],
+        },
+      },
+    ],
+  };
+}
+
 // ペイロード単体テスト用（require しても expo は起動しない）
-module.exports = { buildPayload };
+module.exports = { buildPayload, buildStopPayload };
 
 if (require.main === module) {
   main();
