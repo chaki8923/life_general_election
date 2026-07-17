@@ -180,7 +180,7 @@ function buildPayload(expUrl) {
               type: 'TextBlock',
               size: 'Medium',
               weight: 'Bolder',
-              text: '今から開発します!その間は下のQRコードからアプリを開けます!',
+              text: '今から開発します!🔥その間は下のQRコードからアプリを開けます!',
             },
             {
               type: 'TextBlock',
