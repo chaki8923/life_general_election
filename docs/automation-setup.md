@@ -322,6 +322,72 @@ claude-ask '{"text":"投票結果画面の背景色を変更","user":"chaki"}'
 - PAT の Expiration が切れていないか
 - GitHub の障害情報を確認: https://www.githubstatus.com/
 
+## Expo 起動通知（ローカル → Teams グループチャット）
+
+上記の Teams → GitHub 連携とは**逆方向**の仕組み。`npm run start:tunnel` で開発サーバーを起動すると、トンネルURL（`exp://xxx.exp.direct`）と接続用QRコードを Teams のグループチャットへ自動通知する。
+
+```
+┌──────────────────────┐  POST   ┌─────────────────────┐  投稿   ┌──────────────────┐
+│ npm run start:tunnel │────────▶│ Power Automate      │────────▶│ Teams            │
+│ (トンネルURL検出後)  │         │ Workflows (Webhook) │         │ グループチャット │
+└──────────────────────┘         └─────────────────────┘         └──────────────────┘
+```
+
+- 実装: `scripts/start-tunnel-notify.js`（`expo start -c --tunnel` を起動し、ngrok ローカルAPI からトンネルURLを検出して通知）
+- `TEAMS_WEBHOOK_URL` 未設定時は通知をスキップして expo だけ起動するため、セットアップ前でも安全に使える
+- 依頼受信時に不採用だった「Webhook」は、今回は「外部 → Teams」方向のためプレミアム不要の無料枠で使える
+
+### セットアップ手順
+
+#### 1. Power Automate でフロー作成
+
+1. https://make.powerautomate.com/ を開く（Teams アカウントでログイン）
+2. **作成** → **インスタントクラウドフロー** →トリガーに **「Teams Webhook 要求を受信したとき」(When a Teams webhook request is received)** を選択
+3. トリガーの設定で **「フローをトリガーできるユーザー」= 「すべてのユーザー」** を選択
+4. アクションに **「チャットまたはチャネルでカードを投稿する」(Post card in a chat or channel)** を追加
+   - **投稿者**: Flow bot
+   - **投稿先**: Group chat
+   - **Group chat**: 通知したいグループチャットを選択
+   - **アダプティブ カード**: 式エディタで `triggerBody()?['attachments'][0]['content']` を設定
+5. 保存すると **HTTP POST URL** が発行されるのでコピー
+
+#### 2. ローカルの `.env` に設定
+
+```bash
+# .env に追記（.env は gitignore 済み）
+TEAMS_WEBHOOK_URL=<発行された HTTP POST URL>
+TEAMS_NOTIFY_NAME=chaki   # 省略可（省略時は OS ユーザー名）
+```
+
+#### 3. 動作確認
+
+```bash
+npm run start:tunnel
+```
+
+- 起動後しばらくして `[teams-notify] トンネルURL検出: exp://…` と表示され、グループチャットにカードが届く
+- カードの URL がターミナルの `Metro waiting on exp://…` と一致することを確認
+- QRコードを iOS カメラ / Android の Expo Go でスキャンしてアプリが開けば成功
+
+expo への追加引数はそのまま渡せる: `npm run start:tunnel -- --port 8082`
+
+### 注意事項
+
+- QRコード画像は quickchart.io（外部QR生成API）で生成するため、**トンネルURLが第三者サービスに渡る**。exp.direct のトンネルURLは URL を知っていれば誰でも到達できる一時的なものなので許容範囲だが、気になる場合は通知カードの URL テキストのみを使うこと
+- カード内の「Expo Go で開く」ボタン（`exp://` スキーム）は Teams デスクトップ版では開けないことがある。**QRコードが主動線**
+- 通知の POST に失敗しても expo は落ちない（警告を表示して継続）
+
+### トラブルシューティング
+
+**通知が届かない / HTTP 4xx が返る**
+→ Power Automate 側のフローが有効か、トリガーの「フローをトリガーできるユーザー」が「すべてのユーザー」になっているか確認
+
+**`[teams-notify] トンネルURLを検出できなかったため通知を諦めます` と出る**
+→ トンネル自体が張れていない可能性。ターミナルに `Tunnel ready.` が出ているか確認。expo が ngrok 以外のトンネル実装に切り替わった場合もここに落ちる（expo の動作には影響なし）
+
+**カードは届くが QR 画像が表示されない**
+→ quickchart.io への到達性の問題。時間を置いて再実行するか、カード内の URL テキストを直接使う
+
 ## 参考リンク
 
 - Claude Code Action: https://github.com/anthropics/claude-code-action
