@@ -8,6 +8,8 @@ export const AGE_RANGES = [
   "40代以上",
 ] as const;
 
+export const GENDERS = ["男性", "女性", "その他", "回答しない"] as const;
+
 export const RELATIONSHIP_STATUSES = [
   "独身（恋人なし）",
   "恋人あり",
