@@ -4,10 +4,16 @@ import {
   type RawCandidate,
 } from "@/services/ai/mock/election";
 import { buildElectionPrompt } from "@/services/ai/prompts/election";
-import type { Candidate, Election, Worry } from "@/types";
+import type { Candidate, Election, UserProfile, Worry } from "@/types";
 
 type GeminiElectionResponse = {
   candidates: RawCandidate[];
+};
+
+export type GenerateElectionInput = {
+  worry: Worry;
+  profile: UserProfile;
+  motivation: string;
 };
 
 function isValidCandidate(c: unknown): c is RawCandidate {
@@ -21,12 +27,20 @@ function isValidCandidate(c: unknown): c is RawCandidate {
 }
 
 /**
- * 悩みから総選挙の開票結果を生成する。
+ * 悩み・プロフィール・モチベーションから総選挙の開票結果を生成する。
  * Gemini設定済みならAI生成、未設定・失敗時はモックにフォールバック。
  */
-export async function generateElection(worry: Worry): Promise<Election> {
+export async function generateElection({
+  worry,
+  profile,
+  motivation,
+}: GenerateElectionInput): Promise<Election> {
   const res = await generateJson<GeminiElectionResponse>(
-    buildElectionPrompt(worry.text, worry.category)
+    buildElectionPrompt(worry.text, worry.category, {
+      ageRange: profile.ageRange,
+      gender: profile.gender,
+      motivation,
+    })
   );
 
   const raw: RawCandidate[] =

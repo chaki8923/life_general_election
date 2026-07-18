@@ -11,6 +11,7 @@ import { Animated } from "@/tw/animated";
 import { generateElection } from "@/features/election/generate";
 import { mirrorElection, mirrorWish } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
+import { useProfileStore } from "@/stores/profile";
 import { useWishStore } from "@/stores/wishes";
 import type { Candidate } from "@/types";
 
@@ -125,8 +126,10 @@ function VoteBar({
 export default function ElectionResultScreen() {
   const router = useRouter();
   const worry = useElectionStore((s) => s.worry);
+  const motivation = useElectionStore((s) => s.motivation);
   const election = useElectionStore((s) => s.election);
   const setElection = useElectionStore((s) => s.setElection);
+  const profile = useProfileStore((s) => s.profile);
   const wishes = useWishStore((s) => s.wishes);
   const addWish = useWishStore((s) => s.addWish);
   const [failed, setFailed] = useState(false);
@@ -137,10 +140,10 @@ export default function ElectionResultScreen() {
   // .finallyより先に走るため、「loading state + cancelledガード」方式はデッドロックする。
   // 画面状態はelection/failedのみから導出する。
   useEffect(() => {
-    if (!worry || election) return;
+    if (!worry || !motivation || !profile || election) return;
     let cancelled = false;
     setFailed(false);
-    generateElection(worry)
+    generateElection({ worry, profile, motivation })
       .then((e) => {
         if (cancelled) return;
         setElection(e);
@@ -153,9 +156,9 @@ export default function ElectionResultScreen() {
     return () => {
       cancelled = true;
     };
-  }, [worry, election, setElection, attempt]);
+  }, [worry, motivation, profile, election, setElection, attempt]);
 
-  if (!worry) {
+  if (!worry || !motivation) {
     return (
       <View className="flex-1 items-center justify-center bg-election-cream px-8">
         <Text className="text-base text-election-ink">
