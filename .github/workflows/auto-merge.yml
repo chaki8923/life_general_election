@@ -2,16 +2,24 @@ name: Auto-merge
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI", "AI Review"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to evaluate
+        required: true
+        type: number
 
 jobs:
   merge:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
+      checks: read
       contents: write
       pull-requests: write
+      statuses: read
     steps:
       - name: Find PR for this workflow run
         id: find-pr
@@ -19,14 +27,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          pr_number=$(gh pr list \
-            --repo "$GITHUB_REPOSITORY" \
-            --head "$HEAD_BRANCH" \
-            --state open \
-            --json number,labels,isDraft,headRefOid \
-            --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" \
-            | head -n1)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            pr_number="$INPUT_PR_NUMBER"
+          else
+            pr_number=$(gh pr list \
+              --repo "$GITHUB_REPOSITORY" \
+              --head "$HEAD_BRANCH" \
+              --state open \
+              --json number,labels,isDraft,headRefOid \
+              --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" \
+              | head -n1)
+          fi
 
           if [ -z "$pr_number" ]; then
             echo "No open PR matched head SHA $HEAD_SHA on branch $HEAD_BRANCH — skipping."
@@ -46,6 +59,24 @@ jobs:
 
           if [ -z "$has_label" ]; then
             echo "PR #$pr_number does not have the 'auto-merge' label — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          current_sha=$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
+          ci_state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$current_sha/check-runs" \
+            --jq '[.check_runs[] | select(.name == "lint-and-typecheck") | .conclusion] | last // "missing"')
+          review_state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$current_sha/status" \
+            --jq '[.statuses[] | select(.context == "AI Review Gate") | .state] | first // "missing"')
+
+          if [ "$ci_state" != "success" ]; then
+            echo "CI is not successful for current SHA $current_sha (state: $ci_state) — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$review_state" != "success" ]; then
+            echo "AI Review Gate is not successful for current SHA $current_sha (state: $review_state) — skipping."
             echo "skip=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
