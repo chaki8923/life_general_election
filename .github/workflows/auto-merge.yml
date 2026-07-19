@@ -63,3 +63,70 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --squash \
             --delete-branch
+
+      # GITHUB_TOKEN によるマージでは pull_request: closed の別ワークフローが
+      # 起動されないため、自動マージ成功後はこのワークフロー内で通知する。
+      - name: Notify Teams of completed auto-merge
+        if: steps.find-pr.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.find-pr.outputs.pr_number }}
+          WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "TEAMS_WEBHOOK_URL secret が未設定のため通知をスキップします"
+            exit 0
+          fi
+
+          pr_json=$(gh pr view "$PR_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json title,url,author)
+          merged_at=$(TZ=Asia/Tokyo date '+%Y/%m/%d %H:%M')
+
+          payload=$(echo "$pr_json" | jq \
+            --arg number "$PR_NUMBER" \
+            --arg mergedAt "$merged_at" \
+            '{
+              type: "message",
+              attachments: [
+                {
+                  contentType: "application/vnd.microsoft.card.adaptive",
+                  contentUrl: null,
+                  content: {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    type: "AdaptiveCard",
+                    version: "1.4",
+                    msteams: { width: "Full" },
+                    body: [
+                      {
+                        type: "TextBlock",
+                        size: "Medium",
+                        weight: "Bolder",
+                        wrap: true,
+                        text: "✅ マージ完了！実装が main に取り込まれました"
+                      },
+                      {
+                        type: "TextBlock",
+                        wrap: true,
+                        text: "PR #\($number): \(.title)"
+                      },
+                      {
+                        type: "TextBlock",
+                        isSubtle: true,
+                        wrap: true,
+                        text: "作成者: \(.author.login) / \($mergedAt)"
+                      }
+                    ],
+                    actions: [
+                      { type: "Action.OpenUrl", title: "PRを見る", url: .url }
+                    ]
+                  }
+                }
+              ]
+            }')
+
+          curl -sS --fail-with-body -X POST \
+            -H 'Content-Type: application/json' \
+            -d "$payload" \
+            "$WEBHOOK_URL"
+          echo "Teams へのマージ完了通知に成功しました"

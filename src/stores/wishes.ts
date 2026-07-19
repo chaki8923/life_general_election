@@ -19,6 +19,7 @@ type WishStore = {
   addWish: (input: WishInput) => Wish;
   markDone: (id: string) => Wish | undefined;
   markExcused: (id: string, excuse: string) => Wish | undefined;
+  setPosterUri: (id: string, uri: string) => Wish | undefined;
   setHasHydrated: (v: boolean) => void;
 };
 
@@ -72,6 +73,20 @@ export const useWishStore = create<WishStore>()(
           status: "excused",
           excuse,
           excusedAt: Date.now(),
+        };
+        set({
+          wishes: get().wishes.map((wish) =>
+            wish.id === id ? updated : wish
+          ),
+        });
+        return updated;
+      },
+      setPosterUri: (id, uri) => {
+        const current = get().wishes.find((wish) => wish.id === id);
+        if (!current) return undefined;
+        const updated: Wish = {
+          ...current,
+          posterUri: uri,
         };
         set({
           wishes: get().wishes.map((wish) =>

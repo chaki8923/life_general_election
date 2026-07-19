@@ -9,6 +9,7 @@ import {
 } from "@/features/poster/templates";
 import { usePosterExport } from "@/features/poster/use-poster-export";
 import { usePosterPhoto } from "@/features/poster/use-poster-photo";
+import { mirrorWish } from "@/services/firebase/mirror";
 import { useWishStore } from "@/stores/wishes";
 
 export default function PosterScreen() {
@@ -16,6 +17,7 @@ export default function PosterScreen() {
   const { wishId } = useLocalSearchParams<{ wishId?: string }>();
   const wishes = useWishStore((s) => s.wishes);
   const hasHydrated = useWishStore((s) => s.hasHydrated);
+  const setPosterUri = useWishStore((s) => s.setPosterUri);
   const posterRef = useRef<RNView>(null);
 
   const [photoUri, setPhotoUri] = useState<string | null>(null);
@@ -42,6 +44,13 @@ export default function PosterScreen() {
   // 写真のデコード完了(photoReady)までキャプチャすると空写真になり得る
   const exportable =
     photoUri !== null && photoReady && !busy && selectedWish !== null;
+
+  const handleSaveToLibrary = async () => {
+    const uri = await saveToLibrary();
+    if (!uri || !selectedWish) return;
+    const updatedWish = setPosterUri(selectedWish.id, uri);
+    if (updatedWish) mirrorWish(updatedWish);
+  };
 
   return (
     <View className="flex-1 bg-election-cream">
@@ -160,7 +169,7 @@ export default function PosterScreen() {
         </View>
 
         <Pressable
-          onPress={saveToLibrary}
+          onPress={handleSaveToLibrary}
           disabled={!exportable}
           className={`mt-8 items-center rounded-full py-4 ${
             exportable ? "bg-election-red" : "bg-election-ink/20"

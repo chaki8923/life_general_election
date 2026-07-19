@@ -49,6 +49,7 @@ export type Wish = {
   excuse?: string;
   excusedAt?: number;
   sourceElectionId?: string;
+  posterUri?: string;
   status: WishStatus;
   createdAt: number;
   doneAt?: number;

@@ -1,6 +1,8 @@
 import { useRouter } from "expo-router";
+import { POSTER_ASPECT_RATIO } from "@/features/poster/templates";
 import { WishPolicyCard } from "@/features/wishes/wish-policy-card";
 import { useWishStore } from "@/stores/wishes";
+import { Image } from "@/tw/image";
 import { Pressable, ScrollView, Text, View } from "@/tw";
 
 export default function MyPageScreen() {
@@ -14,8 +16,8 @@ export default function MyPageScreen() {
     <View className="flex-1 bg-[#f8f8f8]">
       <ScrollView contentContainerClassName="px-5 pb-16 pt-16">
         <View className="flex-row items-center">
-          <Pressable onPress={() => router.back()} className="pr-4 py-2">
-            <Text className="text-base font-bold text-[#555555]">‹ 戻る</Text>
+          <Pressable onPress={() => router.dismissTo("/")} className="pr-4 py-2">
+            <Text className="text-base font-bold text-[#555555]">ホーム</Text>
           </Pressable>
           <Text className="text-xl font-bold text-[#333333]">マイページ</Text>
         </View>
@@ -54,12 +56,26 @@ export default function MyPageScreen() {
                     params: { wishId: latestWish.id },
                   })
                 }
-                className="mt-5 items-center justify-center rounded-xl border-2 border-dashed border-[#999999] bg-[#f8f8f8] py-10"
+                className={`mt-5 overflow-hidden rounded-xl ${
+                  latestWish?.posterUri
+                    ? ""
+                    : "items-center justify-center border-2 border-dashed border-[#999999] bg-[#f8f8f8] py-10"
+                }`}
               >
-                <Text className="text-3xl">📷</Text>
-                <Text className="mt-2 text-sm font-bold text-[#737373]">
-                  写真を追加する
-                </Text>
+                {latestWish?.posterUri ? (
+                  <Image
+                    source={latestWish.posterUri}
+                    className="w-full"
+                    style={{ aspectRatio: POSTER_ASPECT_RATIO }}
+                  />
+                ) : (
+                  <>
+                    <Text className="text-3xl">📷</Text>
+                    <Text className="mt-2 text-sm font-bold text-[#737373]">
+                      写真を追加する
+                    </Text>
+                  </>
+                )}
               </Pressable>
               <View className="mt-4 items-center border-2 border-[#333333] py-2">
                 <Text className="text-sm font-bold text-[#333333]">人生総選挙党</Text>

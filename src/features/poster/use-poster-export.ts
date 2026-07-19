@@ -38,8 +38,8 @@ export function usePosterExport(posterRef: RefObject<View | null>) {
     }
   };
 
-  const saveToLibrary = async () => {
-    if (busy) return;
+  const saveToLibrary = async (): Promise<string | undefined> => {
+    if (busy) return undefined;
     setBusy(true);
     try {
       // writeOnly=true: 保存だけなら「写真への追加」権限で済みダイアログが軽い
@@ -53,14 +53,16 @@ export function usePosterExport(posterRef: RefObject<View | null>) {
             { text: "設定を開く", onPress: () => Linking.openSettings() },
           ]
         );
-        return;
+        return undefined;
       }
       const uri = await capture();
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert("ポスターを保存しました 🪧", "写真アプリで確認できます");
+      return uri;
     } catch (e) {
       if (__DEV__) console.warn("[poster/export]", e);
       Alert.alert("保存に失敗しました…");
+      return undefined;
     } finally {
       setBusy(false);
     }
