@@ -187,10 +187,12 @@ export default function PosterScreen() {
         </Pressable>
 
         <Pressable
-          onPress={() => router.back()}
+          onPress={() => router.dismissTo("/")}
           className="mt-3 items-center rounded-full border-2 border-election-ink/20 py-4"
         >
-          <Text className="text-base font-bold text-election-ink">もどる</Text>
+          <Text className="text-base font-bold text-election-ink">
+            ホームへ戻る
+          </Text>
         </Pressable>
       </ScrollView>
     </View>
