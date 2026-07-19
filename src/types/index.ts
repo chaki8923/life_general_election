@@ -44,7 +44,12 @@ export type WishStatus = "active" | "done" | "excused";
 export type Wish = {
   id: string;
   text: string;
+  policy?: string;
+  deadline?: number;
+  excuse?: string;
+  excusedAt?: number;
   sourceElectionId?: string;
+  posterUri?: string;
   status: WishStatus;
   createdAt: number;
   doneAt?: number;
