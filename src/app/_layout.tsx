@@ -38,6 +38,7 @@ export default function RootLayout() {
         <Stack.Screen name="election/worries" />
         <Stack.Screen name="election/motivation" />
         <Stack.Screen name="election/result" />
+        <Stack.Screen name="mypage" />
         <Stack.Screen name="poster/index" />
       </Stack.Protected>
       <Stack.Protected guard={!registered}>
