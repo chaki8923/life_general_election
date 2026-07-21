@@ -27,6 +27,12 @@ function safeCall(fn: () => Promise<unknown>) {
   });
 }
 
+function stripUndefined<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined)
+  );
+}
+
 export function mirrorProfile(profile: UserProfile) {
   const db = getDb();
   const uid = getCurrentUid();
@@ -71,7 +77,7 @@ export function mirrorWish(wish: Wish) {
   if (!db || !uid) return;
   safeCall(() =>
     setDoc(doc(db, "users", uid, "wishes", wish.id), {
-      ...wish,
+      ...stripUndefined(wish),
       savedAt: serverTimestamp(),
     })
   );

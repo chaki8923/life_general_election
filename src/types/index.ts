@@ -1,10 +1,12 @@
 /** ユーザーの基本属性（オンボーディングで入力） */
 export type UserProfile = {
+  nickname: string;
   ageRange: string;
-  relationshipStatus: string;
-  savingsRange: string;
-  hobbies: string[];
-  motivation: string;
+  gender?: string;
+  relationshipStatus?: string;
+  savingsRange?: string;
+  hobbies?: string[];
+  motivation?: string;
 };
 
 /** AIが提案する悩みテーマ（勝手にマニフェスト生成） */
@@ -42,7 +44,12 @@ export type WishStatus = "active" | "done" | "excused";
 export type Wish = {
   id: string;
   text: string;
+  policy?: string;
+  deadline?: number;
+  excuse?: string;
+  excusedAt?: number;
   sourceElectionId?: string;
+  posterUri?: string;
   status: WishStatus;
   createdAt: number;
   doneAt?: number;
@@ -59,8 +66,15 @@ export type Worry = {
   id: string;
   text: string;
   category: string;
-  source: "preset" | "custom";
+  source: "preset" | "custom" | "ai";
   createdAt: number;
+};
+
+/** AIが興味関心とプロフィールから提案する悩み候補 */
+export type WorrySuggestion = {
+  id: string;
+  label: string;
+  category: string; // 選択した興味関心カテゴリ
 };
 
 /** 過去の悩みランキングの1行 */

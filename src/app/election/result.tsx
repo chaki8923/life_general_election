@@ -1,166 +1,52 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
-import {
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from "react-native-reanimated";
-import { Pressable, ScrollView, Text, View } from "@/tw";
-import { Animated } from "@/tw/animated";
+import { CandidateCard } from "@/features/election/candidate-card";
 import { generateElection } from "@/features/election/generate";
+import { GoalModal } from "@/features/election/goal-modal";
 import { mirrorElection, mirrorWish } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
+import { useProfileStore } from "@/stores/profile";
 import { useWishStore } from "@/stores/wishes";
-import type { Candidate } from "@/types";
-
-function VoteBar({
-  candidate,
-  maxVotes,
-  rank,
-  committed,
-  onCommit,
-}: {
-  candidate: Candidate;
-  maxVotes: number;
-  rank: number;
-  committed: boolean;
-  onCommit: () => void;
-}) {
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    progress.value = withDelay(
-      rank * 250,
-      withTiming(1, { duration: 900 })
-    );
-  }, [progress, rank]);
-
-  const barStyle = useAnimatedStyle(() => ({
-    transform: [{ scaleX: progress.value }],
-  }));
-
-  const isTop = rank === 0;
-  const ratio = maxVotes > 0 ? candidate.votes / maxVotes : 0;
-
-  return (
-    <View
-      className={`rounded-2xl border-2 p-4 ${
-        isTop
-          ? "border-election-gold bg-election-paper"
-          : candidate.isMinority
-            ? "border-dashed border-election-pink/50 bg-election-paper"
-            : "border-election-ink/10 bg-election-paper"
-      }`}
-    >
-      <View className="flex-row items-center gap-2">
-        <Text className="w-7 text-lg font-bold text-election-ink/40">
-          {rank + 1}
-        </Text>
-        <Text className="flex-1 text-base font-bold text-election-ink">
-          {candidate.label}
-        </Text>
-        {isTop && (
-          <View className="rounded-md bg-election-red px-2 py-1">
-            <Text className="text-xs font-bold text-white">当確</Text>
-          </View>
-        )}
-        {candidate.isMinority && (
-          <View className="rounded-md bg-election-pink px-2 py-1">
-            <Text className="text-xs font-bold text-white">マイノリティ</Text>
-          </View>
-        )}
-      </View>
-
-      <View className="mt-3 h-4 overflow-hidden rounded-full bg-election-ink/10">
-        <Animated.View
-          className={`h-full rounded-full ${
-            isTop
-              ? "bg-election-gold"
-              : candidate.isMinority
-                ? "bg-election-pink"
-                : "bg-election-red"
-          }`}
-          style={[
-            { width: `${Math.max(ratio * 100, 4)}%`, transformOrigin: "left" },
-            barStyle,
-          ]}
-        />
-      </View>
-
-      <View className="mt-2 flex-row items-baseline justify-between">
-        <Text className="text-xs text-election-ink/50">
-          「{candidate.comment}」
-        </Text>
-        <Text className="text-sm font-bold text-election-ink">
-          {candidate.votes}票
-        </Text>
-      </View>
-
-      <View className="mt-2 rounded-lg bg-election-cream px-3 py-2">
-        <Text className="text-xs text-election-ink/70">
-          👟 今日の一歩: {candidate.action}
-        </Text>
-      </View>
-
-      <Pressable
-        onPress={onCommit}
-        disabled={committed}
-        className={`mt-3 items-center rounded-full py-2.5 ${
-          committed ? "bg-election-gold/20" : "bg-election-gold"
-        }`}
-      >
-        <Text
-          className={`text-sm font-bold ${
-            committed ? "text-election-ink/50" : "text-election-ink"
-          }`}
-        >
-          {committed ? "✅ 公約にした" : "🔥 これをやるぞ"}
-        </Text>
-      </Pressable>
-    </View>
-  );
-}
+import { Pressable, ScrollView, Text, View } from "@/tw";
 
 export default function ElectionResultScreen() {
   const router = useRouter();
   const worry = useElectionStore((s) => s.worry);
+  const motivation = useElectionStore((s) => s.motivation);
   const election = useElectionStore((s) => s.election);
   const setElection = useElectionStore((s) => s.setElection);
-  const wishes = useWishStore((s) => s.wishes);
+  const profile = useProfileStore((s) => s.profile);
   const addWish = useWishStore((s) => s.addWish);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [lastWishId, setLastWishId] = useState<string | null>(null);
+  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
+    null
+  );
+  const [modalVisible, setModalVisible] = useState(false);
 
-  // 注意: setElectionによるzustandの同期flushでこのeffectのクリーンアップが
-  // .finallyより先に走るため、「loading state + cancelledガード」方式はデッドロックする。
-  // 画面状態はelection/failedのみから導出する。
   useEffect(() => {
-    if (!worry || election) return;
+    if (!worry || !motivation || !profile || election) return;
     let cancelled = false;
     setFailed(false);
-    generateElection(worry)
-      .then((e) => {
+    generateElection({ worry, profile, motivation })
+      .then((generated) => {
         if (cancelled) return;
-        setElection(e);
-        mirrorElection(e); // DBへ結果を保存（未設定時はスキップ）
+        setElection(generated);
+        mirrorElection(generated);
       })
-      .catch((e) => {
-        if (__DEV__) console.warn("[election]", e);
+      .catch((error) => {
+        if (__DEV__) console.warn("[election]", error);
         if (!cancelled) setFailed(true);
       });
     return () => {
       cancelled = true;
     };
-  }, [worry, election, setElection, attempt]);
+  }, [worry, motivation, profile, election, setElection, attempt]);
 
-  if (!worry) {
+  if (!worry || !motivation) {
     return (
       <View className="flex-1 items-center justify-center bg-election-cream px-8">
-        <Text className="text-base text-election-ink">
-          悩みが選ばれていません
-        </Text>
+        <Text className="text-base text-election-ink">悩みが選ばれていません</Text>
         <Pressable
           onPress={() => router.replace("/election")}
           className="mt-4 rounded-full bg-election-red px-6 py-3"
@@ -174,11 +60,9 @@ export default function ElectionResultScreen() {
   if (failed) {
     return (
       <View className="flex-1 items-center justify-center bg-election-cream px-8">
-        <Text className="text-base text-election-ink">
-          開票に失敗しました…
-        </Text>
+        <Text className="text-base text-election-ink">開票に失敗しました…</Text>
         <Pressable
-          onPress={() => setAttempt((a) => a + 1)}
+          onPress={() => setAttempt((current) => current + 1)}
           className="mt-4 rounded-full bg-election-red px-6 py-3"
         >
           <Text className="font-bold text-white">もう一度開票する</Text>
@@ -199,95 +83,88 @@ export default function ElectionResultScreen() {
     );
   }
 
-  const maxVotes = election.candidates[0]?.votes ?? 0;
-
-  const commitCandidate = (candidate: Candidate) => {
-    const wish = addWish({
-      text: candidate.label,
-      sourceElectionId: election.id,
-    });
-    mirrorWish(wish); // DBへ保存(Firebase未設定時はスキップ)
-    setLastWishId(wish.id);
-  };
-
-  // 画面再訪時もこの総選挙で公約化済みならポスター導線を有効にする(wishesは新しい順)
-  const posterWishId =
-    lastWishId ??
-    wishes.find((w) => w.sourceElectionId === election.id)?.id ??
+  const selectedCandidate =
+    election.candidates.find((candidate) => candidate.id === selectedCandidateId) ??
     null;
 
+  const registerGoal = (deadline: number) => {
+    if (!selectedCandidate) return;
+    const wish = addWish({
+      text: selectedCandidate.label,
+      policy: selectedCandidate.action,
+      deadline,
+      sourceElectionId: election.id,
+    });
+    mirrorWish(wish);
+    setModalVisible(false);
+    router.replace("/mypage");
+  };
+
   return (
-    <View className="flex-1 bg-election-cream">
-      <ScrollView contentContainerClassName="px-6 pb-16 pt-16">
-        <Text className="text-sm font-bold tracking-widest text-election-red">
-          開票結果
-        </Text>
-        <Text className="mt-2 text-2xl font-bold text-election-ink">
+    <View className="flex-1 bg-[#f8f8f8]">
+      <ScrollView contentContainerClassName="px-5 pb-16 pt-16">
+        <View className="self-start rounded-full bg-[#737373] px-4 py-1.5">
+          <Text className="text-xs font-bold text-white">開票結果</Text>
+        </View>
+        <Text className="mt-3 text-xl font-bold text-[#333333]">
           {election.themeLabel}
         </Text>
-        <Text className="mt-1 text-sm text-election-ink/60">
-          あなたに近い{election.totalVotes}人が踏み出した一歩
+        <Text className="mt-2 text-xs text-[#333333]">
+          あなたに近い1000人が踏み出した小さな一歩
+        </Text>
+        <Text className="mt-4 text-sm leading-6 text-[#333333]">
+          3日以内に実現できそうな政策(目標)を選んで{"\n"}
+          あなたの公約を決めましょう
         </Text>
 
-        <View className="mt-6 gap-3">
-          {election.candidates.map((c, i) => (
-            <VoteBar
-              key={c.id}
-              candidate={c}
-              maxVotes={maxVotes}
-              rank={i}
-              committed={wishes.some(
-                (w) =>
-                  w.sourceElectionId === election.id && w.text === c.label
-              )}
-              onCommit={() => commitCandidate(c)}
+        <View className="mt-6 gap-4">
+          {election.candidates.map((candidate, rank) => (
+            <CandidateCard
+              key={candidate.id}
+              candidate={candidate}
+              totalVotes={election.totalVotes}
+              rank={rank}
+              selected={candidate.id === selectedCandidateId}
+              onSelect={() => setSelectedCandidateId(candidate.id)}
             />
           ))}
         </View>
 
         <Pressable
-          onPress={() =>
-            posterWishId &&
-            router.push({
-              pathname: "/poster",
-              params: { wishId: posterWishId },
-            })
-          }
-          disabled={!posterWishId}
-          className={`mt-8 items-center rounded-full py-4 ${
-            posterWishId ? "bg-election-gold" : "bg-election-ink/20"
+          onPress={() => setModalVisible(true)}
+          disabled={!selectedCandidate}
+          className={`mt-8 h-12 items-center justify-center rounded-full ${
+            selectedCandidate ? "bg-[#555555]" : "bg-[#cccccc]"
           }`}
         >
-          <Text
-            className={`text-lg font-bold ${
-              posterWishId ? "text-election-ink" : "text-white"
-            }`}
-          >
-            🪧 この公約でポスターをつくる
-          </Text>
+          <Text className="text-base font-bold text-white">この公約にする</Text>
         </Pressable>
-        {!posterWishId && (
-          <Text className="mt-2 text-center text-xs text-election-ink/50">
-            候補の「これをやるぞ」を押すと公約になります
-          </Text>
-        )}
+        <Pressable
+          onPress={() => {
+            setSelectedCandidateId(null);
+            setElection(null);
+          }}
+          className="mt-3 h-12 items-center justify-center rounded-full border-2 border-[#737373]"
+        >
+          <Text className="text-base font-bold text-[#555555]">再選挙する</Text>
+        </Pressable>
         <Pressable
           onPress={() => router.replace("/election")}
-          className="mt-3 items-center rounded-full bg-election-red py-4"
+          className="mt-3 items-center py-3"
         >
-          <Text className="text-lg font-bold text-white">
-            別の悩みで開催する
-          </Text>
+          <Text className="text-sm font-bold text-[#555555]">別の悩みで開催する</Text>
         </Pressable>
-        <Pressable
-          onPress={() => router.dismissTo("/")}
-          className="mt-3 items-center rounded-full border-2 border-election-ink/20 py-4"
-        >
-          <Text className="text-base font-bold text-election-ink">
-            ホームへ戻る
-          </Text>
+        <Pressable onPress={() => router.dismissTo("/")} className="items-center py-3">
+          <Text className="text-sm font-bold text-[#999999]">ホームへ戻る</Text>
         </Pressable>
       </ScrollView>
+
+      <GoalModal
+        visible={modalVisible}
+        candidate={selectedCandidate}
+        onRegister={registerGoal}
+        onClose={() => setModalVisible(false)}
+      />
     </View>
   );
 }

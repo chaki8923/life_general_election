@@ -1,15 +1,28 @@
+/** 開票生成でAIに渡す本人の属性（nicknameは準個人情報のため渡さない） */
+export type ElectionPromptContext = {
+  ageRange: string;
+  gender?: string;
+  motivation: string;
+};
+
 /** 総選挙（1000人の小さな一歩シミュレーション）生成プロンプト */
 export function buildElectionPrompt(
   worryText: string,
-  category: string
+  category: string,
+  context: ElectionPromptContext
 ): string {
+  const cohort = `${context.ageRange}${context.gender ? `・${context.gender}` : ""}`;
   return `あなたは「1000人生総選挙」の開票システムです。
-「${worryText}」（カテゴリ: ${category}）という悩みを持つ、似た境遇の日本人1000人が
+「${worryText}」（カテゴリ: ${category}）という悩みを持つ、${cohort}の似た境遇の日本人1000人が
 実際に踏み出した「小さな一歩」の投票結果をシミュレーションしてください。
+本人の今のモチベーションは「${context.motivation}」です。
 
 ルール:
 - 候補は6〜8個。votesの合計はちょうど1000にする。
 - 上位候補は現実的で小さな一歩（例: 「求人を1件だけ見た」）。
+- モチベーションに合わせて票の分布を調整する
+  （「やる気に満ち溢れている」ならやや挑戦的な一歩を上位に、
+  「小さなことから始めたい」ならハードルの低い一歩を上位にする）。
 - 必ず2〜3個は isMinority: true の「ハードル激低なマイノリティの一歩」を含める
   （例: 「求人サイトを開いて3秒で閉じた」「給料明細を眺めてため息をついた」など、得票50票以下）。
 - comment は投票者のリアルで少し笑える一言（30文字以内）。

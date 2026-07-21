@@ -9,7 +9,7 @@ export type RawCandidate = {
 };
 
 const MOCK_BY_CATEGORY: Record<string, RawCandidate[]> = {
-  結婚: [
+  "恋愛・結婚": [
     { label: "パートナーと将来の話を5分した", votes: 328, isMinority: false, comment: "5分だけなら喧嘩にならない", action: "今夜「将来どうする？」と一言だけ聞く" },
     { label: "結婚式場のサイトを眺めた", votes: 244, isMinority: false, comment: "見るだけならタダ", action: "式場サイトを1つブックマーク" },
     { label: "友人夫婦にリアルな話を聞いた", votes: 187, isMinority: false, comment: "現実を知って逆に安心した", action: "既婚の友人にLINEしてみる" },
@@ -18,7 +18,7 @@ const MOCK_BY_CATEGORY: Record<string, RawCandidate[]> = {
     { label: "ドラマの結婚式で泣いた", votes: 31, isMinority: true, comment: "気持ちの準備はできてるかも", action: "結婚がテーマの作品を1本観る" },
     { label: "「結婚 タイミング」で検索して閉じた", votes: 17, isMinority: true, comment: "検索しただけで今日は満足", action: "検索して1記事だけ読む" },
   ],
-  転職: [
+  "仕事・キャリア": [
     { label: "求人を1件だけ見た", votes: 312, isMinority: false, comment: "見るだけなら会社にバレない", action: "求人サイトで1件だけ見る" },
     { label: "職務経歴を箇条書きにしてみた", votes: 236, isMinority: false, comment: "意外とやってきたことあった", action: "スマホメモに3行書く" },
     { label: "転職した友人に話を聞いた", votes: 198, isMinority: false, comment: "隣の芝生、普通に青かった", action: "転職経験者にご飯に誘うLINE" },
