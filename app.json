@@ -47,6 +47,12 @@
           "savePhotosPermission": "作成したポスターを写真に保存するために使用します。",
           "granularPermissions": ["photo"]
         }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "レジェンドポスターを端末の傾きに合わせて動かすために使用します。"
+        }
       ]
     ],
     "experiments": {

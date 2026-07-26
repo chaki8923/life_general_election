@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Modal } from "react-native";
 import { generateExcuse } from "@/features/excuse/generate";
 import { mirrorWish } from "@/services/firebase/mirror";
@@ -6,38 +6,58 @@ import { useWishStore } from "@/stores/wishes";
 import { Pressable, Text, View } from "@/tw";
 import type { Wish } from "@/types";
 
+export type ReportAction = "done" | "excuse";
+
 type ReportModalProps = {
   visible: boolean;
   wish: Wish;
+  action: ReportAction;
   onClose: () => void;
 };
 
-type ModalState = "select" | "loading" | "excuse";
+type ModalState = "done" | "loading" | "excuse";
 
-export function ReportModal({ visible, wish, onClose }: ReportModalProps) {
+export function ReportModal({
+  visible,
+  wish,
+  action,
+  onClose,
+}: ReportModalProps) {
   const markDone = useWishStore((state) => state.markDone);
   const markExcused = useWishStore((state) => state.markExcused);
-  const [state, setState] = useState<ModalState>("select");
+  const [state, setState] = useState<ModalState>("done");
   const [excuse, setExcuse] = useState("");
+  const requestId = useRef(0);
+
+  const createExcuse = useCallback(async () => {
+    const currentRequest = ++requestId.current;
+    setState("loading");
+    const generated = await generateExcuse({ wish });
+    if (requestId.current !== currentRequest) return;
+    setExcuse(generated);
+    setState("excuse");
+  }, [wish]);
 
   useEffect(() => {
-    if (visible) {
-      setState("select");
-      setExcuse("");
+    if (!visible) {
+      requestId.current += 1;
+      return;
     }
-  }, [visible]);
+    setExcuse("");
+    if (action === "done") {
+      setState("done");
+    } else {
+      createExcuse();
+    }
+    return () => {
+      requestId.current += 1;
+    };
+  }, [action, createExcuse, visible]);
 
-  const reportDone = () => {
+  const confirmDone = () => {
     const updated = markDone(wish.id);
     if (updated) mirrorWish(updated);
     onClose();
-  };
-
-  const createExcuse = async () => {
-    setState("loading");
-    const generated = await generateExcuse({ wish });
-    setExcuse(generated);
-    setState("excuse");
   };
 
   const confirmExcuse = () => {
@@ -51,34 +71,30 @@ export function ReportModal({ visible, wish, onClose }: ReportModalProps) {
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={state === "loading" ? undefined : onClose}
+      onRequestClose={onClose}
     >
       <View className="flex-1 items-center justify-center bg-black/50 px-6">
         <View className="w-full max-w-lg rounded-2xl bg-white p-5">
-          {state === "select" ? (
+          {state === "done" ? (
             <>
-              <Text className="text-base font-bold text-[#333333]">
-                実施結果を報告する
+              <Text className="text-lg font-bold text-[#333333]">
+                この公約を達成にしますか？
               </Text>
-              <Text className="mt-3 text-sm text-[#555555]">
+              <Text className="mt-3 text-sm leading-6 text-[#555555]">
                 {wish.policy ?? wish.text}
               </Text>
               <Pressable
-                onPress={reportDone}
+                onPress={confirmDone}
                 className="mt-6 h-12 items-center justify-center rounded-full bg-[#555555]"
               >
-                <Text className="text-base font-bold text-white">できた</Text>
-              </Pressable>
-              <Pressable
-                onPress={createExcuse}
-                className="mt-3 h-12 items-center justify-center rounded-full border-2 border-[#737373]"
-              >
-                <Text className="text-base font-bold text-[#555555]">
-                  言い訳を生成する
+                <Text className="text-base font-bold text-white">
+                  達成として記録する
                 </Text>
               </Pressable>
               <Pressable onPress={onClose} className="items-center py-4">
-                <Text className="text-sm font-bold text-[#999999]">閉じる</Text>
+                <Text className="text-sm font-bold text-[#999999]">
+                  キャンセル
+                </Text>
               </Pressable>
             </>
           ) : state === "loading" ? (
@@ -87,6 +103,9 @@ export function ReportModal({ visible, wish, onClose }: ReportModalProps) {
               <Text className="mt-4 text-sm font-bold text-[#555555]">
                 やさしい言い訳を考えています…
               </Text>
+              <Pressable onPress={onClose} className="mt-5 px-6 py-3">
+                <Text className="text-sm font-bold text-[#999999]">閉じる</Text>
+              </Pressable>
             </View>
           ) : (
             <>
@@ -94,7 +113,9 @@ export function ReportModal({ visible, wish, onClose }: ReportModalProps) {
                 今日の言い訳
               </Text>
               <View className="mt-4 rounded-xl bg-[#f8f8f8] p-4">
-                <Text className="text-sm leading-6 text-[#333333]">{excuse}</Text>
+                <Text className="text-sm leading-6 text-[#333333]">
+                  {excuse}
+                </Text>
               </View>
               <Pressable
                 onPress={confirmExcuse}

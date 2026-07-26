@@ -32,12 +32,6 @@ export default function HomeScreen() {
       >
         👤 マイページ
       </Link>
-      <Link
-        href="/poster"
-        className="mt-4 rounded-full border-2 border-election-red px-10 py-4 text-lg font-bold text-election-red"
-      >
-        🪧 ポスターをつくる
-      </Link>
       {__DEV__ && (
         <Pressable
           onPress={() => {

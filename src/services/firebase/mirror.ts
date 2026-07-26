@@ -75,9 +75,17 @@ export function mirrorWish(wish: Wish) {
   const db = getDb();
   const uid = getCurrentUid();
   if (!db || !uid) return;
+  // 端末ローカルの写真URIは別端末/集計基盤では無効なので送らない
+  const posterSettings = wish.posterSettings
+    ? {
+        ...wish.posterSettings,
+        image: { kind: wish.posterSettings.image.kind },
+      }
+    : undefined;
   safeCall(() =>
     setDoc(doc(db, "users", uid, "wishes", wish.id), {
       ...stripUndefined(wish),
+      ...(posterSettings ? { posterSettings } : {}),
       savedAt: serverTimestamp(),
     })
   );
