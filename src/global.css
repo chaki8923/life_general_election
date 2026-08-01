@@ -33,5 +33,23 @@
     --color-election-paper: #fffdf8;
     --color-election-ink: #2b2b2b;
     --color-election-pink: #e91e63;
+
+    /* 選挙フロー新デザイン（Figma: oh 世界 / 807-13446）のトークン */
+    --color-flow-bg: #f8f8f8;
+    --color-flow-ink: #24292f;
+    --color-flow-ink-mid: #424a53;
+    --color-flow-ink-low: #6e7781;
+    --color-flow-dark: #32383f;
+    --color-flow-pink: #f4728a;
+    --color-flow-onDark: #f6f8fa;
+    --color-flow-disabled: #cccccc;
+    --color-bubble: #dbdbdb;
+    --color-bubble-active: #8e8e8e;
+
+    /* --font-sans はプラットフォーム既定のまま。新デザイン専用のファミリだけ足す */
+    --font-flow: "NotoSansJP_700Bold";
+    --font-flow-medium: "NotoSansJP_500Medium";
+    --font-counter: "font42dotSans_700Bold";
+    --font-counter-regular: "font42dotSans_400Regular";
   }
 }
