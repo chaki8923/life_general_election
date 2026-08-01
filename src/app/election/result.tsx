@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
+import { FlowButton } from "@/components/ui/flow-button";
+import { FlowHeader } from "@/components/ui/flow-header";
+import { FlowStepper } from "@/components/ui/flow-stepper";
 import { CandidateCard } from "@/features/election/candidate-card";
-import { generateElection } from "@/features/election/generate";
 import { GoalModal } from "@/features/election/goal-modal";
-import { mirrorElection, mirrorWish } from "@/services/firebase/mirror";
+import { mirrorWish } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
-import { useProfileStore } from "@/stores/profile";
 import { useWishStore } from "@/stores/wishes";
 import { Pressable, ScrollView, Text, View } from "@/tw";
 
@@ -15,77 +16,41 @@ export default function ElectionResultScreen() {
   const motivation = useElectionStore((s) => s.motivation);
   const election = useElectionStore((s) => s.election);
   const setElection = useElectionStore((s) => s.setElection);
-  const profile = useProfileStore((s) => s.profile);
+  const showProfileStep = useElectionStore((s) => s.showProfileStep);
   const addWish = useWishStore((s) => s.addWish);
-  const [failed, setFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
   const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
     null
   );
   const [modalVisible, setModalVisible] = useState(false);
 
+  const hasSource = Boolean(worry && motivation);
+
+  // 開票の生成はcounting画面が担う。未開票でここに来たら投票中へ戻す。
   useEffect(() => {
-    if (!worry || !motivation || !profile || election) return;
-    let cancelled = false;
-    setFailed(false);
-    generateElection({ worry, profile, motivation })
-      .then((generated) => {
-        if (cancelled) return;
-        setElection(generated);
-        mirrorElection(generated);
-      })
-      .catch((error) => {
-        if (__DEV__) console.warn("[election]", error);
-        if (!cancelled) setFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [worry, motivation, profile, election, setElection, attempt]);
+    if (hasSource && !election) router.replace("/election/counting");
+  }, [hasSource, election, router]);
 
-  if (!worry || !motivation) {
+  if (!hasSource) {
     return (
-      <View className="flex-1 items-center justify-center bg-election-cream px-8">
-        <Text className="text-base text-election-ink">悩みが選ばれていません</Text>
-        <Pressable
-          onPress={() => router.replace("/election")}
-          className="mt-4 rounded-full bg-election-red px-6 py-3"
-        >
-          <Text className="font-bold text-white">悩みを選ぶ</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  if (failed) {
-    return (
-      <View className="flex-1 items-center justify-center bg-election-cream px-8">
-        <Text className="text-base text-election-ink">開票に失敗しました…</Text>
-        <Pressable
-          onPress={() => setAttempt((current) => current + 1)}
-          className="mt-4 rounded-full bg-election-red px-6 py-3"
-        >
-          <Text className="font-bold text-white">もう一度開票する</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
-  if (!election) {
-    return (
-      <View className="flex-1 items-center justify-center bg-election-navy px-8">
-        <Text className="text-5xl">🗳️</Text>
-        <Text className="mt-6 text-xl font-bold text-white">開票作業中…</Text>
-        <Text className="mt-2 text-center text-sm text-white/60">
-          あなたに近い1000人の{"\n"}「小さな一歩」を集計しています
+      <View className="flex-1 items-center justify-center bg-flow-bg px-8">
+        <Text className="font-flow text-base text-flow-ink">
+          悩みが選ばれていません
         </Text>
+        <FlowButton
+          label="悩みを選ぶ"
+          onPress={() => router.replace("/election")}
+          className="mt-4"
+        />
       </View>
     );
   }
+
+  if (!election) return null;
 
   const selectedCandidate =
-    election.candidates.find((candidate) => candidate.id === selectedCandidateId) ??
-    null;
+    election.candidates.find(
+      (candidate) => candidate.id === selectedCandidateId
+    ) ?? null;
 
   const registerGoal = (deadline: number) => {
     if (!selectedCandidate) return;
@@ -101,18 +66,21 @@ export default function ElectionResultScreen() {
   };
 
   return (
-    <View className="flex-1 bg-[#f8f8f8]">
-      <ScrollView contentContainerClassName="px-5 pb-16 pt-16">
-        <View className="self-start rounded-full bg-[#737373] px-4 py-1.5">
-          <Text className="text-xs font-bold text-white">開票結果</Text>
+    <View className="flex-1 bg-flow-bg">
+      <FlowHeader title="投票結果" />
+      <ScrollView contentContainerClassName="px-5 pb-16 pt-3">
+        <FlowStepper current={2} showProfileStep={showProfileStep} />
+
+        <View className="mt-6 self-start rounded-full bg-flow-dark px-4 py-1.5">
+          <Text className="font-flow text-xs text-white">開票結果</Text>
         </View>
-        <Text className="mt-3 text-xl font-bold text-[#333333]">
+        <Text className="mt-3 font-flow text-xl text-flow-ink">
           {election.themeLabel}
         </Text>
-        <Text className="mt-2 text-xs text-[#333333]">
+        <Text className="mt-2 font-flow-medium text-xs text-flow-ink-mid">
           あなたに近い1000人が踏み出した小さな一歩
         </Text>
-        <Text className="mt-4 text-sm leading-6 text-[#333333]">
+        <Text className="mt-4 font-flow-medium text-sm leading-6 text-flow-ink-mid">
           3日以内に実現できそうな政策(目標)を選んで{"\n"}
           あなたの公約を決めましょう
         </Text>
@@ -130,32 +98,36 @@ export default function ElectionResultScreen() {
           ))}
         </View>
 
-        <Pressable
-          onPress={() => setModalVisible(true)}
-          disabled={!selectedCandidate}
-          className={`mt-8 h-12 items-center justify-center rounded-full ${
-            selectedCandidate ? "bg-[#555555]" : "bg-[#cccccc]"
-          }`}
-        >
-          <Text className="text-base font-bold text-white">この公約にする</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            setSelectedCandidateId(null);
-            setElection(null);
-          }}
-          className="mt-3 h-12 items-center justify-center rounded-full border-2 border-[#737373]"
-        >
-          <Text className="text-base font-bold text-[#555555]">再選挙する</Text>
-        </Pressable>
+        <View className="mt-8 gap-3">
+          <FlowButton
+            label="この公約にする"
+            disabled={!selectedCandidate}
+            onPress={() => setModalVisible(true)}
+          />
+          <FlowButton
+            label="再選挙する"
+            variant="dashed"
+            onPress={() => {
+              setSelectedCandidateId(null);
+              setElection(null);
+            }}
+          />
+        </View>
         <Pressable
           onPress={() => router.replace("/election")}
           className="mt-3 items-center py-3"
         >
-          <Text className="text-sm font-bold text-[#555555]">別の悩みで開催する</Text>
+          <Text className="font-flow text-sm text-flow-ink-mid">
+            別の悩みで開催する
+          </Text>
         </Pressable>
-        <Pressable onPress={() => router.dismissTo("/")} className="items-center py-3">
-          <Text className="text-sm font-bold text-[#999999]">ホームへ戻る</Text>
+        <Pressable
+          onPress={() => router.dismissTo("/")}
+          className="items-center py-3"
+        >
+          <Text className="font-flow text-sm text-flow-ink-low">
+            ホームへ戻る
+          </Text>
         </Pressable>
       </ScrollView>
 

@@ -9,7 +9,7 @@ export function buildWorrySuggestionsPrompt(
   const cohort = `${profile.ageRange}${profile.gender ? `・${profile.gender}` : ""}`;
   const interestTheme = JSON.stringify(interest.trim());
   return `あなたは「1000人生総選挙」のヒアリングシステムです。
-${cohort}の日本人について、次の興味・関心テーマをもとに、抱えがちな悩みを6個提案してください。
+${cohort}の日本人について、次の興味・関心テーマをもとに、抱えがちな悩みを5個提案してください。
 
 興味・関心テーマ: ${interestTheme}
 

@@ -9,7 +9,12 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // プロフィール登録直後はそのまま選挙フロー（興味関心）へ直行する
-    if (consumeElectionHandoff()) router.replace("/election");
+    if (consumeElectionHandoff()) {
+      router.replace({
+        pathname: "/election",
+        params: { fromProfile: "1" },
+      });
+    }
   }, [router]);
 
   return (
