@@ -1,175 +1,264 @@
 import { useRef, useState } from "react";
-import { View as RNView } from "react-native";
+import { Alert, View as RNView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, TextInput, View } from "@/tw";
 import { PosterCanvas } from "@/features/poster/poster-canvas";
 import {
+  deleteManagedPosterPhoto,
+  persistPosterPhoto,
+  type PickedPosterImage,
+} from "@/features/poster/photo-storage";
+import {
+  createDefaultPosterSettings,
+  resolvePosterSettings,
+} from "@/features/poster/poster-settings";
+import { getPosterLevel, POSTER_LEVEL_META } from "@/features/poster/level";
+import {
+  getPosterPalette,
   NAME_MAX_LENGTH,
   POSTER_PALETTES,
 } from "@/features/poster/templates";
 import { usePosterExport } from "@/features/poster/use-poster-export";
 import { usePosterPhoto } from "@/features/poster/use-poster-photo";
 import { mirrorWish } from "@/services/firebase/mirror";
+import { useProfileStore } from "@/stores/profile";
 import { useWishStore } from "@/stores/wishes";
+import { Pressable, ScrollView, Text, TextInput, View } from "@/tw";
+import type { PosterSettings } from "@/types";
 
 export default function PosterScreen() {
   const router = useRouter();
   const { wishId } = useLocalSearchParams<{ wishId?: string }>();
-  const wishes = useWishStore((s) => s.wishes);
-  const hasHydrated = useWishStore((s) => s.hasHydrated);
-  const setPosterUri = useWishStore((s) => s.setPosterUri);
+  const wishes = useWishStore((state) => state.wishes);
+  const hasHydrated = useWishStore((state) => state.hasHydrated);
+  const setPosterSettings = useWishStore((state) => state.setPosterSettings);
+  const nickname = useProfileStore((state) => state.profile?.nickname ?? "");
   const posterRef = useRef<RNView>(null);
+  const [photoReady, setPhotoReady] = useState(true);
+  const [photoSaving, setPhotoSaving] = useState(false);
 
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [photoReady, setPhotoReady] = useState(false);
-  const [name, setName] = useState("");
-  const [selectedWishId, setSelectedWishId] = useState<string | null>(
-    wishId ?? null
-  );
-  const [paletteId, setPaletteId] = useState(POSTER_PALETTES[0].id);
-  const palette =
-    POSTER_PALETTES.find((p) => p.id === paletteId) ?? POSTER_PALETTES[0];
-
-  // 公約は開票結果から保存したwishのみ(自由入力なし)。未指定なら最新を選ぶ
-  const activeWishes = wishes.filter((w) => w.status === "active");
-  const selectedWish =
-    activeWishes.find((w) => w.id === selectedWishId) ?? activeWishes[0] ?? null;
-
-  const { pickFromLibrary, takePhoto } = usePosterPhoto((uri) => {
-    setPhotoReady(false);
-    setPhotoUri(uri);
-  });
+  const wish = wishes.find((item) => item.id === wishId) ?? null;
+  const doneCount = wishes.filter((item) => item.status === "done").length;
+  const level = getPosterLevel(doneCount);
+  const storedSettings =
+    wish?.posterSettings ?? createDefaultPosterSettings();
+  const displaySettings = wish
+    ? resolvePosterSettings(wish, nickname)
+    : createDefaultPosterSettings();
+  const palette = getPosterPalette(displaySettings.paletteId);
   const { busy, share, saveToLibrary } = usePosterExport(posterRef);
 
-  // 写真のデコード完了(photoReady)までキャプチャすると空写真になり得る
-  const exportable =
-    photoUri !== null && photoReady && !busy && selectedWish !== null;
-
-  const handleSaveToLibrary = async () => {
-    const uri = await saveToLibrary();
-    if (!uri || !selectedWish) return;
-    const updatedWish = setPosterUri(selectedWish.id, uri);
-    if (updatedWish) mirrorWish(updatedWish);
+  const saveSettings = (next: PosterSettings, shouldMirror = true) => {
+    if (!wish) return;
+    const updated = setPosterSettings(wish.id, next);
+    if (updated && shouldMirror) mirrorWish(updated);
   };
+
+  const handlePicked = async (asset: PickedPosterImage) => {
+    if (!wish || photoSaving) return;
+    setPhotoSaving(true);
+    try {
+      const uri = await persistPosterPhoto(wish.id, asset);
+      const previousUri =
+        storedSettings.image.kind === "photo"
+          ? storedSettings.image.uri
+          : undefined;
+      setPhotoReady(false);
+      saveSettings({
+        ...storedSettings,
+        image: { kind: "photo", uri },
+      });
+      if (previousUri !== uri) deleteManagedPosterPhoto(previousUri);
+    } catch (error) {
+      if (__DEV__) console.warn("[poster/persist-photo]", error);
+      Alert.alert(
+        "写真を保存できませんでした",
+        "別の写真を選ぶか、もう一度お試しください。"
+      );
+    } finally {
+      setPhotoSaving(false);
+    }
+  };
+
+  const { pickFromLibrary, takePhoto } = usePosterPhoto(handlePicked);
+
+  const resetToCharacter = () => {
+    const previousUri =
+      storedSettings.image.kind === "photo"
+        ? storedSettings.image.uri
+        : undefined;
+    setPhotoReady(true);
+    saveSettings({
+      ...storedSettings,
+      image: { kind: "character" },
+    });
+    deleteManagedPosterPhoto(previousUri);
+  };
+
+  const updateName = (candidateName: string) => {
+    saveSettings({ ...storedSettings, candidateName }, false);
+  };
+
+  const updatePalette = (paletteId: PosterSettings["paletteId"]) => {
+    saveSettings({ ...storedSettings, paletteId });
+  };
+
+  const exportable =
+    wish !== null &&
+    !busy &&
+    !photoSaving &&
+    (displaySettings.image.kind === "character" || photoReady);
+
+  if (!hasHydrated) {
+    return (
+      <View className="flex-1 items-center justify-center bg-election-cream">
+        <Text className="text-sm font-bold text-election-ink/60">
+          ポスターを読み込んでいます…
+        </Text>
+      </View>
+    );
+  }
+
+  if (!wish) {
+    return (
+      <View className="flex-1 items-center justify-center bg-election-cream px-6">
+        <Text className="text-lg font-bold text-election-ink">
+          公約が見つかりません
+        </Text>
+        <Pressable
+          onPress={() => router.dismissTo("/mypage")}
+          className="mt-6 rounded-full bg-election-red px-7 py-3"
+        >
+          <Text className="font-bold text-white">マイページへ戻る</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-election-cream">
-      <ScrollView contentContainerClassName="px-6 pb-16 pt-16">
-        <Text className="text-sm font-bold tracking-widest text-election-red">
-          選挙ポスター製作所
-        </Text>
-        <Text className="mt-2 text-2xl font-bold text-election-ink">
-          あなたを公認候補にします
-        </Text>
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerClassName="px-6 pb-16 pt-16"
+      >
+        <View className="flex-row items-center justify-between">
+          <View className="flex-1">
+            <Text className="text-sm font-bold tracking-widest text-election-red">
+              選挙ポスター製作所
+            </Text>
+            <Text className="mt-2 text-2xl font-bold text-election-ink">
+              公約ごとの一枚をつくる
+            </Text>
+          </View>
+          <View className="rounded-full bg-election-navy px-3 py-1.5">
+            <Text className="text-xs font-black text-election-gold">
+              LV.{level}
+            </Text>
+          </View>
+        </View>
+
+        <View className="mt-3 rounded-xl bg-white/70 px-4 py-3">
+          <Text className="text-xs font-bold text-election-red">
+            {POSTER_LEVEL_META[level].title}
+          </Text>
+          <Text className="mt-1 text-xs leading-5 text-election-ink/60">
+            {POSTER_LEVEL_META[level].description}
+          </Text>
+        </View>
 
         <View className="mt-6">
           <PosterCanvas
-            photoUri={photoUri}
-            name={name}
-            slogan={selectedWish?.text ?? ""}
+            settings={displaySettings}
+            slogan={wish.text}
             palette={palette}
+            level={level}
             posterRef={posterRef}
             onPhotoLoaded={() => setPhotoReady(true)}
             onPressPhoto={pickFromLibrary}
+            interactive={!busy}
           />
         </View>
 
-        <View className="mt-4 flex-row gap-3">
+        <Text className="mt-5 text-xs font-bold text-election-ink/50">
+          候補者画像（公約ごとに保存されます）
+        </Text>
+        <View className="mt-2 flex-row flex-wrap gap-2">
+          <Pressable
+            onPress={resetToCharacter}
+            className={`rounded-full border-2 px-4 py-2.5 ${
+              displaySettings.image.kind === "character"
+                ? "border-election-pink bg-white"
+                : "border-election-ink/10"
+            }`}
+          >
+            <Text className="font-bold text-election-ink">
+              🎩 既定キャラ
+            </Text>
+          </Pressable>
           <Pressable
             onPress={pickFromLibrary}
-            className="flex-1 items-center rounded-full border-2 border-election-red py-3"
+            disabled={photoSaving}
+            className="rounded-full border-2 border-election-red px-4 py-2.5"
           >
-            <Text className="font-bold text-election-red">🖼️ 写真を選ぶ</Text>
+            <Text className="font-bold text-election-red">
+              {photoSaving ? "保存中…" : "🖼️ 写真を選ぶ"}
+            </Text>
           </Pressable>
           <Pressable
             onPress={takePhoto}
-            className="flex-1 items-center rounded-full border-2 border-election-red py-3"
+            disabled={photoSaving}
+            className="rounded-full border-2 border-election-red px-4 py-2.5"
           >
             <Text className="font-bold text-election-red">📸 撮影する</Text>
           </Pressable>
         </View>
 
-        <Text className="mt-6 text-xs font-bold text-election-ink/50">
-          掲げる公約
-        </Text>
-        {!hasHydrated ? null : activeWishes.length === 0 ? (
-          <View className="mt-2 items-center rounded-2xl border-2 border-dashed border-election-ink/20 bg-election-paper px-4 py-6">
-            <Text className="text-center text-sm text-election-ink/70">
-              まだ公約がありません。{"\n"}
-              まず総選挙で「これをやるぞ」を選ぼう
-            </Text>
-            <Pressable
-              onPress={() => router.push("/election")}
-              className="mt-4 rounded-full bg-election-red px-6 py-3"
-            >
-              <Text className="font-bold text-white">
-                🗳️ 総選挙をはじめる
-              </Text>
-            </Pressable>
-          </View>
-        ) : (
-          <View className="mt-2 gap-2">
-            {activeWishes.map((w) => {
-              const selected = w.id === selectedWish?.id;
-              return (
-                <Pressable
-                  key={w.id}
-                  onPress={() => setSelectedWishId(w.id)}
-                  className={`flex-row items-center gap-3 rounded-xl border-2 bg-election-paper px-4 py-3 ${
-                    selected ? "border-election-gold" : "border-election-ink/10"
-                  }`}
-                >
-                  <Text className="text-base">{selected ? "🪧" : "📋"}</Text>
-                  <Text
-                    className={`flex-1 text-sm ${
-                      selected
-                        ? "font-bold text-election-ink"
-                        : "text-election-ink/70"
-                    }`}
-                  >
-                    {w.text}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-
-        <Text className="mt-4 text-xs font-bold text-election-ink/50">
-          名前(縦書きになります)
+        <Text className="mt-5 text-xs font-bold text-election-ink/50">
+          名前（自動保存）
         </Text>
         <TextInput
-          value={name}
-          onChangeText={setName}
+          value={storedSettings.candidateName}
+          onChangeText={updateName}
+          onBlur={() => {
+            const latest = useWishStore
+              .getState()
+              .wishes.find((item) => item.id === wish.id);
+            if (latest) mirrorWish(latest);
+          }}
           maxLength={NAME_MAX_LENGTH}
-          placeholder={`例: 山田太郎(${NAME_MAX_LENGTH}文字まで)`}
+          placeholder={
+            nickname.trim() ||
+            `例: 山田太郎（${NAME_MAX_LENGTH}文字まで）`
+          }
           className="mt-2 rounded-xl border-2 border-election-ink/10 bg-election-paper px-4 py-3 text-base text-election-ink"
         />
 
-        <Text className="mt-4 text-xs font-bold text-election-ink/50">
-          カラー
+        <Text className="mt-5 text-xs font-bold text-election-ink/50">
+          イメージカラー（自動保存）
         </Text>
-        <View className="mt-2 flex-row gap-3">
-          {POSTER_PALETTES.map((p) => (
+        <View className="mt-2 flex-row flex-wrap gap-3">
+          {POSTER_PALETTES.map((item) => (
             <Pressable
-              key={p.id}
-              onPress={() => setPaletteId(p.id)}
+              key={item.id}
+              onPress={() => updatePalette(item.id)}
               className={`flex-row items-center gap-2 rounded-full border-2 px-4 py-2 ${
-                p.id === paletteId
+                item.id === displaySettings.paletteId
                   ? "border-election-gold bg-election-paper"
                   : "border-election-ink/10"
               }`}
             >
-              <View className={`h-4 w-4 rounded-full ${p.band}`} />
+              <View
+                className="h-4 w-4 rounded-full"
+                style={{ backgroundColor: item.primary }}
+              />
               <Text className="text-sm font-bold text-election-ink">
-                {p.label}
+                {item.label}
               </Text>
             </Pressable>
           ))}
         </View>
 
         <Pressable
-          onPress={handleSaveToLibrary}
+          onPress={saveToLibrary}
           disabled={!exportable}
           className={`mt-8 items-center rounded-full py-4 ${
             exportable ? "bg-election-red" : "bg-election-ink/20"
@@ -194,13 +283,12 @@ export default function PosterScreen() {
             📤 シェアする
           </Text>
         </Pressable>
-
         <Pressable
-          onPress={() => router.dismissTo("/")}
+          onPress={() => router.dismissTo("/mypage")}
           className="mt-3 items-center rounded-full border-2 border-election-ink/20 py-4"
         >
           <Text className="text-base font-bold text-election-ink">
-            ホームへ戻る
+            マイページへ戻る
           </Text>
         </Pressable>
       </ScrollView>

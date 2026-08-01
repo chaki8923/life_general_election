@@ -1,7 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import type { Wish } from "@/types";
+import { createDefaultPosterSettings } from "@/features/poster/poster-settings";
+import type { PosterSettings, Wish } from "@/types";
 
 type WishInput = {
   text: string;
@@ -19,6 +20,8 @@ type WishStore = {
   addWish: (input: WishInput) => Wish;
   markDone: (id: string) => Wish | undefined;
   markExcused: (id: string, excuse: string) => Wish | undefined;
+  setPosterSettings: (id: string, settings: PosterSettings) => Wish | undefined;
+  /** @deprecated 完成画像保存のversion 1互換API */
   setPosterUri: (id: string, uri: string) => Wish | undefined;
   setHasHydrated: (v: boolean) => void;
 };
@@ -44,6 +47,7 @@ export const useWishStore = create<WishStore>()(
           ...(input.sourceElectionId !== undefined
             ? { sourceElectionId: input.sourceElectionId }
             : {}),
+          posterSettings: createDefaultPosterSettings(),
           status: "active",
           createdAt: Date.now(),
         };
@@ -81,6 +85,20 @@ export const useWishStore = create<WishStore>()(
         });
         return updated;
       },
+      setPosterSettings: (id, posterSettings) => {
+        const current = get().wishes.find((wish) => wish.id === id);
+        if (!current) return undefined;
+        const updated: Wish = {
+          ...current,
+          posterSettings,
+        };
+        set({
+          wishes: get().wishes.map((wish) =>
+            wish.id === id ? updated : wish
+          ),
+        });
+        return updated;
+      },
       setPosterUri: (id, uri) => {
         const current = get().wishes.find((wish) => wish.id === id);
         if (!current) return undefined;
@@ -99,9 +117,21 @@ export const useWishStore = create<WishStore>()(
     }),
     {
       name: "lge-wishes",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ wishes: s.wishes }),
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<WishStore>;
+        if (version >= 2 || !Array.isArray(state.wishes)) return state;
+        return {
+          ...state,
+          wishes: state.wishes.map((wish) => ({
+            ...wish,
+            posterSettings:
+              wish.posterSettings ?? createDefaultPosterSettings(),
+          })),
+        };
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },
