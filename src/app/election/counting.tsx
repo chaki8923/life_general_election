@@ -6,7 +6,7 @@ import { Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
 import { FlowButton } from "@/components/ui/flow-button";
-import { Odometer, odometerTimeAtRatio } from "@/components/ui/odometer";
+import { Odometer, odometerTimeAtValue } from "@/components/ui/odometer";
 import { generateElection } from "@/features/election/generate";
 import { FONT, useDesignScale } from "@/features/election/layout";
 import { mirrorElection } from "@/services/firebase/mirror";
@@ -17,6 +17,10 @@ const TOTAL_VOTES = 1000;
 /** 1000の直前で止め、結果画面へカットする */
 const COUNT_TARGET = 999;
 const COUNT_DURATION_MS = 7000;
+/** 990台に入ったら失速させ、最後の数票をじっくり見せる */
+const COUNT_SLOW_FROM = 960;
+/** 全体の25%（1750ms）を960台の失速に充てる */
+const COUNT_SLOW_TIME_RATIO = 0.25;
 /** 999と最後の案内を600ms見せてから結果へ移る */
 const MIN_DISPLAY_MS = COUNT_DURATION_MS;
 
@@ -82,7 +86,11 @@ export default function ElectionCountingScreen() {
     const timers = STAGES.slice(1).map((s2, i) =>
       setTimeout(
         () => setStage(i + 1),
-        COUNT_DURATION_MS * odometerTimeAtRatio(s2.at / COUNT_TARGET)
+        COUNT_DURATION_MS *
+          odometerTimeAtValue(s2.at, COUNT_TARGET, {
+            slowFrom: COUNT_SLOW_FROM,
+            slowTimeRatio: COUNT_SLOW_TIME_RATIO,
+          })
       )
     );
     return () => timers.forEach(clearTimeout);
@@ -180,6 +188,8 @@ export default function ElectionCountingScreen() {
               value={COUNT_TARGET}
               digits={3}
               durationMs={COUNT_DURATION_MS}
+              slowFrom={COUNT_SLOW_FROM}
+              slowTimeRatio={COUNT_SLOW_TIME_RATIO}
               fontSize={s(130.5)}
               rowHeight={s(156)}
               letterSpacing={s(6.52)}
