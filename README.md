@@ -33,7 +33,7 @@ npm run sync         # origin/main を1回だけチェックして取り込む
 npm run sync:watch   # 60秒間隔で監視し続ける(開発中に起動しておく)
 ```
 
-`npm run sync:watch` の動作:
+`npm run sync` / `npm run sync:watch` の動作:
 
 1. `git fetch origin main` で origin/main の最新状態を取得
 2. ローカル `main` を fast-forward で最新化(作業ブランチにいる場合はブランチを切り替えずに更新)
@@ -45,7 +45,9 @@ npm run sync:watch   # 60秒間隔で監視し続ける(開発中に起動して
 - merge / rebase が進行中の場合
 - コンフリクトが発生した場合(`git merge --abort` で元の状態に自動で戻す)
 
-結果はターミナルのログに加え、macOSでは通知センターにも表示される。停止する場合は起動したターミナルで `Ctrl+C` を押す。
+結果はターミナルのログに加え、macOSでは通知センターにも表示される。
+
+`npm run sync:watch` はこの一連の処理を60秒間隔で繰り返し実行し続けるため、開発中に起動しておけば origin/main の更新をポーリングで自動的に取り込める(停止するには `Ctrl+C`)。
 
 ## ディレクトリ構成
 

@@ -40,15 +40,33 @@ jobs:
 
       - name: Run Claude Code
         uses: anthropics/claude-code-action@beta
+        env:
+          FIGMA_TOKEN: ${{ secrets.FIGMA_TOKEN }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           model: "claude-sonnet-5"
-          allowed_tools: "Bash(npm run lint),Bash(npx tsc --noEmit),Bash(npm ci),Bash(npm test),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh label create:*),Bash(gh label list:*)"
+          allowed_tools: "Bash(npm run lint),Bash(npx tsc --noEmit),Bash(npm ci),Bash(npm test),Bash(gh pr create:*),Bash(gh pr edit:*),Bash(gh label create:*),Bash(gh label list:*),Bash(curl:*),Bash(jq:*)"
           custom_instructions: |
             このプロジェクトは Expo v54 + Expo Router のアプリです。
             AGENTS.md の指示に従い、https://docs.expo.dev/versions/v57.0.0/ の
             バージョン別ドキュメントを必ず参照してください。
             返答は日本語で行ってください。
+
+            **Figma URL が issue に含まれる場合(任意・存在するときのみ)**:
+            issue 本文に figma.com の URL があれば、実装前に Figma REST API で
+            デザインを確認すること。無い場合はこの手順をスキップして通常通り実装する。
+            1. URL からファイルキーとノードIDを抽出する
+               - 例: https://www.figma.com/design/<fileKey>/名前?node-id=1-2
+               - node-id の "1-2" は API では "1:2" に変換する(最初のハイフンをコロンに置換)
+            2. 環境変数 FIGMA_TOKEN が未設定なら、その旨をコメントで報告してスキップする
+            3. ノードのプロパティ(色・サイズ等)を取得:
+               curl -s -H "X-Figma-Token: $FIGMA_TOKEN" \
+                 "https://api.figma.com/v1/files/<fileKey>/nodes?ids=<nodeId>" | jq .
+            4. レンダリング画像の URL を取得:
+               curl -s -H "X-Figma-Token: $FIGMA_TOKEN" \
+                 "https://api.figma.com/v1/images/<fileKey>?ids=<nodeId>&format=png&scale=2"
+            5. 返ってきた画像 URL を `curl -o figma-ref.png "<画像URL>"` でダウンロードし、
+               Read ツールで開いて実際の見た目・色を確認してから実装に反映する
 
             **PR 作成手順(必須)**:
             1. 実装完了後、`npx tsc --noEmit` と `npm run lint` を実行して通過を確認
