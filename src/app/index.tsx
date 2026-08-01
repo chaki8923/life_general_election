@@ -9,7 +9,12 @@ export default function HomeScreen() {
 
   useEffect(() => {
     // プロフィール登録直後はそのまま選挙フロー（興味関心）へ直行する
-    if (consumeElectionHandoff()) router.replace("/election");
+    if (consumeElectionHandoff()) {
+      router.replace({
+        pathname: "/election",
+        params: { fromProfile: "1" },
+      });
+    }
   }, [router]);
 
   return (
@@ -31,12 +36,6 @@ export default function HomeScreen() {
         className="mt-4 rounded-full border-2 border-election-red px-10 py-4 text-lg font-bold text-election-red"
       >
         👤 マイページ
-      </Link>
-      <Link
-        href="/poster"
-        className="mt-4 rounded-full border-2 border-election-red px-10 py-4 text-lg font-bold text-election-red"
-      >
-        🪧 ポスターをつくる
       </Link>
       {__DEV__ && (
         <Pressable

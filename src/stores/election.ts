@@ -12,7 +12,9 @@ type ElectionStore = {
   motivation: string | null;
   /** 生成された開票結果 */
   election: Election | null;
-  setInterest: (interest: string) => void;
+  /** 今回のフローがプロフィール登録直後に始まったか */
+  showProfileStep: boolean;
+  setInterest: (interest: string, showProfileStep?: boolean) => void;
   setWorryCandidates: (candidates: WorrySuggestion[] | null) => void;
   setWorry: (worry: Worry) => void;
   setMotivation: (motivation: string) => void;
@@ -27,13 +29,15 @@ export const useElectionStore = create<ElectionStore>((set) => ({
   worry: null,
   motivation: null,
   election: null,
-  setInterest: (interest) =>
+  showProfileStep: false,
+  setInterest: (interest, showProfileStep = false) =>
     set({
       interest,
       worryCandidates: null,
       worry: null,
       motivation: null,
       election: null,
+      showProfileStep,
     }),
   setWorryCandidates: (worryCandidates) => set({ worryCandidates }),
   setWorry: (worry) => set({ worry, motivation: null, election: null }),

@@ -40,6 +40,19 @@ export type Election = {
 
 export type WishStatus = "active" | "done" | "excused";
 
+export type PosterPaletteId = "red" | "navy" | "pink";
+
+export type PosterImageSource =
+  | { kind: "character" }
+  | { kind: "photo"; uri: string };
+
+export type PosterSettings = {
+  image: PosterImageSource;
+  /** 空文字はプロフィールのニックネームを使う */
+  candidateName: string;
+  paletteId: PosterPaletteId;
+};
+
 /** wishリスト（人生公約） */
 export type Wish = {
   id: string;
@@ -49,6 +62,9 @@ export type Wish = {
   excuse?: string;
   excusedAt?: number;
   sourceElectionId?: string;
+  posterSettings?: PosterSettings;
+  /** @deprecated version 1で保存した完成ポスター。新UIの描画元には使わない */
+  posterUri?: string;
   status: WishStatus;
   createdAt: number;
   doneAt?: number;

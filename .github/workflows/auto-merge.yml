@@ -2,16 +2,24 @@ name: Auto-merge
 
 on:
   workflow_run:
-    workflows: ["CI"]
+    workflows: ["CI", "AI Review"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to evaluate
+        required: true
+        type: number
 
 jobs:
   merge:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     permissions:
+      checks: read
       contents: write
       pull-requests: write
+      statuses: read
     steps:
       - name: Find PR for this workflow run
         id: find-pr
@@ -19,14 +27,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
         run: |
-          pr_number=$(gh pr list \
-            --repo "$GITHUB_REPOSITORY" \
-            --head "$HEAD_BRANCH" \
-            --state open \
-            --json number,labels,isDraft,headRefOid \
-            --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" \
-            | head -n1)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            pr_number="$INPUT_PR_NUMBER"
+          else
+            pr_number=$(gh pr list \
+              --repo "$GITHUB_REPOSITORY" \
+              --head "$HEAD_BRANCH" \
+              --state open \
+              --json number,labels,isDraft,headRefOid \
+              --jq ".[] | select(.headRefOid == \"$HEAD_SHA\") | .number" \
+              | head -n1)
+          fi
 
           if [ -z "$pr_number" ]; then
             echo "No open PR matched head SHA $HEAD_SHA on branch $HEAD_BRANCH — skipping."
@@ -50,6 +63,24 @@ jobs:
             exit 0
           fi
 
+          current_sha=$(gh pr view "$pr_number" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq '.headRefOid')
+          ci_state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$current_sha/check-runs" \
+            --jq '[.check_runs[] | select(.name == "lint-and-typecheck") | .conclusion] | last // "missing"')
+          review_state=$(gh api "repos/$GITHUB_REPOSITORY/commits/$current_sha/status" \
+            --jq '[.statuses[] | select(.context == "AI Review Gate") | .state] | first // "missing"')
+
+          if [ "$ci_state" != "success" ]; then
+            echo "CI is not successful for current SHA $current_sha (state: $ci_state) — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$review_state" != "success" ]; then
+            echo "AI Review Gate is not successful for current SHA $current_sha (state: $review_state) — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
           echo "skip=false" >> "$GITHUB_OUTPUT"
 
@@ -63,3 +94,70 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --squash \
             --delete-branch
+
+      # GITHUB_TOKEN によるマージでは pull_request: closed の別ワークフローが
+      # 起動されないため、自動マージ成功後はこのワークフロー内で通知する。
+      - name: Notify Teams of completed auto-merge
+        if: steps.find-pr.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.find-pr.outputs.pr_number }}
+          WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "TEAMS_WEBHOOK_URL secret が未設定のため通知をスキップします"
+            exit 0
+          fi
+
+          pr_json=$(gh pr view "$PR_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --json title,url,author)
+          merged_at=$(TZ=Asia/Tokyo date '+%Y/%m/%d %H:%M')
+
+          payload=$(echo "$pr_json" | jq \
+            --arg number "$PR_NUMBER" \
+            --arg mergedAt "$merged_at" \
+            '{
+              type: "message",
+              attachments: [
+                {
+                  contentType: "application/vnd.microsoft.card.adaptive",
+                  contentUrl: null,
+                  content: {
+                    "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+                    type: "AdaptiveCard",
+                    version: "1.4",
+                    msteams: { width: "Full" },
+                    body: [
+                      {
+                        type: "TextBlock",
+                        size: "Medium",
+                        weight: "Bolder",
+                        wrap: true,
+                        text: "✅ マージ完了！実装が main に取り込まれました"
+                      },
+                      {
+                        type: "TextBlock",
+                        wrap: true,
+                        text: "PR #\($number): \(.title)"
+                      },
+                      {
+                        type: "TextBlock",
+                        isSubtle: true,
+                        wrap: true,
+                        text: "作成者: \(.author.login) / \($mergedAt)"
+                      }
+                    ],
+                    actions: [
+                      { type: "Action.OpenUrl", title: "PRを見る", url: .url }
+                    ]
+                  }
+                }
+              ]
+            }')
+
+          curl -sS --fail-with-body -X POST \
+            -H 'Content-Type: application/json' \
+            -d "$payload" \
+            "$WEBHOOK_URL"
+          echo "Teams へのマージ完了通知に成功しました"
