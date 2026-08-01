@@ -204,20 +204,46 @@ export default function WorrySuggestScreen() {
             introStyle,
           ]}
         >
-          <View style={{ height: s(HEADING_HEIGHT), justifyContent: "center" }}>
-            <Text
-              className="text-center font-flow text-flow-ink"
-              style={{ fontSize: s(28), lineHeight: s(44) }}
+          <View style={{ height: s(HEADING_HEIGHT) }}>
+            <View
+              style={{
+                height: s(44),
+                flexDirection: "row",
+                alignItems: "baseline",
+                justifyContent: "center",
+              }}
             >
-              あなたの
               <Text
+                numberOfLines={1}
+                className="font-flow text-flow-ink"
+                style={{ fontSize: s(28), lineHeight: s(44) }}
+              >
+                あなたの
+              </Text>
+              <Text
+                numberOfLines={1}
                 className="font-flow text-flow-pink"
-                style={{ fontSize: s(32) }}
+                style={{ fontSize: s(32), lineHeight: s(44) }}
               >
                 悩み
               </Text>
-              に{"\n"}近いものを選んでね
-            </Text>
+              <Text
+                numberOfLines={1}
+                className="font-flow text-flow-ink"
+                style={{ fontSize: s(28), lineHeight: s(44) }}
+              >
+                に
+              </Text>
+            </View>
+            <View style={{ height: s(44), justifyContent: "center" }}>
+              <Text
+                numberOfLines={1}
+                className="text-center font-flow text-flow-ink"
+                style={{ fontSize: s(28), lineHeight: s(44) }}
+              >
+                近いものを選んでね
+              </Text>
+            </View>
           </View>
           <View style={{ height: s(HEADING_TO_BUTTON_GAP) }} />
           <FlowButton
