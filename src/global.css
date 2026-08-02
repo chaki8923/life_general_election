@@ -46,6 +46,14 @@
     --color-bubble: #dbdbdb;
     --color-bubble-active: #8e8e8e;
 
+    /* Figma の primary-button / 中央FAB に共通のグレー */
+    --color-flow-gray: #737373;
+
+    /* フッタータブバー（Figma: メニューバー 494-11783 / 494-11786） */
+    --color-tab-active: #b3efbd;
+    --color-tab-inactive: #757575;
+    --color-tab-border: #eeeeee;
+
     /* --font-sans はプラットフォーム既定のまま。新デザイン専用のファミリだけ足す */
     --font-flow: "NotoSansJP_700Bold";
     --font-flow-medium: "NotoSansJP_500Medium";

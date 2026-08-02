@@ -125,7 +125,7 @@ export default function PosterScreen() {
           公約が見つかりません
         </Text>
         <Pressable
-          onPress={() => router.dismissTo("/mypage")}
+          onPress={() => router.dismissTo("/")}
           className="mt-6 rounded-full bg-election-red px-7 py-3"
         >
           <Text className="font-bold text-white">マイページへ戻る</Text>
@@ -284,7 +284,7 @@ export default function PosterScreen() {
           </Text>
         </Pressable>
         <Pressable
-          onPress={() => router.dismissTo("/mypage")}
+          onPress={() => router.dismissTo("/")}
           className="mt-3 items-center rounded-full border-2 border-election-ink/20 py-4"
         >
           <Text className="text-base font-bold text-election-ink">
