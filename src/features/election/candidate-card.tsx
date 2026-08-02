@@ -5,6 +5,7 @@ import {
   withDelay,
   withTiming,
 } from "react-native-reanimated";
+import { Odometer } from "@/components/ui/odometer";
 import { Pressable, Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import type { Candidate } from "@/types";
@@ -60,9 +61,22 @@ export function CandidateCard({
         <Text className="flex-1 text-sm font-bold text-[#333333]">
           {candidate.label}
         </Text>
-        <Text className="text-sm font-bold text-[#333333]">
-          {percentage.toFixed(1)}%
-        </Text>
+        <View className="items-end">
+          <Text className="text-sm font-bold text-[#333333]">
+            {percentage.toFixed(1)}%
+          </Text>
+          <View className="mt-0.5 flex-row items-end">
+            <Odometer
+              value={candidate.votes}
+              digits={String(totalVotes).length}
+              durationMs={900}
+              fontSize={16}
+              rowHeight={18}
+              color="#333333"
+            />
+            <Text className="ml-0.5 text-[10px] text-[#737373]">票</Text>
+          </View>
+        </View>
       </View>
 
       <View className="mt-3 h-4 overflow-hidden rounded-full bg-[#d9d9d9]">

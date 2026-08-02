@@ -11,14 +11,19 @@ export function usePosterExport(posterRef: RefObject<View | null>) {
 
   // tmpfileならSharing.shareAsyncとsaveToLibraryAsyncにそのまま渡せる。
   // width/height指定で表示サイズに関係なく1080x1440の高解像度出力になる
-  const capture = () =>
-    captureRef(posterRef, {
+  const capture = async () => {
+    // busy反映後に2フレーム待ち、パーティクル/視差を安定させてから撮る
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+    return captureRef(posterRef, {
       format: "png",
       quality: 1,
       result: "tmpfile",
       width: CAPTURE_WIDTH,
       height: CAPTURE_HEIGHT,
     });
+  };
 
   const share = async () => {
     if (busy) return;

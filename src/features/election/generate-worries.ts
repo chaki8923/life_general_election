@@ -7,7 +7,8 @@ type GeminiWorriesResponse = {
   worries: { label: string }[];
 };
 
-const SUGGESTION_COUNT = 6;
+// 悩み選択画面の吹き出しレイアウト（Figma 916:14877）が5個固定なので合わせる
+const SUGGESTION_COUNT = 5;
 
 /**
  * プロフィールと興味関心から悩み候補を生成する。

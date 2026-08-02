@@ -20,6 +20,7 @@ export async function resetAppData() {
     worry: null,
     motivation: null,
     election: null,
+    showProfileStep: false,
   });
   // 最後にprofileを消すとStack.Protectedガードが反転し、即オンボーディングへ切り替わる
   useProfileStore.setState({ profile: null, tutorialSeen: false });

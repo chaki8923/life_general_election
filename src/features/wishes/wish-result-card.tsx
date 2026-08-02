@@ -1,13 +1,6 @@
 import { Text, View } from "@/tw";
+import { formatDate } from "@/utils/date";
 import type { Wish } from "@/types";
-
-function formatDate(timestamp: number) {
-  const date = new Date(timestamp);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}/${month}/${day}`;
-}
 
 /** 達成(done)・未達成(excused)になった公約の履歴カード */
 export function WishResultCard({ wish }: { wish: Wish }) {

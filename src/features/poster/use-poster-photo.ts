@@ -1,5 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Linking } from "react-native";
+import type { PickedPosterImage } from "./photo-storage";
 
 // allowsEditing + aspect 3:4 でユーザー自身に切り抜かせることで、
 // cover配置での顔位置ズレを防ぐ(aspectはAndroidのみ有効。iOSは正方形クロップ)
@@ -7,16 +8,19 @@ const PICKER_OPTIONS: ImagePicker.ImagePickerOptions = {
   mediaTypes: ["images"],
   allowsEditing: true,
   aspect: [3, 4],
-  quality: 1,
+  quality: 0.82,
+  base64: process.env.EXPO_OS === "web",
 };
 
 /** ポスター用の写真をフォトライブラリ/カメラから取得するフック */
-export function usePosterPhoto(onPicked: (uri: string) => void) {
+export function usePosterPhoto(
+  onPicked: (asset: PickedPosterImage) => void | Promise<void>
+) {
   const pickFromLibrary = async () => {
     try {
       // PHPicker / Photo Picker のため事前パーミッション不要
       const result = await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
-      if (!result.canceled) onPicked(result.assets[0].uri);
+      if (!result.canceled) await onPicked(result.assets[0]);
     } catch (e) {
       if (__DEV__) console.warn("[poster/photo]", e);
       Alert.alert("写真を読み込めませんでした…");
@@ -42,7 +46,7 @@ export function usePosterPhoto(onPicked: (uri: string) => void) {
         return;
       }
       const result = await ImagePicker.launchCameraAsync(PICKER_OPTIONS);
-      if (!result.canceled) onPicked(result.assets[0].uri);
+      if (!result.canceled) await onPicked(result.assets[0]);
     } catch (e) {
       if (__DEV__) console.warn("[poster/photo]", e);
       Alert.alert("撮影に失敗しました…");
