@@ -46,30 +46,16 @@ def make_particles(width: int, height: int, seed: int = 31) -> list[dict[str, fl
     ]
 
 
-def softened_pose(poses: list[Image.Image], cycle_progress: float) -> Image.Image:
-    """Use crisp poses with a very brief cross-dissolve that reads like motion blur."""
+def crisp_pose(poses: list[Image.Image], cycle_progress: float) -> Image.Image:
+    """Return exactly one opaque pose; never composite adjacent character frames."""
     position = cycle_progress * 4
     current_index = int(position) % 4
-    local = position - math.floor(position)
-    current = poses[current_index]
-
-    # Only blend during the final 12% of each pose; the limbs remain crisp most of the time.
-    if local < 0.88:
-        return current.copy()
-    next_pose = poses[(current_index + 1) % 4]
-    blend = (local - 0.88) / 0.12
-    canvas_w = max(current.width, next_pose.width)
-    canvas_h = max(current.height, next_pose.height)
-    first = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
-    second = Image.new("RGBA", (canvas_w, canvas_h), (0, 0, 0, 0))
-    first.alpha_composite(current, ((canvas_w - current.width) // 2, canvas_h - current.height))
-    second.alpha_composite(next_pose, ((canvas_w - next_pose.width) // 2, canvas_h - next_pose.height))
-    return Image.blend(first, second, blend)
+    return poses[current_index].copy()
 
 
 def render(args: argparse.Namespace) -> None:
     output_dir = Path(args.output_dir)
-    frames_dir = output_dir / "frames-v2"
+    frames_dir = output_dir / "frames-v3"
     frames_dir.mkdir(parents=True, exist_ok=True)
 
     background = Image.open(args.background).convert("RGB")
@@ -105,7 +91,7 @@ def render(args: argparse.Namespace) -> None:
             )
         frame.alpha_composite(particle_layer.filter(ImageFilter.GaussianBlur(0.4)))
 
-        character = softened_pose(poses, cycle_progress)
+        character = crisp_pose(poses, cycle_progress)
         # Two landings per gait cycle: upbeat, compact bounce without moving across the screen.
         bounce = -8.0 * abs(math.sin(phase))
         forward_pulse = 3.0 * math.sin(phase)
@@ -141,15 +127,18 @@ def render(args: argparse.Namespace) -> None:
         frame.save(frame_path, compress_level=2)
 
         if index == round(frame_count * 0.42):
-            frame.save(output_dir / "poster-in-place-v2.png", optimize=True)
+            frame.save(output_dir / "poster-in-place-v3.png", optimize=True)
         if index % 2 == 0:
             gif_frames.append(frame.resize((640, 360), Image.Resampling.LANCZOS))
 
+    # GIF timing is stored in 10 ms units. A 70/70/60 pattern averages exactly
+    # 66.67 ms for the 15 fps preview, keeping 90 frames at a 6.0 second loop.
+    gif_durations = [60 if index % 3 == 2 else 70 for index in range(len(gif_frames))]
     gif_frames[0].save(
-        output_dir / "character-walk-in-place-right-v2.gif",
+        output_dir / "character-walk-in-place-right-v3.gif",
         save_all=True,
         append_images=gif_frames[1:],
-        duration=round(2000 / args.fps),
+        duration=gif_durations,
         loop=0,
         optimize=False,
         disposal=2,
@@ -161,7 +150,7 @@ def render(args: argparse.Namespace) -> None:
         still = Image.open(frames_dir / f"frame_{frame_index:04d}.png").convert("RGB")
         still = still.resize((640, 360), Image.Resampling.LANCZOS)
         sheet.paste(still, ((slot % 2) * 640, (slot // 2) * 360))
-    sheet.save(output_dir / "contact-sheet-in-place-v2.jpg", quality=91, optimize=True)
+    sheet.save(output_dir / "contact-sheet-in-place-v3.jpg", quality=91, optimize=True)
 
 
 def parse_args() -> argparse.Namespace:
