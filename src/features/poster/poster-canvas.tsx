@@ -112,7 +112,7 @@ function CandidateImage({
   level,
   onPhotoLoaded,
 }: Pick<Props, "settings" | "level" | "onPhotoLoaded">) {
-  const showPhoto = settings.image.kind === "photo" && level > 0;
+  const showPhoto = settings.image.kind === "photo";
   let source = level >= 3 ? ACTION_CHARACTER : DEFAULT_CHARACTER;
   if (showPhoto && settings.image.kind === "photo") {
     source = settings.image.uri;
