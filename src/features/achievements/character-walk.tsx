@@ -3,7 +3,7 @@ import { useFocusEffect } from "expo-router";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { View } from "@/tw";
 
-const walkVideo = require("../../../assets/video/character-walk-in-place-right-v2.mp4");
+const walkVideo = require("../../../assets/video/character-walk-in-place-right-v3.mp4");
 
 type CharacterWalkProps = {
   /** ヒーロー領域の高さ（幅は画面いっぱい） */
