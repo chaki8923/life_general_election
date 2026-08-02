@@ -3,8 +3,8 @@ import { Pressable, Text, View } from "@/tw";
 
 type FlowButtonProps = {
   label: string;
-  /** primary = 濃紺塗り / pink = アクセント塗り / dashed = 白抜き破線（「選び直す」など） */
-  variant?: "primary" | "pink" | "dashed";
+  /** primary = 濃紺塗り / gray = Figmaのprimary-button（#737373） / pink = アクセント塗り / dashed = 白抜き破線（「選び直す」など） */
+  variant?: "primary" | "gray" | "pink" | "dashed";
   disabled?: boolean;
   /** 処理中はラベルをスピナーへ置き換え、連打を防ぐ */
   loading?: boolean;
@@ -28,7 +28,9 @@ export function FlowButton({
     ? "bg-flow-disabled"
     : variant === "pink"
       ? "bg-flow-pink active:opacity-80"
-      : "bg-flow-dark active:opacity-80";
+      : variant === "gray"
+        ? "bg-flow-gray active:opacity-80"
+        : "bg-flow-dark active:opacity-80";
   const container =
     isDashed && !disabled
       ? "border-2 border-dashed border-black bg-white"
