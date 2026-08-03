@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
-import { CandidateCard } from "@/features/election/candidate-card";
 import { GoalModal } from "@/features/election/goal-modal";
+import { MinorityCarousel } from "@/features/election/minority-carousel";
+import { RankedResultCard } from "@/features/election/ranked-result-card";
+import { ResultHero } from "@/features/election/result-hero";
+import type { ResultRank } from "@/features/election/result-theme";
 import { mirrorWish } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
 import { useWishStore } from "@/stores/wishes";
+import type { Candidate } from "@/types";
 import { Pressable, ScrollView, Text, View } from "@/tw";
 
 export default function ElectionResultScreen() {
@@ -18,17 +22,31 @@ export default function ElectionResultScreen() {
   const setElection = useElectionStore((s) => s.setElection);
   const showProfileStep = useElectionStore((s) => s.showProfileStep);
   const addWish = useWishStore((s) => s.addWish);
-  const [selectedCandidateId, setSelectedCandidateId] = useState<string | null>(
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(
     null
   );
   const [modalVisible, setModalVisible] = useState(false);
 
   const hasSource = Boolean(worry && motivation);
 
-  // 開票の生成はcounting画面が担う。未開票でここに来たら投票中へ戻す。
+  const { topThree, minorities } = useMemo(() => {
+    if (!election) return { topThree: [], minorities: [] };
+    const mainstream = election.candidates.filter((c) => !c.isMinority);
+    const minority = election.candidates.filter((c) => c.isMinority);
+    return {
+      topThree: mainstream.slice(0, 3),
+      minorities: minority,
+    };
+  }, [election]);
+
   useEffect(() => {
     if (hasSource && !election) router.replace("/election/counting");
   }, [hasSource, election, router]);
+
+  const openGoalModal = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setModalVisible(true);
+  };
 
   if (!hasSource) {
     return (
@@ -46,11 +64,6 @@ export default function ElectionResultScreen() {
   }
 
   if (!election) return null;
-
-  const selectedCandidate =
-    election.candidates.find(
-      (candidate) => candidate.id === selectedCandidateId
-    ) ?? null;
 
   const registerGoal = (deadline: number) => {
     if (!selectedCandidate) return;
@@ -71,46 +84,29 @@ export default function ElectionResultScreen() {
       <ScrollView contentContainerClassName="px-5 pb-16 pt-3">
         <FlowStepper current={2} showProfileStep={showProfileStep} />
 
-        <View className="mt-6 self-start rounded-full bg-flow-dark px-4 py-1.5">
-          <Text className="font-flow text-xs text-white">開票結果</Text>
-        </View>
-        <Text className="mt-3 font-flow text-xl text-flow-ink">
-          {election.themeLabel}
-        </Text>
-        <Text className="mt-2 font-flow-medium text-xs text-flow-ink-mid">
-          あなたに近い1000人が踏み出した小さな一歩
-        </Text>
-        <Text className="mt-4 font-flow-medium text-sm leading-6 text-flow-ink-mid">
-          3日以内に実現できそうな政策(目標)を選んで{"\n"}
-          あなたの公約を決めましょう
-        </Text>
+        <ResultHero themeLabel={election.themeLabel} />
 
         <View className="mt-6 gap-4">
-          {election.candidates.map((candidate, rank) => (
-            <CandidateCard
+          {topThree.map((candidate, index) => (
+            <RankedResultCard
               key={candidate.id}
+              rank={(index + 1) as ResultRank}
               candidate={candidate}
-              totalVotes={election.totalVotes}
-              rank={rank}
-              selected={candidate.id === selectedCandidateId}
-              onSelect={() => setSelectedCandidateId(candidate.id)}
+              onProceed={() => openGoalModal(candidate)}
             />
           ))}
         </View>
 
+        <MinorityCarousel
+          candidates={minorities}
+          onProceed={openGoalModal}
+        />
+
         <View className="mt-8 gap-3">
-          <FlowButton
-            label="この公約にする"
-            disabled={!selectedCandidate}
-            onPress={() => setModalVisible(true)}
-          />
           <FlowButton
             label="再選挙する"
             variant="dashed"
-            onPress={() => {
-              setSelectedCandidateId(null);
-              setElection(null);
-            }}
+            onPress={() => setElection(null)}
           />
         </View>
         <Pressable
