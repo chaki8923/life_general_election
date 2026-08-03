@@ -12,7 +12,6 @@ type ProfileStore = {
   hasHydrated: boolean;
   setProfile: (profile: UserProfile) => void;
   markTutorialSeen: () => void;
-  setHasHydrated: (v: boolean) => void;
 };
 
 export const useProfileStore = create<ProfileStore>()(
@@ -23,15 +22,17 @@ export const useProfileStore = create<ProfileStore>()(
       hasHydrated: false,
       setProfile: (profile) => set({ profile }),
       markTutorialSeen: () => set({ tutorialSeen: true }),
-      setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {
       name: "lge-profile",
       version: 1,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ profile: s.profile, tutorialSeen: s.tutorialSeen }),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
+      onRehydrateStorage: () => () => {
+        // SSR 中は window がないため setState すると AsyncStorage が落ちる
+        if (typeof window !== "undefined") {
+          useProfileStore.setState({ hasHydrated: true });
+        }
       },
     }
   )

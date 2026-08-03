@@ -23,7 +23,6 @@ type WishStore = {
   setPosterSettings: (id: string, settings: PosterSettings) => Wish | undefined;
   /** @deprecated 完成画像保存のversion 1互換API */
   setPosterUri: (id: string, uri: string) => Wish | undefined;
-  setHasHydrated: (v: boolean) => void;
 };
 
 export const useWishStore = create<WishStore>()(
@@ -113,7 +112,6 @@ export const useWishStore = create<WishStore>()(
         });
         return updated;
       },
-      setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {
       name: "lge-wishes",
@@ -132,8 +130,11 @@ export const useWishStore = create<WishStore>()(
           })),
         };
       },
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true);
+      onRehydrateStorage: () => () => {
+        // SSR 中は window がないため setState すると AsyncStorage が落ちる
+        if (typeof window !== "undefined") {
+          useWishStore.setState({ hasHydrated: true });
+        }
       },
     }
   )
