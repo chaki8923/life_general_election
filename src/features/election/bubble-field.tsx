@@ -13,25 +13,15 @@ import { View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { FONT, useDesignScale } from "./layout";
 import { ThoughtBubble } from "./thought-bubble";
+import { WORRY_BUBBLE_COLORS } from "./worry-bubble-colors";
 import type { WorrySuggestion } from "@/types";
 
 const SHAPES = {
-  a: {
-    idle: require("../../../assets/election/bubble-a.svg"),
-    active: require("../../../assets/election/bubble-a-active.svg"),
-  },
-  b: {
-    idle: require("../../../assets/election/bubble-b.svg"),
-    active: require("../../../assets/election/bubble-b-active.svg"),
-  },
-  c: {
-    idle: require("../../../assets/election/bubble-c.svg"),
-    active: require("../../../assets/election/bubble-c-active.svg"),
-  },
-  d: {
-    idle: require("../../../assets/election/bubble-d.svg"),
-    active: require("../../../assets/election/bubble-d-active.svg"),
-  },
+  orange: require("../../../assets/election/worry-bubble-orange.svg"),
+  pink: require("../../../assets/election/worry-bubble-pink.svg"),
+  green: require("../../../assets/election/worry-bubble-green.svg"),
+  purple: require("../../../assets/election/worry-bubble-purple.svg"),
+  blue: require("../../../assets/election/worry-bubble-blue.svg"),
 } as const;
 
 /**
@@ -41,68 +31,78 @@ const SHAPES = {
  */
 const SLOTS = [
   {
-    shape: "c",
+    shape: "orange",
+    color: WORRY_BUBBLE_COLORS[0],
     x: 18,
-    y: 69.706,
-    w: 153.152,
-    h: 136.036,
-    textCenterX: 0.58,
-    textCenterY: 0.41,
-    textWidthRatio: 0.6,
-    textHeightRatio: 0.54,
-    flipX: false,
-    hint: { x: 145, y: 52.706 },
-  },
-  {
-    shape: "b",
-    x: 232,
-    y: 88.706,
+    y: 75.706,
     w: 153.001,
     h: 135.9,
     textCenterX: 0.58,
     textCenterY: 0.41,
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
+    flipX: false,
+    quoted: false,
+    hint: { x: 145, y: 52.706 },
+  },
+  {
+    shape: "pink",
+    color: WORRY_BUBBLE_COLORS[1],
+    x: 229,
+    y: 64.706,
+    w: 151.47,
+    h: 126,
+    textCenterX: 0.58,
+    textCenterY: 0.41,
+    textWidthRatio: 0.6,
+    textHeightRatio: 0.54,
     flipX: true,
+    quoted: true,
     hint: null,
   },
   {
-    shape: "d",
-    x: 113,
+    shape: "green",
+    color: WORRY_BUBBLE_COLORS[2],
+    x: 112,
     y: 176.706,
-    w: 170.834,
+    w: 170.833,
     h: 142.109,
     textCenterX: 0.55,
     textCenterY: 0.44,
     textWidthRatio: 0.62,
     textHeightRatio: 0.56,
     flipX: true,
+    quoted: true,
     hint: { x: 72, y: 235.706 },
   },
   {
-    shape: "a",
-    x: 9,
-    y: 344.706,
-    w: 145.761,
-    h: 129.47,
+    shape: "purple",
+    color: WORRY_BUBBLE_COLORS[3],
+    x: 18,
+    y: 311.706,
+    w: 151.47,
+    h: 126,
     textCenterX: 0.58,
     textCenterY: 0.41,
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
     flipX: false,
+    quoted: true,
     hint: { x: 149, y: 353.706 },
   },
   {
-    shape: "a",
-    x: 223,
-    y: 343.706,
-    w: 145.761,
-    h: 129.47,
+    shape: "blue",
+    color: WORRY_BUBBLE_COLORS[4],
+    x: 206,
+    y: 347.706,
+    w: 151.469,
+    h: 126,
     textCenterX: 0.58,
     textCenterY: 0.41,
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
     flipX: true,
+    quoted: true,
     hint: { x: 336, y: 331.706 },
   },
 ] as const;
@@ -111,7 +111,7 @@ const SLOTS = [
 const HINT_DELAY_MS = SLOTS.length * 220 + 450;
 
 /** Figma上の吹き出し文字サイズ（アートボード基準） */
-const BUBBLE_FONT_SIZE = 12;
+const BUBBLE_FONT_SIZE = 16;
 
 type BubbleFieldProps = {
   candidates: WorrySuggestion[];
@@ -215,7 +215,9 @@ export function BubbleField({
             label={candidate.label}
             index={i}
             selected={selected}
-            source={SHAPES[slot.shape][selected ? "active" : "idle"]}
+            source={SHAPES[slot.shape]}
+            color={slot.color}
+            quoted={slot.quoted}
             left={s(slot.x)}
             top={s(slot.y)}
             width={s(slot.w)}

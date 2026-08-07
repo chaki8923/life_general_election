@@ -21,6 +21,8 @@ type ThoughtBubbleProps = {
   index: number;
   selected: boolean;
   source: ImageSourcePropType;
+  color: string;
+  quoted?: boolean;
   /** 最終位置・実寸（実機px） */
   left: number;
   top: number;
@@ -47,6 +49,8 @@ export function ThoughtBubble({
   index,
   selected,
   source,
+  color,
+  quoted = true,
   left,
   top,
   width,
@@ -92,7 +96,7 @@ export function ThoughtBubble({
     };
   });
 
-  const displayLabel = selected ? `『${label}』` : label;
+  const displayLabel = quoted ? `『${label}』` : label;
   const labelLength = [...displayLabel].length;
   // adjustsFontSizeToFitだけに頼らず、長さに応じて初期サイズから確実に下げる
   const lengthScale = labelLength > 20 ? 0.78 : labelLength > 16 ? 0.86 : labelLength > 12 ? 0.92 : 1;
@@ -118,6 +122,7 @@ export function ThoughtBubble({
           style={{
             width,
             height,
+            tintColor: color,
             transform: [{ scaleX: flipX ? -1 : 1 }],
           }}
           contentFit="contain"
@@ -147,7 +152,7 @@ export function ThoughtBubble({
               fontFamily: FONT.bold,
               fontSize: fittedFontSize,
               lineHeight: fittedFontSize * 1.32,
-              color: selected ? "#ffffff" : "#24292f",
+              color: "#ffffff",
             }}
           >
             {displayLabel}
