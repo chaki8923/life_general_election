@@ -1,9 +1,8 @@
+import { useState } from "react";
 import { VideoView } from "expo-video";
 import { useReducedMotion } from "react-native-reanimated";
 import { useBackgroundVideo } from "@/hooks/use-background-video";
 import { View } from "@/tw";
-
-const countingVideo = require("../../../assets/video/vort_complete.mp4");
 
 /**
  * 開票中の背景（Figma注記の「動く背景」）。静止画 arena.png の置き換え。
@@ -11,17 +10,23 @@ const countingVideo = require("../../../assets/video/vort_complete.mp4");
  */
 export function CountingBackground() {
   const reduceMotion = useReducedMotion();
-  const player = useBackgroundVideo(countingVideo, { play: !reduceMotion });
+  const player = useBackgroundVideo("counting", { play: !reduceMotion });
+  const [hasRenderedFirstFrame, setHasRenderedFirstFrame] = useState(false);
 
   return (
     <View pointerEvents="none" className="absolute inset-0">
       <VideoView
         player={player}
-        style={{ width: "100%", height: "100%" }}
+        style={{
+          width: "100%",
+          height: "100%",
+          opacity: hasRenderedFirstFrame ? 1 : 0,
+        }}
         contentFit="cover"
         nativeControls={false}
         fullscreenOptions={{ enable: false }}
         allowsPictureInPicture={false}
+        onFirstFrameRender={() => setHasRenderedFirstFrame(true)}
       />
     </View>
   );

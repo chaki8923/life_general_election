@@ -10,6 +10,7 @@ import { NotoSansJP_500Medium } from "@expo-google-fonts/noto-sans-jp/500Medium"
 import { NotoSansJP_700Bold } from "@expo-google-fonts/noto-sans-jp/700Bold";
 import { font42dotSans_400Regular } from "@expo-google-fonts/42dot-sans/400Regular";
 import { font42dotSans_700Bold } from "@expo-google-fonts/42dot-sans/700Bold";
+import { BackgroundVideoProvider } from "@/hooks/use-background-video";
 import { ensureSignedIn } from "@/services/firebase/auth";
 import { useProfileStore } from "@/stores/profile";
 
@@ -40,30 +41,35 @@ export default function RootLayout() {
     if (hasHydrated && fontsReady) SplashScreen.hideAsync().catch(() => {});
   }, [hasHydrated, fontsReady]);
 
-  if (!hasHydrated || !fontsReady) return null;
+  const appReady = hasHydrated && fontsReady;
 
   return (
-    // やる気スライダーのPanジェスチャに必要（Androidでは必須）
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-        }}
-      >
-        <Stack.Protected guard={registered}>
-          {/* マイページ／総選挙／実績はフッタータブバー配下 */}
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="election/index" />
-          <Stack.Screen name="election/worries" />
-          <Stack.Screen name="election/motivation" />
-          <Stack.Screen name="election/counting" />
-          <Stack.Screen name="election/result" />
-          <Stack.Screen name="poster/index" />
-        </Stack.Protected>
-        <Stack.Protected guard={!registered}>
-          <Stack.Screen name="onboarding" />
-        </Stack.Protected>
-      </Stack>
-    </GestureHandlerRootView>
+    // フォントやプロフィールの復元中も動画のバッファ準備は先行させる。
+    <BackgroundVideoProvider>
+      {appReady ? (
+        // やる気スライダーのPanジェスチャに必要（Androidでは必須）
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+            }}
+          >
+            <Stack.Protected guard={registered}>
+              {/* マイページ／総選挙／実績はフッタータブバー配下 */}
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="election/index" />
+              <Stack.Screen name="election/worries" />
+              <Stack.Screen name="election/motivation" />
+              <Stack.Screen name="election/counting" />
+              <Stack.Screen name="election/result" />
+              <Stack.Screen name="poster/index" />
+            </Stack.Protected>
+            <Stack.Protected guard={!registered}>
+              <Stack.Screen name="onboarding" />
+            </Stack.Protected>
+          </Stack>
+        </GestureHandlerRootView>
+      ) : null}
+    </BackgroundVideoProvider>
   );
 }
