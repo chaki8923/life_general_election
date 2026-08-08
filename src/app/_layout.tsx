@@ -51,14 +51,13 @@ export default function RootLayout() {
         }}
       >
         <Stack.Protected guard={registered}>
-          <Stack.Screen name="index" />
+          {/* マイページ／総選挙／実績はフッタータブバー配下 */}
+          <Stack.Screen name="(tabs)" />
           <Stack.Screen name="election/index" />
           <Stack.Screen name="election/worries" />
           <Stack.Screen name="election/motivation" />
           <Stack.Screen name="election/counting" />
           <Stack.Screen name="election/result" />
-          <Stack.Screen name="mypage" />
-          <Stack.Screen name="achievements" />
           <Stack.Screen name="poster/index" />
         </Stack.Protected>
         <Stack.Protected guard={!registered}>

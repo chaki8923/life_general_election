@@ -6,6 +6,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
+import { FlowHeader } from "@/components/ui/flow-header";
+import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
 import {
   getPosterLevelProgress,
   POSTER_LEVEL_META,
@@ -33,10 +35,10 @@ export default function MyPageScreen() {
   const nickname = useProfileStore((state) => state.profile?.nickname ?? "");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [reportAction, setReportAction] = useState<ReportAction | null>(null);
+  const bottomPadding = useTabBarBottomPadding();
 
   const activeWishes = wishes.filter((wish) => wish.status === "active");
   const doneWishes = wishes.filter((wish) => wish.status === "done");
-  const excusedWishes = wishes.filter((wish) => wish.status === "excused");
   const progress = getPosterLevelProgress(doneWishes.length);
   const levelMeta = POSTER_LEVEL_META[progress.level];
   const carouselWidth = Math.max(1, width - PAGE_HORIZONTAL_PADDING * 2);
@@ -114,18 +116,12 @@ export default function MyPageScreen() {
 
   return (
     <View className="flex-1 bg-[#f8f8f8]">
+      <FlowHeader title="設定済みの公約・政策" hideBack />
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="pb-16 pt-16"
+        contentContainerStyle={{ paddingTop: 24, paddingBottom: bottomPadding }}
       >
         <View className="px-5">
-          <View className="flex-row items-center">
-            <Pressable onPress={() => router.dismissTo("/")} className="py-2 pr-4">
-              <Text className="text-base font-bold text-[#555555]">ホーム</Text>
-            </Pressable>
-            <Text className="text-xl font-bold text-[#333333]">マイページ</Text>
-          </View>
-
           {!hasHydrated ? (
             <View className="items-center py-20">
               <Text className="text-sm text-[#737373]">
@@ -296,40 +292,6 @@ export default function MyPageScreen() {
                   <Text className="font-bold text-white">次の総選挙を開く</Text>
                 </Pressable>
               </View>
-            ) : null}
-
-            {doneWishes.length + excusedWishes.length > 0 ? (
-              <Pressable
-                onPress={() => router.push("/achievements")}
-                className="mt-8 rounded-2xl bg-white p-5"
-              >
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-lg font-bold text-[#333333]">
-                    公約の実績
-                  </Text>
-                  <Text className="text-sm font-bold text-[#999999]">
-                    見る &gt;
-                  </Text>
-                </View>
-                <View className="mt-3 flex-row items-center gap-4">
-                  <View className="flex-row items-center gap-2">
-                    <View className="rounded-full bg-election-red px-2.5 py-0.5">
-                      <Text className="text-xs font-bold text-white">達成</Text>
-                    </View>
-                    <Text className="text-base font-bold text-[#333333]">
-                      {doneWishes.length}件
-                    </Text>
-                  </View>
-                  <View className="flex-row items-center gap-2">
-                    <View className="rounded-full bg-[#999999] px-2.5 py-0.5">
-                      <Text className="text-xs font-bold text-white">未達成</Text>
-                    </View>
-                    <Text className="text-base font-bold text-[#333333]">
-                      {excusedWishes.length}件
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
             ) : null}
           </View>
         ) : null}

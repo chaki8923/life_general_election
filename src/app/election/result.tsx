@@ -62,7 +62,7 @@ export default function ElectionResultScreen() {
     });
     mirrorWish(wish);
     setModalVisible(false);
-    router.replace("/mypage");
+    router.replace("/");
   };
 
   return (
