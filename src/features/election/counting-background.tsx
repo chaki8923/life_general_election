@@ -1,22 +1,20 @@
 import { useState } from "react";
 import { VideoView } from "expo-video";
+import { useReducedMotion } from "react-native-reanimated";
 import { useBackgroundVideo } from "@/hooks/use-background-video";
 import { View } from "@/tw";
 
-type CharacterWalkProps = {
-  /** ヒーロー領域の高さ（幅は画面いっぱい） */
-  height?: number;
-};
-
 /**
- * 実績画面のヒーロー。歩き続けるキャラクターをループ再生する。
+ * 開票中の背景（Figma注記の「動く背景」）。静止画 arena.png の置き換え。
+ * 装飾なので読み上げ対象にせず、前面のタップも邪魔しない。
  */
-export function CharacterWalk({ height = 240 }: CharacterWalkProps) {
-  const player = useBackgroundVideo("achievementWalk");
+export function CountingBackground() {
+  const reduceMotion = useReducedMotion();
+  const player = useBackgroundVideo("counting", { play: !reduceMotion });
   const [hasRenderedFirstFrame, setHasRenderedFirstFrame] = useState(false);
 
   return (
-    <View className="w-full overflow-hidden bg-[#fdf6e8]" style={{ height }}>
+    <View pointerEvents="none" className="absolute inset-0">
       <VideoView
         player={player}
         style={{
@@ -28,7 +26,6 @@ export function CharacterWalk({ height = 240 }: CharacterWalkProps) {
         nativeControls={false}
         fullscreenOptions={{ enable: false }}
         allowsPictureInPicture={false}
-        accessibilityLabel="歩き続けるキャラクター"
         onFirstFrameRender={() => setHasRenderedFirstFrame(true)}
       />
     </View>

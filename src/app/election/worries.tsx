@@ -57,6 +57,8 @@ export default function WorrySuggestScreen() {
   const [attempt, setAttempt] = useState(0);
   const [picking, setPicking] = useState(false);
   const [selected, setSelected] = useState<WorrySuggestion | null>(null);
+  /** 吹き出しが捌け終わって確認フェーズに入ったか */
+  const [confirming, setConfirming] = useState(false);
   const selectedBubbleIndex = selected
     ? (worryCandidates?.findIndex((candidate) => candidate.id === selected.id) ??
       -1)
@@ -121,10 +123,23 @@ export default function WorrySuggestScreen() {
     brainShift.value = withTiming(shift, { duration: 600 });
   };
 
+  // 捌けている最中に別の吹き出しを選び直せないようにする
+  const handleSelect = (candidate: WorrySuggestion) => {
+    if (selected) return;
+    setSelected(candidate);
+  };
+
+  const handleReselect = () => {
+    // scatter/focusがfalseに戻るので、吹き出しが左右から定位置へ帰ってくる
+    setConfirming(false);
+    setSelected(null);
+  };
+
   const handleConfirm = () => {
     if (!selected) return;
     const confirmed = selected;
     // 確認表示のvisible条件を先にfalseにし、画面遷移中に残らないようにする
+    setConfirming(false);
     setSelected(null);
     const worry: Worry = {
       id: `w-${Date.now().toString(36)}`,
@@ -209,7 +224,8 @@ export default function WorrySuggestScreen() {
           <BubbleField
             candidates={worryCandidates}
             selectedId={selected?.id ?? null}
-            onSelect={setSelected}
+            onSelect={handleSelect}
+            onFocusEnd={() => setConfirming(true)}
             originX={BRAIN_ORIGIN_X}
             originY={BRAIN_ORIGIN_Y}
           />
@@ -276,13 +292,16 @@ export default function WorrySuggestScreen() {
           />
         </Animated.View>
 
-        <WorryConfirmModal
-          visible={selected !== null}
-          candidate={selected}
-          bubbleIndex={selectedBubbleIndex}
-          onConfirm={handleConfirm}
-          onReselect={() => setSelected(null)}
-        />
+        {/* exitingを効かせるため、visible条件ではなくマウント自体を切り替える */}
+        {confirming && selected ? (
+          <WorryConfirmModal
+            visible
+            candidate={selected}
+            bubbleIndex={selectedBubbleIndex}
+            onConfirm={handleConfirm}
+            onReselect={handleReselect}
+          />
+        ) : null}
       </View>
     </View>
   );
