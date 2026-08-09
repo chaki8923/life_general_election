@@ -11,112 +11,28 @@ import {
 } from "react-native-reanimated";
 import { View } from "@/tw";
 import { Animated } from "@/tw/animated";
-import { FONT, useDesignScale } from "./layout";
+import { DESIGN_WIDTH, FONT, useDesignScale } from "./layout";
 import { ThoughtBubble } from "./thought-bubble";
+import {
+  BUBBLE_FONT_SIZE,
+  CONFIRM_CENTER_Y,
+  WORRY_BUBBLE_SLOTS,
+  getConfirmCloudRect,
+} from "./worry-bubble-slots";
 import type { WorrySuggestion } from "@/types";
 
-const SHAPES = {
-  a: {
-    idle: require("../../../assets/election/bubble-a.svg"),
-    active: require("../../../assets/election/bubble-a-active.svg"),
-  },
-  b: {
-    idle: require("../../../assets/election/bubble-b.svg"),
-    active: require("../../../assets/election/bubble-b-active.svg"),
-  },
-  c: {
-    idle: require("../../../assets/election/bubble-c.svg"),
-    active: require("../../../assets/election/bubble-c-active.svg"),
-  },
-  d: {
-    idle: require("../../../assets/election/bubble-d.svg"),
-    active: require("../../../assets/election/bubble-d-active.svg"),
-  },
-} as const;
-
-/**
- * Figma 916:14877 の吹き出し5枠。x,w,h はアートボード(390幅)基準、
- * y は CONTENT_TOP（ステッパー下端）を原点にした値。
- * textCenterX/Y は雲ごとに主ローブの位置が違うので個別に持つ。
- */
-const SLOTS = [
-  {
-    shape: "c",
-    x: 18,
-    y: 69.706,
-    w: 153.152,
-    h: 136.036,
-    textCenterX: 0.58,
-    textCenterY: 0.41,
-    textWidthRatio: 0.6,
-    textHeightRatio: 0.54,
-    flipX: false,
-    hint: { x: 145, y: 52.706 },
-  },
-  {
-    shape: "b",
-    x: 232,
-    y: 88.706,
-    w: 153.001,
-    h: 135.9,
-    textCenterX: 0.58,
-    textCenterY: 0.41,
-    textWidthRatio: 0.6,
-    textHeightRatio: 0.54,
-    flipX: true,
-    hint: null,
-  },
-  {
-    shape: "d",
-    x: 113,
-    y: 176.706,
-    w: 170.834,
-    h: 142.109,
-    textCenterX: 0.55,
-    textCenterY: 0.44,
-    textWidthRatio: 0.62,
-    textHeightRatio: 0.56,
-    flipX: true,
-    hint: { x: 72, y: 235.706 },
-  },
-  {
-    shape: "a",
-    x: 9,
-    y: 344.706,
-    w: 145.761,
-    h: 129.47,
-    textCenterX: 0.58,
-    textCenterY: 0.41,
-    textWidthRatio: 0.6,
-    textHeightRatio: 0.54,
-    flipX: false,
-    hint: { x: 149, y: 353.706 },
-  },
-  {
-    shape: "a",
-    x: 223,
-    y: 343.706,
-    w: 145.761,
-    h: 129.47,
-    textCenterX: 0.58,
-    textCenterY: 0.41,
-    textWidthRatio: 0.6,
-    textHeightRatio: 0.54,
-    flipX: true,
-    hint: { x: 336, y: 331.706 },
-  },
-] as const;
-
 /** 全部ポップし終わってから「タッチ」を出すまでの待ち */
-const HINT_DELAY_MS = SLOTS.length * 220 + 450;
+const HINT_DELAY_MS = WORRY_BUBBLE_SLOTS.length * 220 + 450;
 
-/** Figma上の吹き出し文字サイズ（アートボード基準） */
-const BUBBLE_FONT_SIZE = 12;
+/** 選ばれた吹き出しが向かう先＝確認画面の雲の中心（アートボード座標） */
+const CONFIRM_CENTER_X = DESIGN_WIDTH / 2;
 
 type BubbleFieldProps = {
   candidates: WorrySuggestion[];
   selectedId: string | null;
   onSelect: (candidate: WorrySuggestion) => void;
+  /** 選ばれた吹き出しが確認画面の位置に着いた通知 */
+  onFocusEnd: () => void;
   /** 吹き出しが飛び出す起点＝脳の中心（アートボード座標） */
   originX: number;
   originY: number;
@@ -198,6 +114,7 @@ export function BubbleField({
   candidates,
   selectedId,
   onSelect,
+  onFocusEnd,
   originX,
   originY,
 }: BubbleFieldProps) {
@@ -205,26 +122,35 @@ export function BubbleField({
 
   return (
     <View className="absolute inset-0" pointerEvents="box-none">
-      {SLOTS.map((slot, i) => {
+      {WORRY_BUBBLE_SLOTS.map((slot, i) => {
         const candidate = candidates[i];
         if (!candidate) return null;
         const selected = candidate.id === selectedId;
+        const centerX = slot.x + slot.w / 2;
+        const centerY = slot.y + slot.h / 2;
+        // アートボード中央より左の雲は左へ、右の雲は右へ抜ける
+        const dir = centerX < DESIGN_WIDTH / 2 ? -1 : 1;
         return (
           <ThoughtBubble
             key={candidate.id}
+            scatter={selectedId !== null && !selected}
+            scatterX={s(dir * (DESIGN_WIDTH / 2 + slot.w))}
+            scatterY={s(i % 2 === 0 ? -22 : 18)}
+            scatterRotate={dir * 10}
+            focus={selected}
+            focusX={s(CONFIRM_CENTER_X - centerX)}
+            focusY={s(CONFIRM_CENTER_Y - centerY)}
+            // 確認画面の雲は同じ形の相似拡大なので、その倍率まで拡大すれば継ぎ目がない
+            focusScale={getConfirmCloudRect(i).scale}
+            onFocusEnd={selected ? onFocusEnd : undefined}
             label={candidate.label}
             index={i}
             selected={selected}
-            source={SHAPES[slot.shape][selected ? "active" : "idle"]}
+            slot={slot}
             left={s(slot.x)}
             top={s(slot.y)}
             width={s(slot.w)}
             height={s(slot.h)}
-            textCenterX={slot.textCenterX}
-            textCenterY={slot.textCenterY}
-            textWidthRatio={slot.textWidthRatio}
-            textHeightRatio={slot.textHeightRatio}
-            flipX={slot.flipX}
             fontSize={s(BUBBLE_FONT_SIZE)}
             originX={s(originX)}
             originY={s(originY)}
@@ -233,7 +159,7 @@ export function BubbleField({
         );
       })}
 
-      {SLOTS.map((slot, i) =>
+      {WORRY_BUBBLE_SLOTS.map((slot, i) =>
         slot.hint && candidates[i] ? (
           <TouchHint
             key={`hint-${i}`}

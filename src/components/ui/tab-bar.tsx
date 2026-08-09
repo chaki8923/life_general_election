@@ -1,69 +1,81 @@
+import type { ReactNode } from "react";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "@/tw/image";
-import { Pressable, View } from "@/tw";
+import { Pressable, Text, View } from "@/tw";
 
-/** バー本体の高さ（Figma: メニューバー h53） */
-export const TAB_BAR_HEIGHT = 53;
-/** 中央FABがバー上端からせり上がる量（Figma: バー y1055 に対し FAB y1044） */
-const FAB_OVERHANG = 11;
-const FAB_SIZE = 61;
+/** ピル本体の高さ（Figma: manu 502-2760 h48） */
+export const TAB_BAR_HEIGHT = 48;
+/** 中央の投票ボタン（Figma: 56×56 の円） */
+const FAB_SIZE = 56;
+/** FAB がピル上下からはみ出す量（56 と 48 の差の半分） */
+const FAB_OVERHANG = (FAB_SIZE - TAB_BAR_HEIGHT) / 2;
+/** セーフエリアが 0 の端末でのバー下端の最低余白 */
+const BAR_BOTTOM_GAP = 20;
+/** Figma: drop-shadow 0px 2px 4px rgba(51,51,51,0.08) */
+const BAR_SHADOW = "0px 2px 4px rgba(51,51,51,0.08)";
 
-const ICONS = {
-  index: {
-    active: require("../../../assets/tabbar/storage-active.svg"),
-    inactive: require("../../../assets/tabbar/storage-inactive.svg"),
-    width: 40,
-    label: "マイページ",
-  },
-  achievements: {
-    active: require("../../../assets/tabbar/ghost-active.svg"),
-    inactive: require("../../../assets/tabbar/ghost-inactive.svg"),
-    width: 45,
-    label: "実績",
-  },
-} as const;
-
-const addIcon = require("../../../assets/tabbar/add.svg");
+const policyIcon = require("../../../assets/tabbar/policy.svg");
+const voteIcon = require("../../../assets/tabbar/vote.svg");
+const historyIcon = require("../../../assets/tabbar/history.svg");
 
 /**
- * タブ本文が中央FABに隠れないよう、各画面のスクロール下端に足す余白。
- * バー高 + セーフエリア + FABのはみ出し分。
+ * タブ本文が浮いたフッターに隠れないよう、各画面のスクロール下端に足す余白。
+ * 下余白 + ピル高 + FAB の上へのはみ出し分。
  */
 export function useTabBarBottomPadding(extra = 16) {
   const insets = useSafeAreaInsets();
-  return TAB_BAR_HEIGHT + insets.bottom + FAB_OVERHANG + extra;
+  return (
+    Math.max(insets.bottom, BAR_BOTTOM_GAP) +
+    TAB_BAR_HEIGHT +
+    FAB_OVERHANG +
+    extra
+  );
 }
 
 type SideTabProps = {
-  routeName: keyof typeof ICONS;
+  icon: number;
+  label: ReactNode;
+  accessibilityLabel: string;
   focused: boolean;
   onPress: () => void;
 };
 
-function SideTab({ routeName, focused, onPress }: SideTabProps) {
-  const icon = ICONS[routeName];
+function SideTab({
+  icon,
+  label,
+  accessibilityLabel,
+  focused,
+  onPress,
+}: SideTabProps) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: focused }}
-      accessibilityLabel={icon.label}
+      accessibilityLabel={accessibilityLabel}
       hitSlop={12}
-      className="h-[53px] flex-1 items-center justify-center"
+      className="items-center gap-px"
     >
       <Image
-        source={focused ? icon.active : icon.inactive}
-        style={{ width: icon.width, height: 40 }}
+        source={icon}
+        style={{ width: 24, height: 24 }}
         contentFit="contain"
       />
+      <Text
+        numberOfLines={1}
+        className="font-flow-medium text-[8px] leading-[11.2px] text-flow-ink-low"
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }
 
 /**
- * フッタータブバー（Figma: メニューバー）。
- * 中央の＋がバー上端をはみ出すため、標準の tabBar ではなくカスタム実装。
+ * フッターメニュー（Figma: manu 502-2760）。
+ * 画面から浮いた角丸ピルに、中央の投票ボタンが上下へはみ出す形。
+ * 遷移先は index=公約・政策 / vote=投票する / achievements=過去の履歴。
  */
 export function AppTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -85,53 +97,73 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
   const currentRoute = state.routes[state.index]?.name;
 
   return (
-    // 画面の上に重ねる。FABのはみ出し分はpaddingTopで内側に取り込み、
-    // Androidで親の外にはみ出した子が切れるのを避ける
+    // 画面の上に重ねる。バー自体は透明な全幅ラッパの中に浮かせるので、
+    // 余白部分のタップは背後のコンテンツに通す
     <View
+      pointerEvents="box-none"
       className="absolute inset-x-0 bottom-0"
-      style={{ paddingTop: FAB_OVERHANG }}
+      style={{ paddingBottom: Math.max(insets.bottom, BAR_BOTTOM_GAP) }}
     >
-      <View
-        className="border-t border-tab-border bg-white"
-        style={{ paddingBottom: insets.bottom }}
-      >
-        <View className="h-[53px] flex-row items-center">
+      {/* 行の高さは FAB に合わせ、ピル本体は背景として絶対配置する。
+          こうすると Android で親からはみ出した子が切れる問題を踏まない。
+          外枠に padding を持たせないのは、absolute な子の基準が
+          Yoga のバージョンで padding の内/外に振れるのを避けるため */}
+      <View className="mx-5 h-[56px]" pointerEvents="box-none">
+        <View
+          className="absolute inset-x-0 rounded-[99px] bg-white"
+          style={{
+            top: FAB_OVERHANG,
+            height: TAB_BAR_HEIGHT,
+            boxShadow: BAR_SHADOW,
+          }}
+        />
+
+        <View
+          pointerEvents="box-none"
+          className="h-[56px] flex-row items-center justify-center gap-10 px-5"
+        >
           <SideTab
-            routeName="index"
+            icon={policyIcon}
+            label={
+              <>
+                公<Text className="tracking-[-1.6px]">約・</Text>政策
+              </>
+            }
+            accessibilityLabel="公約・政策"
             focused={currentRoute === "index"}
             onPress={() => go("index")}
           />
-          {/* 中央FABの footprint（実体は下の absolute 要素） */}
-          <View style={{ width: FAB_SIZE }} />
+
+          <Pressable
+            onPress={() => go("vote")}
+            accessibilityRole="button"
+            accessibilityState={{ selected: currentRoute === "vote" }}
+            accessibilityLabel="投票する"
+            className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px] bg-flow-pink px-[3px] py-[2px]"
+            style={{ width: FAB_SIZE, height: FAB_SIZE }}
+          >
+            <Image
+              source={voteIcon}
+              style={{ width: 18, height: 19.476 }}
+              contentFit="contain"
+            />
+            <Text
+              numberOfLines={1}
+              className="font-flow-medium text-[8px] leading-[11.2px] text-white"
+            >
+              投票する
+            </Text>
+          </Pressable>
+
           <SideTab
-            routeName="achievements"
+            icon={historyIcon}
+            label="過去の履歴"
+            accessibilityLabel="過去の履歴"
             focused={currentRoute === "achievements"}
             onPress={() => go("achievements")}
           />
         </View>
       </View>
-
-      <Pressable
-        onPress={() => go("vote")}
-        accessibilityRole="button"
-        accessibilityState={{ selected: currentRoute === "vote" }}
-        accessibilityLabel="総選挙"
-        className={`absolute left-1/2 top-0 items-center justify-center rounded-full ${
-          currentRoute === "vote" ? "bg-tab-active" : "bg-flow-gray"
-        }`}
-        style={{
-          width: FAB_SIZE,
-          height: FAB_SIZE,
-          marginLeft: -FAB_SIZE / 2,
-          boxShadow: "0 4px 4px rgba(0,0,0,0.25)",
-        }}
-      >
-        <Image
-          source={addIcon}
-          style={{ width: 40, height: 40 }}
-          contentFit="contain"
-        />
-      </Pressable>
     </View>
   );
 }
