@@ -213,8 +213,10 @@ export default function ElectionCountingScreen() {
             position: "absolute",
             left: s(35),
             width: s(322),
+            // Figma 1700:7760 は -translate-y-1/2 なので、50%-90pxはブロックの中心
             top: "50%",
             marginTop: -s(90),
+            transform: [{ translateY: "-50%" }],
             gap: s(20),
           }}
         >

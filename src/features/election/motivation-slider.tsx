@@ -20,7 +20,7 @@ import { FONT, useDesignScale } from "./layout";
  * 枠は炎(image 18)の外形にそろえてある。
  */
 export const SLIDER_LEFT = -4;
-export const SLIDER_TOP = 246.706;
+export const SLIDER_TOP = 226.706;
 export const SLIDER_WIDTH = 343.4;
 export const SLIDER_HEIGHT = 129;
 
@@ -184,22 +184,6 @@ export function MotivationSlider({ level, onChange }: MotivationSliderProps) {
         height: s(SLIDER_HEIGHT),
       }}
     >
-      <Text
-        numberOfLines={1}
-        style={{
-          position: "absolute",
-          left: s(HINT.left),
-          top: s(HINT.top),
-          width: s(HINT.width),
-          textAlign: "center",
-          fontFamily: FONT.bold,
-          fontSize: s(12),
-          lineHeight: s(20),
-          color: "#6e7781",
-        }}
-      >
-        スライドしてみてっ
-      </Text>
 
       <View
         className="rounded-[15px] bg-bubble"
