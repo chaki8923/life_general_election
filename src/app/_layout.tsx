@@ -1,9 +1,11 @@
 import "../global.css";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { isRunningInExpoGo } from "expo";
 import { Stack } from "expo-router/stack";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
+import { Image } from "expo-image";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // パッケージ直下のindexは全ウェイト(1本5MB超)をrequireしてしまうので、必ずサブパスで読む
 import { NotoSansJP_500Medium } from "@expo-google-fonts/noto-sans-jp/500Medium";
@@ -14,8 +16,22 @@ import { BackgroundVideoProvider } from "@/hooks/use-background-video";
 import { ensureSignedIn } from "@/services/firebase/auth";
 import { useProfileStore } from "@/stores/profile";
 
+// アリーナ背景。Androidのネイティブスプラッシュは全画面画像を出せない(OSが単色+中央アイコンに固定する)ので、
+// ネイティブスプラッシュを外したあとJS側で同じ絵を敷き、両OSで同じ見た目にする。
+const splashBackground = require("../../assets/images/splash-bg.png");
+
+// フォントはバンドル同梱、プロフィールもAsyncStorageなので復元は数十msで終わる。
+// そのままだとスプラッシュが1フレームで消えてしまうので、最低表示時間を設ける。
+const SPLASH_MIN_DURATION_MS = 1200;
+
 // プロフィール復元が終わるまでスプラッシュを維持（オンボーディングのチラつき防止）
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// ネイティブスプラッシュからJS側の背景へ切り替わる瞬間を目立たせない。
+// Expo Goでは呼ぶだけで警告が出るうえ効果もないので避ける
+// （ネイティブスプラッシュ自体、SDK52以降のExpo Goでは再現されずアプリアイコンが出る）。
+if (!isRunningInExpoGo()) {
+  SplashScreen.setOptions({ duration: 250, fade: true });
+}
 
 export default function RootLayout() {
   const hasHydrated = useProfileStore((s) => s.hasHydrated);
@@ -37,11 +53,24 @@ export default function RootLayout() {
     });
   }, []);
 
-  useEffect(() => {
-    if (hasHydrated && fontsReady) SplashScreen.hideAsync().catch(() => {});
-  }, [hasHydrated, fontsReady]);
+  const [splashImageLoaded, setSplashImageLoaded] = useState(false);
+  const [minDurationPassed, setMinDurationPassed] = useState(false);
 
-  const appReady = hasHydrated && fontsReady;
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setMinDurationPassed(true),
+      SPLASH_MIN_DURATION_MS
+    );
+    return () => clearTimeout(timer);
+  }, []);
+
+  const appReady = hasHydrated && fontsReady && minDurationPassed;
+
+  useEffect(() => {
+    // 背景画像が描けた時点でネイティブスプラッシュを外し、下のJS側の背景に引き継ぐ。
+    // 画像が読めなかった場合もappReadyで必ず外し、スプラッシュに閉じ込められないようにする。
+    if (splashImageLoaded || appReady) SplashScreen.hideAsync().catch(() => {});
+  }, [splashImageLoaded, appReady]);
 
   return (
     // フォントやプロフィールの復元中も動画のバッファ準備は先行させる。
@@ -69,7 +98,17 @@ export default function RootLayout() {
             </Stack.Protected>
           </Stack>
         </GestureHandlerRootView>
-      ) : null}
+      ) : (
+        // 準備中の画面。backgroundColorはネイティブスプラッシュと同じ地色で、
+        // 画像がデコードされる前の一瞬にも継ぎ目が出ないようにする。
+        <Image
+          source={splashBackground}
+          style={{ flex: 1, backgroundColor: "#000628" }}
+          contentFit="cover"
+          transition={0}
+          onLoadEnd={() => setSplashImageLoaded(true)}
+        />
+      )}
     </BackgroundVideoProvider>
   );
 }
