@@ -28,9 +28,9 @@ export function FlowHeader({
       className={transparent ? "" : "bg-white"}
       style={{ paddingTop: insets.top }}
     >
-      <View className="h-[42px] justify-center">
+      <View className="h-[42px] justify-center border-b border-[#f0f0f0]">
         <Text
-          className={`text-center font-flow text-base tracking-[0.8px] ${inkClass}`}
+          className={`text-center font-flow text-base leading-[1.4] tracking-[0.8px] ${inkClass}`}
         >
           {title}
         </Text>
