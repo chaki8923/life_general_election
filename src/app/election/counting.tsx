@@ -8,6 +8,7 @@ import { Image } from "@/tw/image";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { Odometer, odometerTimeAtValue } from "@/components/ui/odometer";
+import { CountingBackground } from "@/features/election/counting-background";
 import { generateElection } from "@/features/election/generate";
 import { FONT, useDesignScale } from "@/features/election/layout";
 import { mirrorElection } from "@/services/firebase/mirror";
@@ -202,14 +203,9 @@ export default function ElectionCountingScreen() {
       className="flex-1 bg-white"
       style={{ paddingTop: insets.top, paddingBottom: insets.bottom }}
     >
-      <View className="flex-1 overflow-hidden">
-        {/* Figma注記では動く背景（GIF）予定。届いたらこのsourceを差し替えるだけ */}
-        <Image
-          source={require("../../../assets/election/arena.png")}
-          className="absolute inset-0"
-          contentFit="cover"
-          pointerEvents="none"
-        />
+      {/* 地色は旧背景 arena.png の濃紺。動画の読み込み中に白文字が消えないようにする */}
+      <View className="flex-1 overflow-hidden bg-[#0a1238]">
+        <CountingBackground />
 
         <View
           className="items-end"
@@ -217,8 +213,10 @@ export default function ElectionCountingScreen() {
             position: "absolute",
             left: s(35),
             width: s(322),
+            // Figma 1700:7760 は -translate-y-1/2 なので、50%-90pxはブロックの中心
             top: "50%",
             marginTop: -s(90),
+            transform: [{ translateY: "-50%" }],
             gap: s(20),
           }}
         >

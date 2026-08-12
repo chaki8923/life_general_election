@@ -1,15 +1,19 @@
+import { FadeIn, FadeOut } from "react-native-reanimated";
 import { FlowButton } from "@/components/ui/flow-button";
 import { Text, View } from "@/tw";
+import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
-import { FONT, useDesignScale } from "./layout";
-import { getWorryBubbleColor } from "./worry-bubble-colors";
+import { useDesignScale } from "./layout";
+import { WorryBubbleCloud } from "./worry-bubble-cloud";
+import {
+  BUBBLE_FONT_SIZE,
+  getConfirmCloudRect,
+  getWorryBubbleSlot,
+} from "./worry-bubble-slots";
 import type { WorrySuggestion } from "@/types";
 
 const CONTENT_WIDTH = 302;
 const HEADING_TOP = 80.706;
-const CLOUD_TOP = 154.706;
-const CLOUD_WIDTH = 242;
-const CLOUD_HEIGHT = 201;
 const BUTTONS_TOP = 381.706;
 
 type WorryConfirmModalProps = {
@@ -30,10 +34,16 @@ export function WorryConfirmModal({
 }: WorryConfirmModalProps) {
   const { s } = useDesignScale();
   if (!visible || !candidate) return null;
-  const bubbleColor = getWorryBubbleColor(bubbleIndex);
+  // 選んだ吹き出しをそのまま相似拡大する（形・向き・改行位置が選択前と揃う）
+  const slot = getWorryBubbleSlot(bubbleIndex);
+  const rect = getConfirmCloudRect(bubbleIndex);
 
   return (
-    <View className="absolute inset-0 overflow-hidden bg-flow-bg">
+    <Animated.View
+      className="absolute inset-0 overflow-hidden bg-flow-bg"
+      entering={FadeIn.duration(200)}
+      exiting={FadeOut.duration(180)}
+    >
       <Image
         source={require("../../../assets/election/worries-bg.png")}
         className="absolute inset-0"
@@ -59,50 +69,20 @@ export function WorryConfirmModal({
       <View
         style={{
           position: "absolute",
-          left: s((390 - CLOUD_WIDTH) / 2),
-          top: s(CLOUD_TOP),
-          width: s(CLOUD_WIDTH),
-          height: s(CLOUD_HEIGHT),
+          left: s(rect.left),
+          top: s(rect.top),
+          width: s(rect.width),
+          height: s(rect.height),
         }}
       >
-        <Image
-          source={require("../../../assets/election/worry-bubble-pink.svg")}
-          style={{
-            width: "100%",
-            height: "100%",
-            tintColor: bubbleColor,
-          }}
-          contentFit="fill"
-          pointerEvents="none"
+        <WorryBubbleCloud
+          label={candidate.label}
+          slot={slot}
+          width={s(rect.width)}
+          height={s(rect.height)}
+          // 幅と同じ倍率で拡大するので、改行位置が選択前の吹き出しと一致する
+          fontSize={s(BUBBLE_FONT_SIZE * rect.scale)}
         />
-        <View
-          pointerEvents="none"
-          style={{
-            position: "absolute",
-            left: s(31),
-            top: s(39),
-            width: s(180),
-            height: s(108),
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Text
-            numberOfLines={3}
-            adjustsFontSizeToFit
-            minimumFontScale={0.65}
-            style={{
-              textAlign: "center",
-              fontFamily: FONT.bold,
-              fontSize: s(24),
-              lineHeight: s(36),
-              letterSpacing: s(1.2),
-              color: "#ffffff",
-            }}
-          >
-            『{candidate.label}』
-          </Text>
-        </View>
       </View>
 
       <View
@@ -117,6 +97,6 @@ export function WorryConfirmModal({
         <FlowButton label="はい！" onPress={onConfirm} />
         <FlowButton label="選び直す" variant="dashed" onPress={onReselect} />
       </View>
-    </View>
+    </Animated.View>
   );
 }

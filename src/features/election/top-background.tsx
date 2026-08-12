@@ -3,20 +3,17 @@ import { VideoView } from "expo-video";
 import { useBackgroundVideo } from "@/hooks/use-background-video";
 import { View } from "@/tw";
 
-type CharacterWalkProps = {
-  /** ヒーロー領域の高さ（幅は画面いっぱい） */
-  height?: number;
-};
-
 /**
- * 実績画面のヒーロー。歩き続けるキャラクターをループ再生する。
+ * 選挙トップの背景（Figma: TOP 1664-6457 の「後ろの人たちを動かす」）。
+ * 装飾なので読み上げ対象にせず、前面のタップも邪魔しない。
  */
-export function CharacterWalk({ height = 240 }: CharacterWalkProps) {
-  const player = useBackgroundVideo("achievementWalk");
+export function TopBackground() {
+  const player = useBackgroundVideo("electionTop");
   const [hasRenderedFirstFrame, setHasRenderedFirstFrame] = useState(false);
 
   return (
-    <View className="w-full overflow-hidden bg-[#fdf6e8]" style={{ height }}>
+    // Figma: 背景 opacity 61%。地の白の上に薄く重ねる
+    <View pointerEvents="none" className="absolute inset-0 opacity-[0.61]">
       <VideoView
         player={player}
         style={{
@@ -28,7 +25,6 @@ export function CharacterWalk({ height = 240 }: CharacterWalkProps) {
         nativeControls={false}
         fullscreenOptions={{ enable: false }}
         allowsPictureInPicture={false}
-        accessibilityLabel="歩き続けるキャラクター"
         onFirstFrameRender={() => setHasRenderedFirstFrame(true)}
       />
     </View>
