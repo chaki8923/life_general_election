@@ -1,3 +1,4 @@
+import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
 import {
@@ -78,12 +79,12 @@ const FIGMA_FALLBACK_MINORITY_CANDIDATES: Candidate[] = [
 /** Tipsカード（公約、政策とは？）と同じページ間隔に統一 */
 const MINORITY_CARD_GAP = 24;
 
-
 export default function ElectionResultScreen() {
   const router = useRouter();
   const worry = useElectionStore((s) => s.worry);
   const motivation = useElectionStore((s) => s.motivation);
   const election = useElectionStore((s) => s.election);
+  const showProfileStep = useElectionStore((s) => s.showProfileStep);
   const addWish = useWishStore((s) => s.addWish);
   const hasSource = Boolean(worry && motivation);
   const [modalCandidate, setModalCandidate] = useState<Candidate | null>(null);
@@ -96,19 +97,34 @@ export default function ElectionResultScreen() {
     if (hasSource && !election) router.replace("/election/counting");
   }, [hasSource, election, router]);
 
-  if (hasSource && !election) return null;
+  if (!hasSource) {
+    return (
+      <View className="flex-1 items-center justify-center bg-flow-bg px-8">
+        <Text className="font-flow text-base text-flow-ink">
+          悩みが選ばれていません
+        </Text>
+        <FlowButton
+          label="悩みを選ぶ"
+          onPress={() => router.replace("/election")}
+          className="mt-4"
+        />
+      </View>
+    );
+  }
+
+  if (!election) return null;
 
   const rankedCandidates: { rank: PledgeRank; candidate: Candidate }[] = (
     [1, 2, 3] as const
   ).map((rank) => ({
     rank,
     candidate:
-      election?.candidates[rank - 1] ?? FIGMA_FALLBACK_CANDIDATES[rank - 1],
+      election.candidates[rank - 1] ?? FIGMA_FALLBACK_CANDIDATES[rank - 1],
   }));
   const topCandidate = rankedCandidates[0]?.candidate ?? null;
-  const minorityCandidates = (
-    election?.candidates.filter((c) => c.isMinority) ?? []
-  ).slice(0, 2);
+  const minorityCandidates = election.candidates
+    .filter((c) => c.isMinority)
+    .slice(0, 2);
   while (minorityCandidates.length < 2) {
     minorityCandidates.push(
       FIGMA_FALLBACK_MINORITY_CANDIDATES[minorityCandidates.length]
@@ -121,7 +137,7 @@ export default function ElectionResultScreen() {
   const minorityStride = minorityWidth + MINORITY_CARD_GAP;
   const registerGoal = (deadline: number) => {
     const candidate = modalCandidate ?? topCandidate;
-    if (!candidate || !election) return;
+    if (!candidate) return;
     const wish = addWish({
       text: candidate.label,
       policy: candidate.action,
@@ -150,7 +166,7 @@ export default function ElectionResultScreen() {
       >
         {/* 893:3409 — FlowStepper（画像モックから差し替え） */}
         <View className="px-5 py-2">
-          <FlowStepper current={2} showProfileStep />
+          <FlowStepper current={2} showProfileStep={showProfileStep} />
         </View>
 
         {/* 1691:2823 + 1905:13894 — 見出し + 開票ボード付きヒーロー */}
@@ -181,7 +197,6 @@ export default function ElectionResultScreen() {
           <View className="mt-3">
             <ResultTipCard recommendLabel={topCandidate?.label} />
           </View>
-
 
           {/* 704:9825 / 704:9826 / 704:9827 — 1〜3位カード */}
           {rankedCandidates.map(({ rank, candidate }) => (
@@ -214,7 +229,9 @@ export default function ElectionResultScreen() {
                       style={{
                         width: minorityWidth,
                         marginRight:
-                          index < minoritySlides.length - 1 ? MINORITY_CARD_GAP : 0,
+                          index < minoritySlides.length - 1
+                            ? MINORITY_CARD_GAP
+                            : 0,
                       }}
                     >
                       <ResultMinorityPledgeCard
@@ -234,7 +251,10 @@ export default function ElectionResultScreen() {
 
         {/* 1012:3606 — ページドット */}
         <View className="mt-4">
-          <ResultProgressDots current={minorityPage} total={minoritySlides.length} />
+          <ResultProgressDots
+            current={minorityPage}
+            total={minoritySlides.length}
+          />
         </View>
       </ScrollView>
 
