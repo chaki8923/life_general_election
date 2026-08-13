@@ -17,6 +17,7 @@ import { Pressable, Text, View } from "@/tw";
 import type { PosterSettings } from "@/types";
 import type { PosterLevel } from "./level";
 import { POSTER_LEVEL_META } from "./level";
+import { getPosterImageUri } from "./poster-settings";
 import { POSTER_ASPECT_RATIO, type PosterPalette } from "./templates";
 import { usePosterParallax } from "./use-poster-parallax";
 
@@ -112,11 +113,10 @@ function CandidateImage({
   level,
   onPhotoLoaded,
 }: Pick<Props, "settings" | "level" | "onPhotoLoaded">) {
-  const showPhoto = settings.image.kind === "photo";
-  let source = level >= 3 ? ACTION_CHARACTER : DEFAULT_CHARACTER;
-  if (showPhoto && settings.image.kind === "photo") {
-    source = settings.image.uri;
-  }
+  // 写真もAI生成画像も同じ扱い（cover配置・blendなし）。既定キャラだけ別
+  const uri = getPosterImageUri(settings.image);
+  const showPhoto = uri !== undefined;
+  const source = uri ?? (level >= 3 ? ACTION_CHARACTER : DEFAULT_CHARACTER);
   const image = (
     <Image
       source={source}

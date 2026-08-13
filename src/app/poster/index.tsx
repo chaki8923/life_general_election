@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import { Alert, View as RNView } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { AiAvatarModal } from "@/features/avatar/ai-avatar-modal";
+import type { AiAvatarResult } from "@/features/avatar/use-ai-avatar";
 import { PosterCanvas } from "@/features/poster/poster-canvas";
 import {
   deleteManagedPosterPhoto,
@@ -9,6 +11,7 @@ import {
 } from "@/features/poster/photo-storage";
 import {
   createDefaultPosterSettings,
+  getPosterImageUri,
   resolvePosterSettings,
 } from "@/features/poster/poster-settings";
 import { getPosterLevel, POSTER_LEVEL_META } from "@/features/poster/level";
@@ -35,6 +38,7 @@ export default function PosterScreen() {
   const posterRef = useRef<RNView>(null);
   const [photoReady, setPhotoReady] = useState(true);
   const [photoSaving, setPhotoSaving] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
 
   const wish = wishes.find((item) => item.id === wishId) ?? null;
   const doneCount = wishes.filter((item) => item.status === "done").length;
@@ -58,10 +62,7 @@ export default function PosterScreen() {
     setPhotoSaving(true);
     try {
       const uri = await persistPosterPhoto(wish.id, asset);
-      const previousUri =
-        storedSettings.image.kind === "photo"
-          ? storedSettings.image.uri
-          : undefined;
+      const previousUri = getPosterImageUri(storedSettings.image);
       setPhotoReady(false);
       saveSettings({
         ...storedSettings,
@@ -82,16 +83,28 @@ export default function PosterScreen() {
   const { pickFromLibrary, takePhoto } = usePosterPhoto(handlePicked);
 
   const resetToCharacter = () => {
-    const previousUri =
-      storedSettings.image.kind === "photo"
-        ? storedSettings.image.uri
-        : undefined;
+    const previousUri = getPosterImageUri(storedSettings.image);
     setPhotoReady(true);
     saveSettings({
       ...storedSettings,
       image: { kind: "character" },
     });
     deleteManagedPosterPhoto(previousUri);
+  };
+
+  const handleAvatarConfirm = ({ uri, sourceUri }: AiAvatarResult) => {
+    setAvatarOpen(false);
+    if (!wish) return;
+    const previousUri = getPosterImageUri(storedSettings.image);
+    setPhotoReady(false);
+    saveSettings({
+      ...storedSettings,
+      image: { kind: "ai", uri, sourceUri },
+    });
+    // 生成元の写真はやり直し用に残すので、それ以外の旧画像だけ消す
+    if (previousUri !== uri && previousUri !== sourceUri) {
+      deleteManagedPosterPhoto(previousUri);
+    }
   };
 
   const updateName = (candidateName: string) => {
@@ -101,6 +114,14 @@ export default function PosterScreen() {
   const updatePalette = (paletteId: PosterSettings["paletteId"]) => {
     saveSettings({ ...storedSettings, paletteId });
   };
+
+  // 似顔絵化の元にする写真。AI画像を再生成するときも元写真を使い回す
+  const avatarSourceUri =
+    storedSettings.image.kind === "photo"
+      ? storedSettings.image.uri
+      : storedSettings.image.kind === "ai"
+        ? storedSettings.image.sourceUri
+        : undefined;
 
   const exportable =
     wish !== null &&
@@ -210,7 +231,31 @@ export default function PosterScreen() {
           >
             <Text className="font-bold text-election-red">📸 撮影する</Text>
           </Pressable>
+          <Pressable
+            onPress={() => setAvatarOpen(true)}
+            disabled={photoSaving}
+            className={`rounded-full border-2 px-4 py-2.5 ${
+              displaySettings.image.kind === "ai"
+                ? "border-election-gold bg-white"
+                : "border-election-navy"
+            }`}
+          >
+            <Text
+              className={`font-bold ${
+                displaySettings.image.kind === "ai"
+                  ? "text-election-ink"
+                  : "text-election-navy"
+              }`}
+            >
+              ✨ AIアバター
+            </Text>
+          </Pressable>
         </View>
+        <Text className="mt-2 text-[11px] leading-4 text-election-ink/40">
+          {avatarSourceUri
+            ? "AIアバターは、設定中の写真から似顔絵をつくります。"
+            : "写真を選んでからAIアバターを押すと、その写真から似顔絵をつくります。"}
+        </Text>
 
         <Text className="mt-5 text-xs font-bold text-election-ink/50">
           名前（自動保存）
@@ -292,6 +337,16 @@ export default function PosterScreen() {
           </Text>
         </Pressable>
       </ScrollView>
+
+      <AiAvatarModal
+        visible={avatarOpen}
+        wishId={wish.id}
+        slogan={wish.text}
+        paletteLabel={palette.label}
+        sourceUri={avatarSourceUri}
+        onConfirm={handleAvatarConfirm}
+        onClose={() => setAvatarOpen(false)}
+      />
     </View>
   );
 }
