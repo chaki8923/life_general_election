@@ -33,6 +33,13 @@ export function useTabBarBottomPadding(extra = 16) {
   );
 }
 
+export type FlowTabId = "index" | "vote" | "achievements";
+
+type FlowTabBarProps = {
+  active: FlowTabId;
+  onPress: (id: FlowTabId) => void;
+};
+
 type SideTabProps = {
   icon: number;
   label: ReactNode;
@@ -73,14 +80,91 @@ function SideTab({
 }
 
 /**
+ * フッターメニュー本体（Figma BottomNav 1679:8798 / manu 502-2760）。
+ * 角丸ピル + 中央の投票 FAB。タブ外の画面からも同じ見た目で使える。
+ */
+export function FlowTabBar({ active, onPress }: FlowTabBarProps) {
+  return (
+    <View className="mx-5 h-[56px]" pointerEvents="box-none">
+      <View
+        className="absolute inset-x-0 rounded-[99px] bg-white"
+        style={{
+          top: FAB_OVERHANG,
+          height: TAB_BAR_HEIGHT,
+          boxShadow: BAR_SHADOW,
+        }}
+      />
+
+      <View
+        pointerEvents="box-none"
+        className="h-[56px] flex-row items-center justify-center gap-10 px-5"
+      >
+        <SideTab
+          icon={policyIcon}
+          label={
+            <>
+              公<Text className="tracking-[-1.6px]">約・</Text>政策
+            </>
+          }
+          accessibilityLabel="公約・政策"
+          focused={active === "index"}
+          onPress={() => onPress("index")}
+        />
+
+        <Pressable
+          onPress={() => onPress("vote")}
+          accessibilityRole="button"
+          accessibilityState={{ selected: active === "vote" }}
+          accessibilityLabel="投票する"
+          className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px] bg-flow-pink px-[3px] py-[2px]"
+          style={{ width: FAB_SIZE, height: FAB_SIZE }}
+        >
+          <Image
+            source={voteIcon}
+            style={{ width: 18, height: 19.476 }}
+            contentFit="contain"
+          />
+          <Text
+            numberOfLines={1}
+            className="font-flow-medium text-[8px] leading-[11.2px] text-white"
+          >
+            投票する
+          </Text>
+        </Pressable>
+
+        <SideTab
+          icon={historyIcon}
+          label="過去の履歴"
+          accessibilityLabel="過去の履歴"
+          focused={active === "achievements"}
+          onPress={() => onPress("achievements")}
+        />
+      </View>
+    </View>
+  );
+}
+
+/** 画面下に重ねる BottomNav（セーフエリア込み） */
+export function FlowTabBarOverlay(props: FlowTabBarProps) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      pointerEvents="box-none"
+      className="absolute inset-x-0 bottom-0"
+      style={{ paddingBottom: Math.max(insets.bottom, BAR_BOTTOM_GAP) }}
+    >
+      <FlowTabBar {...props} />
+    </View>
+  );
+}
+
+/**
  * フッターメニュー（Figma: manu 502-2760）。
  * 画面から浮いた角丸ピルに、中央の投票ボタンが上下へはみ出す形。
  * 遷移先は index=公約・政策 / vote=投票する / achievements=過去の履歴。
  */
 export function AppTabBar({ state, navigation }: BottomTabBarProps) {
-  const insets = useSafeAreaInsets();
-
-  const go = (routeName: string) => {
+  const go = (routeName: FlowTabId) => {
     const route = state.routes.find((r) => r.name === routeName);
     if (!route) return;
     const isFocused = state.routes[state.index]?.name === routeName;
@@ -95,75 +179,10 @@ export function AppTabBar({ state, navigation }: BottomTabBarProps) {
   };
 
   const currentRoute = state.routes[state.index]?.name;
+  const active: FlowTabId =
+    currentRoute === "vote" || currentRoute === "achievements"
+      ? currentRoute
+      : "index";
 
-  return (
-    // 画面の上に重ねる。バー自体は透明な全幅ラッパの中に浮かせるので、
-    // 余白部分のタップは背後のコンテンツに通す
-    <View
-      pointerEvents="box-none"
-      className="absolute inset-x-0 bottom-0"
-      style={{ paddingBottom: Math.max(insets.bottom, BAR_BOTTOM_GAP) }}
-    >
-      {/* 行の高さは FAB に合わせ、ピル本体は背景として絶対配置する。
-          こうすると Android で親からはみ出した子が切れる問題を踏まない。
-          外枠に padding を持たせないのは、absolute な子の基準が
-          Yoga のバージョンで padding の内/外に振れるのを避けるため */}
-      <View className="mx-5 h-[56px]" pointerEvents="box-none">
-        <View
-          className="absolute inset-x-0 rounded-[99px] bg-white"
-          style={{
-            top: FAB_OVERHANG,
-            height: TAB_BAR_HEIGHT,
-            boxShadow: BAR_SHADOW,
-          }}
-        />
-
-        <View
-          pointerEvents="box-none"
-          className="h-[56px] flex-row items-center justify-center gap-10 px-5"
-        >
-          <SideTab
-            icon={policyIcon}
-            label={
-              <>
-                公<Text className="tracking-[-1.6px]">約・</Text>政策
-              </>
-            }
-            accessibilityLabel="公約・政策"
-            focused={currentRoute === "index"}
-            onPress={() => go("index")}
-          />
-
-          <Pressable
-            onPress={() => go("vote")}
-            accessibilityRole="button"
-            accessibilityState={{ selected: currentRoute === "vote" }}
-            accessibilityLabel="投票する"
-            className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px] bg-flow-pink px-[3px] py-[2px]"
-            style={{ width: FAB_SIZE, height: FAB_SIZE }}
-          >
-            <Image
-              source={voteIcon}
-              style={{ width: 18, height: 19.476 }}
-              contentFit="contain"
-            />
-            <Text
-              numberOfLines={1}
-              className="font-flow-medium text-[8px] leading-[11.2px] text-white"
-            >
-              投票する
-            </Text>
-          </Pressable>
-
-          <SideTab
-            icon={historyIcon}
-            label="過去の履歴"
-            accessibilityLabel="過去の履歴"
-            focused={currentRoute === "achievements"}
-            onPress={() => go("achievements")}
-          />
-        </View>
-      </View>
-    </View>
-  );
+  return <FlowTabBarOverlay active={active} onPress={go} />;
 }
