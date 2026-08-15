@@ -11,6 +11,8 @@ type FlowButtonProps = {
   onPress: () => void;
   /** 幅指定などの上書き用 */
   className?: string;
+  /** variant の塗りを上書き（開票カード 2位橙 / 3位紫など） */
+  fillColor?: string;
 };
 
 /** 選挙フロー共通ボタン（Figma: h48 / rounded-full / 16px Bold / tracking 0.8） */
@@ -21,21 +23,26 @@ export function FlowButton({
   loading = false,
   onPress,
   className = "",
+  fillColor,
 }: FlowButtonProps) {
   const interactionDisabled = disabled || loading;
-  const isDashed = variant === "dashed";
-  const fill = disabled && !loading
-    ? "bg-flow-disabled"
-    : variant === "pink"
-      ? "bg-flow-pink active:opacity-80"
-      : variant === "gray"
-        ? "bg-flow-gray active:opacity-80"
-        : "bg-flow-dark active:opacity-80";
+  const isDashed = variant === "dashed" && !fillColor;
+  const fill = fillColor
+    ? "active:opacity-80"
+    : disabled && !loading
+      ? "bg-flow-disabled"
+      : variant === "pink"
+        ? "bg-flow-pink active:opacity-80"
+        : variant === "gray"
+          ? "bg-flow-gray active:opacity-80"
+          : "bg-flow-dark active:opacity-80";
   const container =
     isDashed && !disabled
       ? "border-2 border-dashed border-black bg-white"
       : fill;
   const ink = isDashed && !disabled ? "text-[#060505]" : "text-white";
+  const customFill =
+    fillColor && !(disabled && !loading) ? { backgroundColor: fillColor } : undefined;
 
   return (
     <Pressable
@@ -44,6 +51,7 @@ export function FlowButton({
       accessibilityRole="button"
       accessibilityLabel={loading ? `${label}、読み込み中` : label}
       accessibilityState={{ disabled: interactionDisabled, busy: loading }}
+      style={customFill}
       className={`h-12 items-center justify-center rounded-full px-6 ${container} ${className}`}
     >
       <View>

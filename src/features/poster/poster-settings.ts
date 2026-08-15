@@ -1,4 +1,9 @@
-import type { PosterPaletteId, PosterSettings, Wish } from "@/types";
+import type {
+  PosterImageSource,
+  PosterPaletteId,
+  PosterSettings,
+  Wish,
+} from "@/types";
 
 export const DEFAULT_POSTER_PALETTE_ID: PosterPaletteId = "pink";
 
@@ -8,6 +13,16 @@ export function createDefaultPosterSettings(): PosterSettings {
     candidateName: "",
     paletteId: DEFAULT_POSTER_PALETTE_ID,
   };
+}
+
+/**
+ * 既定キャラ以外（写真/AI生成）で表示するURI。既定キャラならundefined。
+ * kindが増えても分岐がここだけで済むようにするためのヘルパー。
+ */
+export function getPosterImageUri(
+  image: PosterImageSource
+): string | undefined {
+  return image.kind === "character" ? undefined : image.uri;
 }
 
 export function resolvePosterSettings(
