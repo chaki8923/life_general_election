@@ -37,6 +37,7 @@ export function AiAvatarModal({
   const [preview, setPreview] = useState<AiAvatarResult | null>(null);
   const { busy, generate, cancel } = useAiAvatar();
   const remaining = useAiUsageStore((state) => state.remainingToday());
+  const resetUsage = useAiUsageStore((state) => state.resetUsage);
 
   useEffect(() => {
     if (visible) setPreview(null);
@@ -154,9 +155,18 @@ export function AiAvatarModal({
             )}
           </View>
 
-          <Text className="mt-3 text-center text-xs text-election-ink/50">
-            本日の残り {remaining} / {AI_AVATAR_DAILY_LIMIT} 回
-          </Text>
+          <View className="mt-3 flex-row items-center justify-center gap-2">
+            <Text className="text-xs text-election-ink/50">
+              本日の残り {remaining} / {AI_AVATAR_DAILY_LIMIT} 回
+            </Text>
+            {__DEV__ && (
+              <Pressable onPress={resetUsage} hitSlop={8}>
+                <Text className="text-xs text-election-ink/40">
+                  🧹 DEVリセット
+                </Text>
+              </Pressable>
+            )}
+          </View>
 
           {preview ? (
             <Pressable
