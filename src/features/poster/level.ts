@@ -52,20 +52,3 @@ export function getPosterLevel(doneCount: number): PosterLevel {
   }
   return 0;
 }
-
-export function getPosterLevelProgress(doneCount: number) {
-  const level = getPosterLevel(doneCount);
-  if (level === 6) {
-    return { level, current: doneCount, nextAt: null, remaining: 0, ratio: 1 };
-  }
-  const start = POSTER_LEVEL_THRESHOLDS[level];
-  const nextAt = POSTER_LEVEL_THRESHOLDS[level + 1];
-  const current = Math.max(start, doneCount);
-  return {
-    level,
-    current,
-    nextAt,
-    remaining: Math.max(0, nextAt - current),
-    ratio: Math.max(0, Math.min(1, (current - start) / (nextAt - start))),
-  };
-}
