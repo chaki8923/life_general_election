@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 import { useState } from "react";
 import { View as RNView } from "react-native";
+import { getPresetAvatarSource } from "@/features/avatar/preset-avatars";
 import { Image } from "@/tw/image";
 import { Pressable, Text, View } from "@/tw";
 import type { PosterSettings } from "@/types";
@@ -56,6 +57,11 @@ export function PosterCanvas({
   const s = (value: number) => (value * width) / POSTER_WIDTH;
 
   const uri = getPosterImageUri(settings.image);
+  const presetSource =
+    settings.image.kind === "preset"
+      ? getPresetAvatarSource(settings.image.id)
+      : undefined;
+  // 実写だけ枠いっぱいに敷く。イラストは全身が入るようcontainで収める
   const showPhoto = uri !== undefined;
   const name = settings.candidateName || "あなた";
 
@@ -85,7 +91,7 @@ export function PosterCanvas({
             }}
           >
             <Image
-              source={uri ?? DEFAULT_CHARACTER}
+              source={uri ?? presetSource ?? DEFAULT_CHARACTER}
               className="h-full w-full"
               contentFit={showPhoto ? "cover" : "contain"}
               onLoadEnd={onPhotoLoaded}

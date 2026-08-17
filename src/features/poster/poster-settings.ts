@@ -16,13 +16,13 @@ export function createDefaultPosterSettings(): PosterSettings {
 }
 
 /**
- * 既定キャラ以外（写真/AI生成）で表示するURI。既定キャラならundefined。
- * kindが増えても分岐がここだけで済むようにするためのヘルパー。
+ * 端末に実ファイルを持つ画像（アップロード写真）のURI。それ以外はundefined。
+ * 既定キャラも既製アバターもバンドル同梱なので掃除の対象にならない。
  */
 export function getPosterImageUri(
   image: PosterImageSource
 ): string | undefined {
-  return image.kind === "character" ? undefined : image.uri;
+  return image.kind === "photo" ? image.uri : undefined;
 }
 
 export function resolvePosterSettings(

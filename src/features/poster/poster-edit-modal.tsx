@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Alert, Modal } from "react-native";
-import { AiAvatarModal } from "@/features/avatar/ai-avatar-modal";
-import type { AiAvatarResult } from "@/features/avatar/use-ai-avatar";
+import { pickRandomPresetAvatarId } from "@/features/avatar/preset-avatars";
 import { mirrorWish } from "@/services/firebase/mirror";
 import { useWishStore } from "@/stores/wishes";
 import { Pressable, Text, View } from "@/tw";
@@ -13,7 +12,6 @@ import {
 } from "./photo-storage";
 import { PosterNameModal } from "./poster-name-modal";
 import { getPosterImageUri } from "./poster-settings";
-import { getPosterPalette } from "./templates";
 import { usePosterPhoto } from "./use-poster-photo";
 
 type Props = {
@@ -27,14 +25,14 @@ type Props = {
 };
 
 /** 同時に開くのは常に1つ。RNのModalは入れ子にすると Android で崩れるため */
-type Mode = "sheet" | "name" | "avatar";
+type Mode = "sheet" | "name";
 
 /**
  * ポスターの編集（Figma 2040:6371 → 2040:6437）。
  * 中央にフロートする白カードに、テキストリンクを4行並べただけのアクションシート。
  * 閉じるボタンは無く、暗幕タップで閉じる。
  *
- * シート・名前入力・AIアバターは「兄弟」として並べ、Modal の入れ子を作らない
+ * シートと名前入力は「兄弟」として並べ、Modal の入れ子を作らない
  * （入れ子は Android で表示が崩れる）。写真ピッカーも iOS で presentation が
  * 競合するため、シートを閉じてから起動する。
  */
@@ -49,7 +47,6 @@ export function PosterEditModal({
   const setPosterSettings = useWishStore((state) => state.setPosterSettings);
   const [photoSaving, setPhotoSaving] = useState(false);
   const [mode, setMode] = useState<Mode>("sheet");
-  const palette = getPosterPalette(settings.paletteId);
 
   // 開き直したときは必ずシートから
   useEffect(() => {
@@ -83,14 +80,18 @@ export function PosterEditModal({
 
   const { pickFromLibrary, takePhoto } = usePosterPhoto(handlePicked);
 
-  const handleAvatarConfirm = ({ uri, sourceUri }: AiAvatarResult) => {
+  /** 既製アバターから1枚引いて即反映する。今と同じ絵は引かない */
+  const handleShufflePresetAvatar = () => {
     const previousUri = getPosterImageUri(settings.image);
+    const currentId =
+      settings.image.kind === "preset" ? settings.image.id : undefined;
     onImageChanged();
-    saveSettings({ ...settings, image: { kind: "ai", uri, sourceUri } });
-    // 生成元の写真はやり直し用に残すので、それ以外の旧画像だけ消す
-    if (previousUri !== uri && previousUri !== sourceUri) {
-      deleteManagedPosterPhoto(previousUri);
-    }
+    saveSettings({
+      ...settings,
+      image: { kind: "preset", id: pickRandomPresetAvatarId(currentId) },
+    });
+    // 差し替え前が端末に持っていた写真なら片付ける
+    deleteManagedPosterPhoto(previousUri);
     onClose();
   };
 
@@ -101,17 +102,9 @@ export function PosterEditModal({
     start();
   };
 
-  // 似顔絵化の元にする写真。AI画像を再生成するときも元写真を使い回す
-  const avatarSourceUri =
-    settings.image.kind === "photo"
-      ? settings.image.uri
-      : settings.image.kind === "ai"
-        ? settings.image.sourceUri
-        : undefined;
-
   const options: { label: string; onPress: () => void }[] = [
     { label: "ニックネームを変更する", onPress: () => setMode("name") },
-    { label: "アバターを生成する", onPress: () => setMode("avatar") },
+    { label: "アバターを生成する", onPress: handleShufflePresetAvatar },
     {
       label: "写真をアップロードする",
       onPress: () => runWithSheetClosed(pickFromLibrary),
@@ -171,16 +164,6 @@ export function PosterEditModal({
           saveSettings({ ...settings, candidateName });
           onClose();
         }}
-        onClose={() => setMode("sheet")}
-      />
-
-      <AiAvatarModal
-        visible={visible && mode === "avatar"}
-        wishId={wish.id}
-        slogan={wish.text}
-        paletteLabel={palette.label}
-        sourceUri={avatarSourceUri}
-        onConfirm={handleAvatarConfirm}
         onClose={() => setMode("sheet")}
       />
     </>
