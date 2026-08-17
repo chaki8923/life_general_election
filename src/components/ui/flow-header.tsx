@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pressable, Text, View } from "@/tw";
@@ -10,6 +11,8 @@ type FlowHeaderProps = {
   hideBack?: boolean;
   /** 会場背景など暗い画面に重ねるとき、地の白を消して文字を白にする */
   transparent?: boolean;
+  /** 右端に置く要素（ヘルプアイコンなど）。Figma 2040:6175 */
+  right?: ReactNode;
 };
 
 /** 選挙フロー共通ヘッダー（Figma: 白地h42・中央タイトル・左20pxに戻る矢印） */
@@ -18,6 +21,7 @@ export function FlowHeader({
   onBack,
   hideBack = false,
   transparent = false,
+  right,
 }: FlowHeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -51,6 +55,11 @@ export function FlowHeader({
             />
           </Pressable>
         )}
+        {right ? (
+          <View className="absolute inset-y-0 right-5 justify-center">
+            {right}
+          </View>
+        ) : null}
       </View>
     </View>
   );

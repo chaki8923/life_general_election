@@ -83,6 +83,12 @@ export async function generateAvatarImage({
       });
     }
 
+    if (__DEV__) {
+      console.log(
+        `[gemini-image] model=${MODEL} mode=${sourceImage ? "edit" : "create"}\n${prompt}`
+      );
+    }
+
     const res = await fetch(ENDPOINT, {
       method: "POST",
       signal: controller.signal,

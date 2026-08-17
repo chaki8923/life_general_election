@@ -26,6 +26,8 @@ type AiUsageStore = {
   /** 上限内なら1回消費してtrue。上限に達していればfalse */
   consume: () => boolean;
   grantConsent: () => void;
+  /** 開発用: 本日の生成回数を0に戻す */
+  resetUsage: () => void;
   setHasHydrated: (v: boolean) => void;
 };
 
@@ -51,6 +53,7 @@ export const useAiUsageStore = create<AiUsageStore>()(
         return true;
       },
       grantConsent: () => set({ avatarConsent: true }),
+      resetUsage: () => set({ date: today(), count: 0 }),
       setHasHydrated: (v) => set({ hasHydrated: v }),
     }),
     {

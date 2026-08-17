@@ -19,6 +19,8 @@ type WishStore = {
   /** 追加したWishを返す。同一text+sourceElectionIdが既にあれば既存を返す */
   addWish: (input: WishInput) => Wish;
   markDone: (id: string) => Wish | undefined;
+  /** 公約ごと削除する。ローカルのみ（Firestore側の削除APIは未実装） */
+  removeWish: (id: string) => void;
   markExcused: (id: string, excuse: string) => Wish | undefined;
   setPosterSettings: (id: string, settings: PosterSettings) => Wish | undefined;
   /** @deprecated 完成画像保存のversion 1互換API */
@@ -68,6 +70,9 @@ export const useWishStore = create<WishStore>()(
           ),
         });
         return updated;
+      },
+      removeWish: (id) => {
+        set({ wishes: get().wishes.filter((wish) => wish.id !== id) });
       },
       markExcused: (id, excuse) => {
         const current = get().wishes.find((wish) => wish.id === id);

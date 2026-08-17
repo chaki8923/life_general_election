@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   Extrapolation,
+  FadeIn,
   interpolate,
   useAnimatedStyle,
   useReducedMotion,
@@ -16,7 +17,7 @@ import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
 import { BubbleField } from "@/features/election/bubble-field";
 import { generateWorrySuggestions } from "@/features/election/generate-worries";
-import { useDesignScale } from "@/features/election/layout";
+import { CONTENT_TOP, useDesignScale } from "@/features/election/layout";
 import { WorryConfirmModal } from "@/features/election/worry-confirm-modal";
 import { mirrorWorry } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
@@ -34,13 +35,19 @@ const HEADING_WIDTH = 292;
 const HEADING_TO_BUTTON_GAP = 34;
 const HEADING_HEIGHT = 88;
 
-const BRAIN_SIZE = 664;
-const BRAIN_LEFT = -134;
-const BRAIN_TOP_INTRO = 287.7;
-const BRAIN_TOP_PICKING = 410.7;
-/** 吹き出しが飛び出す起点（脳の上のほう） */
-const BRAIN_ORIGIN_X = 195;
-const BRAIN_ORIGIN_Y = BRAIN_TOP_PICKING + 140;
+/** Figma 1700:6814 のキャラ矩形（絶対 x:-40 y:562 / 471×707）。導入・吹き出しで動かない */
+const CHARACTER_LEFT = -40;
+const CHARACTER_TOP = 407.7;
+const CHARACTER_WIDTH = 471;
+const CHARACTER_HEIGHT = 707;
+/** 吹き出しが飛び出す起点（キャラの中心x = -40 + 471/2） */
+const CHARACTER_ORIGIN_X = 195;
+const CHARACTER_ORIGIN_Y = CHARACTER_TOP + 140;
+
+/** Figma 2215:18535。おでこに乗る案内文（絶対 y:674 → CONTENT_TOP基準） */
+const FOREHEAD_LEFT = 101;
+const FOREHEAD_TOP = 674 - CONTENT_TOP;
+const FOREHEAD_WIDTH = 188;
 
 export default function WorrySuggestScreen() {
   const router = useRouter();
@@ -65,8 +72,6 @@ export default function WorrySuggestScreen() {
     : -1;
 
   const intro = useSharedValue(1);
-  /** 脳の下方向オフセット（実機px）。レイアウトではなくtransformで動かす */
-  const brainShift = useSharedValue(0);
   const introShift = s(406);
 
   // result.tsxと同じく、setWorryCandidatesのzustand同期flushでeffectクリーンアップが
@@ -106,21 +111,16 @@ export default function WorrySuggestScreen() {
     }),
     [introShift]
   );
-  const brainStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: brainShift.value }],
-  }));
 
-  // 画面01 → 02（見出しとボタンが縮んで消え、脳が下がる）→ 03/04（吹き出しがポップ）
+  // 画面02 →（見出しとボタンが縮んで消える）→ 03/04（吹き出しがポップ）
+  // Figmaではキャラが両画面で同じ位置なので、キャラ自体は動かさない
   const startPicking = () => {
     setPicking(true);
-    const shift = s(BRAIN_TOP_PICKING - BRAIN_TOP_INTRO);
     if (reduceMotion) {
       intro.value = 0;
-      brainShift.value = shift;
       return;
     }
     intro.value = withTiming(0, { duration: 600 });
-    brainShift.value = withTiming(shift, { duration: 600 });
   };
 
   // 捌けている最中に別の吹き出しを選び直せないようにする
@@ -198,27 +198,45 @@ export default function WorrySuggestScreen() {
         <FlowStepper current={2} showProfileStep />
       </View>
 
-      {/* ここから下はFigmaの絶対座標レイアウト。脳がはみ出すのでクリップする */}
+      {/* ここから下はFigmaの絶対座標レイアウト。キャラがはみ出すのでクリップする */}
       <View className="flex-1 overflow-hidden">
-        <Animated.View
+        <View
           pointerEvents="none"
-          style={[
-            {
-              position: "absolute",
-              left: s(BRAIN_LEFT),
-              top: s(BRAIN_TOP_INTRO),
-              width: s(BRAIN_SIZE),
-              height: s(BRAIN_SIZE),
-            },
-            brainStyle,
-          ]}
+          style={{
+            position: "absolute",
+            left: s(CHARACTER_LEFT),
+            top: s(CHARACTER_TOP),
+            width: s(CHARACTER_WIDTH),
+            height: s(CHARACTER_HEIGHT),
+          }}
         >
           <Image
-            source={require("../../../assets/election/brain.png")}
+            source={require("../../../assets/election/worry-character.png")}
             style={{ width: "100%", height: "100%" }}
             contentFit="contain"
           />
-        </Animated.View>
+        </View>
+
+        {/* 吹き出し表示中だけ、キャラのおでこに案内文を重ねる */}
+        {picking ? (
+          <Animated.Text
+            entering={reduceMotion ? undefined : FadeIn.delay(300).duration(300)}
+            pointerEvents="none"
+            numberOfLines={2}
+            className="text-center font-flow text-flow-ink"
+            style={{
+              position: "absolute",
+              left: s(FOREHEAD_LEFT),
+              top: s(FOREHEAD_TOP),
+              width: s(FOREHEAD_WIDTH),
+              fontSize: s(20),
+              lineHeight: s(32),
+              letterSpacing: s(1),
+            }}
+          >
+            あなたの悩みに{"\n"}近いものを選んでね
+          </Animated.Text>
+        ) : null}
 
         {picking && worryCandidates ? (
           <BubbleField
@@ -226,8 +244,8 @@ export default function WorrySuggestScreen() {
             selectedId={selected?.id ?? null}
             onSelect={handleSelect}
             onFocusEnd={() => setConfirming(true)}
-            originX={BRAIN_ORIGIN_X}
-            originY={BRAIN_ORIGIN_Y}
+            originX={CHARACTER_ORIGIN_X}
+            originY={CHARACTER_ORIGIN_Y}
           />
         ) : null}
 
@@ -243,46 +261,28 @@ export default function WorrySuggestScreen() {
             introStyle,
           ]}
         >
+          {/* 1つのTextに2行入れると高さ88の枠で2行目が切れるので、行ごとに箱を持つ */}
           <View style={{ height: s(HEADING_HEIGHT) }}>
-            <View
-              style={{
-                height: s(44),
-                flexDirection: "row",
-                alignItems: "baseline",
-                justifyContent: "center",
-              }}
-            >
-              <Text
-                numberOfLines={1}
-                className="font-flow text-flow-ink"
-                style={{ fontSize: s(28), lineHeight: s(44) }}
+            {["あなたの興味から", "悩みを見つけてきたよ"].map((line) => (
+              <View
+                key={line}
+                // 「悩みを見つけてきたよ」は280pxで枠292pxとほぼ同幅。行だけ左右に
+                // 逃がして三点リーダ化を防ぐ（下のボタンは292のまま）
+                style={{
+                  height: s(44),
+                  marginHorizontal: -s(24),
+                  justifyContent: "center",
+                }}
               >
-                あなたの
-              </Text>
-              <Text
-                numberOfLines={1}
-                className="font-flow text-flow-pink"
-                style={{ fontSize: s(32), lineHeight: s(44) }}
-              >
-                悩み
-              </Text>
-              <Text
-                numberOfLines={1}
-                className="font-flow text-flow-ink"
-                style={{ fontSize: s(28), lineHeight: s(44) }}
-              >
-                に
-              </Text>
-            </View>
-            <View style={{ height: s(44), justifyContent: "center" }}>
-              <Text
-                numberOfLines={1}
-                className="text-center font-flow text-flow-ink"
-                style={{ fontSize: s(28), lineHeight: s(44) }}
-              >
-                近いものを選んでね
-              </Text>
-            </View>
+                <Text
+                  numberOfLines={1}
+                  className="text-center font-flow text-flow-ink"
+                  style={{ fontSize: s(28), lineHeight: s(44) }}
+                >
+                  {line}
+                </Text>
+              </View>
+            ))}
           </View>
           <View style={{ height: s(HEADING_TO_BUTTON_GAP) }} />
           <FlowButton
