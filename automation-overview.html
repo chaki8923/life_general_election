@@ -1,0 +1,1058 @@
+<title>自動化の配線図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=42dot+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap">
+
+<style>
+  :root {
+    --bg: #F5F8F8;
+    --surface: #FFFFFF;
+    --surface-2: #EAF1F1;
+    --line: #D3DFDF;
+    --line-strong: #B4C6C6;
+    --ink: #12201F;
+    --ink-2: #465958;
+    --ink-3: #718382;
+    --accent: #0D7B85;
+    --accent-ink: #0A5C64;
+    --accent-soft: #DCEEF0;
+    --pass: #1E7A4C;
+    --pass-soft: #DDEEE4;
+    --block: #AF3830;
+    --block-soft: #F6E1DF;
+    --hold: #96660F;
+    --hold-soft: #F5E9D2;
+    --shadow: 0 1px 2px rgba(18, 32, 31, .05), 0 8px 24px -12px rgba(18, 32, 31, .18);
+
+    --display: "42dot Sans", "Noto Sans JP", system-ui, sans-serif;
+    --body: "Noto Sans JP", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0C1414;
+      --surface: #121D1D;
+      --surface-2: #182626;
+      --line: #243737;
+      --line-strong: #334A4A;
+      --ink: #E4EEED;
+      --ink-2: #A2B4B3;
+      --ink-3: #7B8E8D;
+      --accent: #4ECED9;
+      --accent-ink: #7FE0E8;
+      --accent-soft: #0E3438;
+      --pass: #55BC89;
+      --pass-soft: #123227;
+      --block: #E5776E;
+      --block-soft: #38201E;
+      --hold: #D6A748;
+      --hold-soft: #33270F;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -14px rgba(0, 0, 0, .7);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #0C1414;
+    --surface: #121D1D;
+    --surface-2: #182626;
+    --line: #243737;
+    --line-strong: #334A4A;
+    --ink: #E4EEED;
+    --ink-2: #A2B4B3;
+    --ink-3: #7B8E8D;
+    --accent: #4ECED9;
+    --accent-ink: #7FE0E8;
+    --accent-soft: #0E3438;
+    --pass: #55BC89;
+    --pass-soft: #123227;
+    --block: #E5776E;
+    --block-soft: #38201E;
+    --hold: #D6A748;
+    --hold-soft: #33270F;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 10px 28px -14px rgba(0, 0, 0, .7);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    padding: 64px 0 40px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    margin: 0 0 18px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: clamp(34px, 5.4vw, 52px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.14;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 20px 0 0;
+    max-width: 62ch;
+    font-size: 16px;
+    color: var(--ink-2);
+  }
+
+  .summary {
+    list-style: none;
+    margin: 40px 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+    gap: 14px;
+  }
+
+  .summary li {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .summary a {
+    color: inherit;
+    text-decoration: none;
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15.5px;
+    line-height: 1.4;
+  }
+
+  .summary a:hover { color: var(--accent-ink); }
+  .summary p { margin: 0; font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+
+  .where {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+
+  /* ---------- layout ---------- */
+
+  .shell {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: 56px;
+    align-items: start;
+  }
+
+  .toc {
+    position: sticky;
+    top: 32px;
+    padding-top: 56px;
+    font-size: 13px;
+  }
+
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-left: 1px solid var(--line);
+  }
+
+  .toc a {
+    display: block;
+    padding: 5px 0 5px 14px;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+    line-height: 1.5;
+  }
+
+  .toc a:hover { color: var(--accent-ink); border-left-color: var(--accent); }
+
+  section { padding-top: 56px; scroll-margin-top: 24px; }
+
+  h2 {
+    margin: 0 0 8px;
+    font-family: var(--display);
+    font-size: clamp(23px, 3vw, 29px);
+    font-weight: 700;
+    letter-spacing: -.015em;
+    line-height: 1.3;
+    text-wrap: balance;
+  }
+
+  h3 {
+    margin: 40px 0 14px;
+    font-family: var(--display);
+    font-size: 16.5px;
+    font-weight: 700;
+    letter-spacing: -.005em;
+  }
+
+  .section-note {
+    margin: 0 0 4px;
+    max-width: 66ch;
+    color: var(--ink-2);
+  }
+
+  p { max-width: 66ch; }
+
+  code {
+    font-family: var(--mono);
+    font-size: .875em;
+    background: var(--surface-2);
+    border-radius: 2px;
+    padding: .12em .4em;
+    word-break: break-word;
+  }
+
+  a { color: var(--accent-ink); }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* ---------- 全体像レール ---------- */
+
+  .railwrap { overflow-x: auto; padding: 6px 0 14px; }
+
+  .rail {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(148px, 1fr);
+    align-items: stretch;
+    gap: 0;
+    min-width: 900px;
+  }
+
+  .stage {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 14px 15px 15px;
+    margin-right: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .stage:last-child { margin-right: 0; }
+
+  .stage::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -22px;
+    width: 22px;
+    height: 1px;
+    background: var(--line-strong);
+  }
+
+  .stage:last-child::after { display: none; }
+
+  .stage::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -8px;
+    width: 6px;
+    height: 6px;
+    border-top: 1px solid var(--line-strong);
+    border-right: 1px solid var(--line-strong);
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .stage:last-child::before { display: none; }
+
+  .stage-name { font-family: var(--display); font-weight: 700; font-size: 14px; line-height: 1.4; }
+  .stage-file { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); line-height: 1.6; word-break: break-all; }
+
+  .host {
+    align-self: flex-start;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 2px;
+    background: var(--surface-2);
+    color: var(--ink-2);
+  }
+
+  .host.gh { background: var(--accent-soft); color: var(--accent-ink); }
+  .host.local { background: var(--hold-soft); color: var(--hold); }
+  .host.ext { background: var(--surface-2); color: var(--ink-2); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+
+  .legend li { display: flex; align-items: center; gap: 7px; }
+
+  .swatch {
+    width: 26px;
+    height: 14px;
+    border-radius: 2px;
+    flex: none;
+  }
+
+  /* ---------- ステップ ---------- */
+
+  .steps {
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 26px;
+    border-left: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .steps > li { position: relative; }
+
+  .steps > li::before {
+    content: "";
+    position: absolute;
+    left: -30px;
+    top: 9px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--accent);
+  }
+
+  .step-head {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+
+  .step-body { margin: 3px 0 0; font-size: 14px; color: var(--ink-2); max-width: 64ch; }
+
+  .branch {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .branch li {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: baseline;
+    padding: 11px 14px;
+    border-radius: 3px;
+    font-size: 13.5px;
+    line-height: 1.7;
+    background: var(--surface-2);
+    border-left: 3px solid var(--line-strong);
+  }
+
+  .branch li.yes { background: var(--pass-soft); border-left-color: var(--pass); }
+  .branch li.no { background: var(--hold-soft); border-left-color: var(--hold); }
+  .branch li.stop { background: var(--block-soft); border-left-color: var(--block); }
+
+  .branch b {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .branch li.yes b { color: var(--pass); }
+  .branch li.no b { color: var(--hold); }
+  .branch li.stop b { color: var(--block); }
+
+  /* ---------- テーブル ---------- */
+
+  .tablewrap {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    background: var(--surface);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-size: 13.5px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 11px 15px;
+    border-bottom: 1px solid var(--line);
+    vertical-align: top;
+    line-height: 1.7;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: 0; }
+  td code { background: transparent; padding: 0; color: var(--ink); }
+
+  .num {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+    width: 1%;
+    white-space: nowrap;
+  }
+
+  /* ---------- callout / code ---------- */
+
+  .callout {
+    margin: 24px 0 0;
+    padding: 15px 18px;
+    border-radius: 3px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    font-size: 13.5px;
+    line-height: 1.8;
+  }
+
+  .callout.warn { border-left-color: var(--hold); }
+  .callout p { margin: 0; max-width: 68ch; }
+  .callout p + p { margin-top: 8px; }
+
+  .callout strong { font-family: var(--display); }
+
+  pre {
+    margin: 16px 0 0;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.85;
+    color: var(--ink);
+  }
+
+  pre .c { color: var(--ink-3); }
+
+  .footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 860px) {
+    .page { padding: 0 20px 72px; }
+    .shell { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    .toc { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="page">
+
+  <header class="masthead">
+    <p class="eyebrow">life_general_election / 開発自動化</p>
+    <h1>自動化の配線図</h1>
+    <p class="lede">
+      このリポジトリには独立した4本の自動化が通っています。何がきっかけで動き、どこで通し、どこで止まるのか。
+      入口（Teams での依頼）から出口（手元のワークツリー）まで、実装ファイルに紐づけて並べたリファレンスです。
+    </p>
+
+    <ul class="summary">
+      <li>
+        <span class="where">GitHub Actions</span>
+        <a href="#automerge">PR の自動マージ</a>
+        <p>CI と AI レビューの両方を通った <code>auto-merge</code> ラベル付き PR だけを squash merge。</p>
+      </li>
+      <li>
+        <span class="where">ローカル</span>
+        <a href="#sync">開発環境への自動取り込み</a>
+        <p>main の更新を60秒ごとに検知して、作業ブランチへ安全にマージ。</p>
+      </li>
+      <li>
+        <span class="where">ローカル → Teams</span>
+        <a href="#expo">Expo 起動通知</a>
+        <p>トンネル URL と QR コードを Teams のグループチャットへ自動投稿。</p>
+      </li>
+      <li>
+        <span class="where">Teams → GitHub</span>
+        <a href="#teams">依頼から issue を作る</a>
+        <p>Cloudflare Worker が受けて <code>@claude</code> 付き issue を立て、実装を起動。</p>
+      </li>
+    </ul>
+  </header>
+
+  <div class="shell">
+
+    <nav class="toc" aria-label="目次">
+      <ol>
+        <li><a href="#overview">全体像</a></li>
+        <li><a href="#automerge">1. PR の自動マージ</a></li>
+        <li><a href="#sync">2. 開発環境への取り込み</a></li>
+        <li><a href="#expo">3. Expo 起動通知</a></li>
+        <li><a href="#teams">4. Teams → issue</a></li>
+        <li><a href="#ops">設定と緊急停止</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <!-- ================= 全体像 ================= -->
+      <section id="overview">
+        <h2>全体像</h2>
+        <p class="section-note">
+          4本は一本道につながっているように見えますが、実際に結ばれているのは <code>origin/main</code> の SHA だけです。
+          手前が止まっても後ろは動きます。
+        </p>
+
+        <div class="railwrap">
+          <div class="rail">
+            <div class="stage">
+              <span class="host ext">Teams</span>
+              <span class="stage-name">依頼を送る</span>
+              <span class="stage-file">Power Automate / curl</span>
+            </div>
+            <div class="stage">
+              <span class="host ext">Cloudflare</span>
+              <span class="stage-name">issue を作成</span>
+              <span class="stage-file">cloudflare-worker/src/index.ts</span>
+            </div>
+            <div class="stage">
+              <span class="host gh">GitHub</span>
+              <span class="stage-name">実装して PR</span>
+              <span class="stage-file">.github/workflows/claude.yml</span>
+            </div>
+            <div class="stage">
+              <span class="host gh">GitHub</span>
+              <span class="stage-name">2つの関門</span>
+              <span class="stage-file">ci.yml / ai-review.yml</span>
+            </div>
+            <div class="stage">
+              <span class="host gh">GitHub</span>
+              <span class="stage-name">main へ squash</span>
+              <span class="stage-file">auto-merge.yml</span>
+            </div>
+            <div class="stage">
+              <span class="host local">ローカル</span>
+              <span class="stage-name">手元に取り込む</span>
+              <span class="stage-file">scripts/auto-sync.js</span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="legend">
+          <li><span class="swatch" style="background: var(--accent-soft); border: 1px solid var(--accent);"></span>GitHub Actions で動く</li>
+          <li><span class="swatch" style="background: var(--hold-soft); border: 1px solid var(--hold);"></span>自分のマシンで動く</li>
+          <li><span class="swatch" style="background: var(--surface-2); border: 1px solid var(--line-strong);"></span>外部サービス</li>
+        </ul>
+
+        <div class="callout">
+          <p>
+            <strong>Expo 起動通知だけはこの流れの外側にいます。</strong>
+            他の3本が「依頼 → コード → main」の一方向なのに対し、こちらは開発サーバーの状態を Teams へ流す逆向きの配線です。
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= 1. 自動マージ ================= -->
+      <section id="automerge">
+        <p class="eyebrow">GitHub Actions</p>
+        <h2>1. PR の自動マージ</h2>
+        <p class="section-note">
+          GitHub Free プランでは標準の auto-merge が使えないため、ワークフローで自前実装しています。
+          関門は <b>CI</b> と <b>AI Review Gate</b> の2つ。両方が「今の SHA で」成功していなければマージされません。
+        </p>
+
+        <h3>マージの判定 — <code>auto-merge.yml</code></h3>
+        <p class="step-body">
+          <code>CI</code> または <code>AI Review</code> の完了（<code>workflow_run</code>）で起動します。PR 番号を指定した手動実行も可能です。
+          以下を<b>すべて</b>満たさないと、何もせず終了します。
+        </p>
+
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr><th></th><th>条件</th><th>満たさないとき</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="num">1</td><td>head SHA に一致する open な PR がある</td><td>対象なしとしてスキップ</td></tr>
+              <tr><td class="num">2</td><td>Draft ではない</td><td>スキップ</td></tr>
+              <tr><td class="num">3</td><td><code>auto-merge</code> ラベルが付いている</td><td>スキップ</td></tr>
+              <tr><td class="num">4</td><td>check-run <code>lint-and-typecheck</code> が success</td><td>スキップ</td></tr>
+              <tr><td class="num">5</td><td>commit status <code>AI Review Gate</code> が success</td><td>スキップ</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout">
+          <p>
+            <strong>4と5は、起動のきっかけになった SHA ではなく「その時点の最新 SHA」で取り直して判定します。</strong>
+            レビュー中に push された未検証のコミットが、古い成功結果に便乗してマージされるのを防ぐためです。
+          </p>
+        </div>
+
+        <p class="step-body" style="margin-top: 24px;">
+          通過したら <code>gh pr merge --squash --delete-branch</code>。ブランチはそのまま削除されます。
+        </p>
+
+        <h3>関門その1 — CI（<code>ci.yml</code>）</h3>
+        <p class="step-body">
+          PR と main への push で <code>npx tsc --noEmit</code> と <code>npm run lint</code> を実行するだけの単純なジョブです。
+          判定に使われるのはジョブ名 <code>lint-and-typecheck</code> の結果です。
+        </p>
+
+        <h3>関門その2 — AI レビュー（<code>ai-review.yml</code>）</h3>
+        <p class="step-body">
+          Codex が読み取り専用でレビューし、問題があれば Claude が直して再レビュー。3回直しても残るなら人間に渡します。
+        </p>
+
+        <ol class="steps">
+          <li>
+            <div class="step-head">レビュー対象か判定する</div>
+            <p class="step-body">
+              open / 非 Draft / base が main / 同一リポジトリのブランチ / <code>auto-merge</code> ラベルあり / <code>ai-review-blocked</code> なし。
+              このすべてを満たすときだけ先へ進みます。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">AI Review Gate を pending にする</div>
+            <p class="step-body">レビュー中はマージ判定が通らない状態を明示します。</p>
+          </li>
+          <li>
+            <div class="step-head">Codex がレビューする</div>
+            <p class="step-body">
+              報告されるのは <b>P0（重大な security / data-loss / availability の欠陥）</b>と
+              <b>P1（実際に起きうるバグ・破綻したユーザー動線）</b>のみ。
+              スタイルの好みや任意のリファクタは対象外です。指摘は PR のインラインコメントとして投稿されます。
+            </p>
+            <ul class="branch">
+              <li class="yes"><b>指摘ゼロ</b><span>Gate を success にし、<code>auto-merge</code> ワークフローを明示的に再起動してマージへ。</span></li>
+              <li class="no"><b>指摘あり</b><span>自動修正へ進む（3回まで）。</span></li>
+            </ul>
+          </li>
+          <li>
+            <div class="step-head">Claude が指摘だけを直す</div>
+            <p class="step-body">
+              <code>ai-review-attempt-N</code> ラベルで回数を数えながら、指摘された箇所だけを最小の変更で修正し、
+              型チェックと lint を通してから既存の PR ブランチへ直接 push します。新しい PR は作らず、ワークフローファイルも触りません。
+              その後、自分でレビューを再実行します。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">3回で打ち切る</div>
+            <ul class="branch">
+              <li class="stop"><b>打ち切り時</b><span>Gate を failure に、<code>auto-merge</code> ラベルを外して <code>ai-review-blocked</code> を付与。PR にコメントし、Teams にも通知します。</span></li>
+            </ul>
+            <p class="step-body">
+              手動で直したあと <code>auto-merge</code> ラベルを付け直すと、<code>ai-review-blocked</code> と回数ラベルが自動で外れてレビューが再開します。
+            </p>
+          </li>
+        </ol>
+
+        <h3>マージ完了通知が2か所にある理由</h3>
+        <p class="step-body">
+          <code>notify-teams-on-merge.yml</code> は PR のクローズ（マージ済みのみ）で発火しますが、
+          <b><code>GITHUB_TOKEN</code> で行ったマージは他のワークフローを起動しません。</b>
+          そのため自動マージ経路では発火せず、同じ通知が <code>auto-merge.yml</code> の中にも埋め込まれています。
+        </p>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>マージのしかた</th><th>通知を送るファイル</th></tr></thead>
+            <tbody>
+              <tr><td>人が手でマージ</td><td><code>notify-teams-on-merge.yml</code></td></tr>
+              <tr><td>自動マージ</td><td><code>auto-merge.yml</code> 内の通知ステップ</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>使われるラベル</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>ラベル</th><th>意味</th><th>付ける人</th></tr></thead>
+            <tbody>
+              <tr><td><code>auto-merge</code></td><td>関門を通ったら自動マージしてよい</td><td>Claude（PR 作成時）/ 人</td></tr>
+              <tr><td><code>ai-review-attempt-1〜3</code></td><td>自動修正の回数</td><td>ai-review.yml</td></tr>
+              <tr><td><code>ai-review-blocked</code></td><td>3回直しても P0/P1 が残った</td><td>ai-review.yml</td></tr>
+              <tr><td><code>from-teams</code></td><td>Teams 経由で作られた issue</td><td>Cloudflare Worker</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ================= 2. auto-sync ================= -->
+      <section id="sync">
+        <p class="eyebrow">ローカル / scripts/auto-sync.js</p>
+        <h2>2. 開発環境への自動取り込み</h2>
+        <p class="section-note">
+          main に入った変更を、手元のリポジトリへ降ろしてくる仕組みです。
+          GitHub 側の自動マージとは完全に独立していて、見ているのは <code>origin/main</code> の SHA だけ。
+          誰がどうやって main を更新したかは問いません。
+        </p>
+
+<pre><span class="c"># 1回だけチェックして終了</span>
+npm run sync
+
+<span class="c"># 60秒間隔で監視し続ける（開発中に別ターミナルで起動しておく）</span>
+npm run sync:watch</pre>
+
+        <h3>1周回でやること</h3>
+        <ol class="steps">
+          <li>
+            <div class="step-head">origin/main を fetch する</div>
+            <p class="step-body">ネットワーク断などで失敗しても、警告を出すだけで次の周回に回します。</p>
+          </li>
+          <li>
+            <div class="step-head">ローカル main を最新にする</div>
+            <p class="step-body">
+              今どこにいるかで手段が変わります。<b>main にいるなら</b> <code>git merge --ff-only</code>、
+              <b>main 以外にいるなら</b> <code>git fetch origin main:main</code> で <b>checkout せずに</b> fast-forward します。
+              作業ブランチを離れずに済ませるための使い分けです。
+              ここが失敗（origin と分岐している）しても、作業ブランチへの取り込みは続行します。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">作業ブランチへマージする</div>
+            <p class="step-body">
+              <code>git merge --no-edit origin/main</code>。
+              main 上にいるとき、detached HEAD のとき、すでに最新のときは何もしません。
+            </p>
+          </li>
+        </ol>
+
+        <h3>マージせず通知だけ出すケース</h3>
+        <p class="step-body">壊れた状態のワークツリーを黙って残さないための安全弁です。</p>
+
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>状況</th><th>ふるまい</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>追跡ファイルに未コミット変更がある</td>
+                <td>スキップ。<b>未追跡ファイルだけなら続行します</b>。コミットすれば次の周回で自動的に取り込まれます。</td>
+              </tr>
+              <tr>
+                <td>merge / rebase が進行中</td>
+                <td>スキップ。<code>.git</code> 内の <code>MERGE_HEAD</code> / <code>rebase-merge</code> / <code>rebase-apply</code> の有無で判定します。</td>
+              </tr>
+              <tr>
+                <td>マージがコンフリクトした</td>
+                <td><code>git merge --abort</code> で<b>元の状態へ巻き戻し</b>、手動対応を促します。</td>
+              </tr>
+              <tr>
+                <td>ローカル main が origin と分岐している</td>
+                <td>「要確認」を通知。fast-forward できないので触りません。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>通知とループ</h3>
+        <p class="step-body">
+          結果はコンソールと macOS の通知センター（<code>osascript</code>、macOS 以外では無視）に出ます。
+          通知は <b>origin/main の SHA と種別の組み合わせごとに1回だけ</b>。
+          60秒おきに同じ警告が鳴り続けることはありません（ログには毎回出ます）。
+          ループは <code>setInterval</code> ではなく逐次 <code>setTimeout</code> で、
+          fetch や merge が60秒を超えても周回が重ならないようにしています。
+        </p>
+      </section>
+
+      <!-- ================= 3. Expo 通知 ================= -->
+      <section id="expo">
+        <p class="eyebrow">ローカル → Teams / scripts/start-tunnel-notify.js</p>
+        <h2>3. Expo 起動通知</h2>
+        <p class="section-note">
+          開発サーバーを立ち上げると、接続用の QR コードが Teams のグループチャットに届きます。
+          チームの誰でも、その場で実機からアプリを開けるようにするための配線です。
+        </p>
+
+<pre>npm run start:tunnel
+
+<span class="c"># expo への追加引数はそのまま渡せる</span>
+npm run start:tunnel -- --port 8082</pre>
+
+        <h3>起動から通知まで</h3>
+        <ol class="steps">
+          <li>
+            <div class="step-head"><code>.env</code> を読む</div>
+            <p class="step-body">シェルで export 済みの値は上書きしません。ファイルが無くても正常系として続行します。</p>
+          </li>
+          <li>
+            <div class="step-head"><code>expo start -c --tunnel</code> を起動する</div>
+            <p class="step-body">
+              出力は素通し（<code>stdio: 'inherit'</code>）。
+              <b>stdout をパースしないのが設計上の肝です</b>— pipe すると Expo CLI が非対話モードになり、QR もキー操作も全部消えてしまいます。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">ngrok のローカル API を叩いて URL を探す</div>
+            <p class="step-body">
+              <code>http://127.0.0.1:4040/api/tunnels</code> を2秒間隔でポーリング（最大180秒）。
+              起動直後は接続拒否になりますが、次の周回で拾います。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">自分のトンネルか確かめる</div>
+            <p class="step-body">
+              <code>.expo/settings.json</code> の <code>urlRandomness</code> と突き合わせ、
+              別プロジェクトや古いプロセスが張った ngrok トンネルを誤検出しないようにしています。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">Teams へカードを送る</div>
+            <p class="step-body">
+              「今から開発します！」の見出し、起動者名と時刻、<code>exp://</code> URL のテキスト、そして QR 画像を載せた Adaptive Card。
+              <b>QR が主動線</b>です — <code>exp://</code> リンクは Teams デスクトップ版では開けないことがあります。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">停止したら停止カードを送る</div>
+            <p class="step-body">
+              Ctrl+C で止めると、QR なしの停止カードが同じチャットに届きます。
+              送られるのは<b>起動通知を送ったセッションだけ</b>。<code>kill -9</code> や
+              ターミナルの強制終了ではプロセスが即死するため送れません。
+            </p>
+          </li>
+        </ol>
+
+        <h3>設定</h3>
+<pre><span class="c"># .env（gitignore 済み）</span>
+TEAMS_WEBHOOK_URL=&lt;Power Automate の HTTP POST URL&gt;
+TEAMS_NOTIFY_NAME=chaki   <span class="c"># 省略時は OS のユーザー名</span></pre>
+
+        <p class="step-body" style="margin-top: 16px;">
+          <code>TEAMS_WEBHOOK_URL</code> が未設定なら、警告を出して通知だけスキップし、expo は通常どおり起動します。
+          通知の送信に失敗した場合も expo は落ちません。
+        </p>
+
+        <div class="callout warn">
+          <p><strong>Power Automate 側で詰まりやすい2点</strong></p>
+          <p>
+            <b>トリガーの「このフローをトリガーできるユーザー」は必ず「誰でも」にする。</b>
+            「テナント内すべて」にすると OAuth トークンが必須になり、401（<code>DirectApiAuthorizationRequired</code>）で弾かれます。
+          </p>
+          <p>
+            <b>アダプティブカード欄は fx（式）タブから入力する。</b>
+            <code>triggerBody()?['attachments'][0]['content']</code> を直接タイプするとプレーンテキスト扱いになり、
+            「message body is invalid JSON」で失敗します。コードビューで先頭に <code>@</code> が付いていれば正しく入っています。
+          </p>
+        </div>
+
+        <div class="callout">
+          <p>
+            <strong>QR 画像は quickchart.io で生成しています。</strong>
+            つまりトンネル URL が外部サービスに渡ります。exp.direct の URL は URL を知っていれば誰でも到達できる一時的なものなので許容範囲ですが、
+            気になる場合はカード内の URL テキストだけを使ってください。
+          </p>
+        </div>
+      </section>
+
+      <!-- ================= 4. Teams → issue ================= -->
+      <section id="teams">
+        <p class="eyebrow">Teams → GitHub / cloudflare-worker</p>
+        <h2>4. 依頼から issue を作る</h2>
+        <p class="section-note">
+          「こう直してほしい」を投げると、<code>@claude</code> 付きの issue が立ち、実装から PR 作成までが自動で走り出します。
+          中継役は Cloudflare Worker（無料枠 10万リクエスト／日）です。
+        </p>
+
+        <h3>Worker がやること</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th></th><th>処理</th><th>結果</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td>POST 以外のメソッド</td><td>405 を返す</td></tr>
+              <tr><td class="num">2</td><td><code>x-shared-secret</code> ヘッダーを照合</td><td>不一致なら 401</td></tr>
+              <tr><td class="num">3</td><td>ボディ <code>{ text, user?, title? }</code> を検証</td><td><code>text</code> 必須。<code>title</code> 省略時は本文を80文字で切り詰め</td></tr>
+              <tr><td class="num">4</td><td>GitHub REST API で issue を作成</td><td>失敗したら 502 とエラー詳細</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>作られる issue の形</h3>
+        <div class="tablewrap">
+          <table>
+            <tbody>
+              <tr><th>タイトル</th><td><code>[Teams] &lt;title&gt;</code></td></tr>
+              <tr><th>本文</th><td>先頭に <code>@claude</code>、続けて「以下のリクエストを実装して PR を作成してください」＋依頼者＋依頼内容</td></tr>
+              <tr><th>ラベル</th><td><code>from-teams</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>issue から先 — <code>claude.yml</code></h3>
+        <p class="step-body">
+          本文かタイトルに <code>@claude</code> を含む issue（コメント、PR レビューコメントでも可）で起動します。
+          ワークフロー内の指示で、次のことを守らせています。
+        </p>
+
+        <ol class="steps">
+          <li>
+            <div class="step-head">Expo v57 のドキュメントを参照し、日本語で応答する</div>
+          </li>
+          <li>
+            <div class="step-head">issue に Figma URL があればデザインを実際に見る</div>
+            <p class="step-body">
+              Figma REST API で色やサイズを取得し、レンダリング画像をダウンロードして目視で確認してから実装に反映します。
+              URL が無ければこの手順は飛ばします。
+            </p>
+          </li>
+          <li>
+            <div class="step-head">自分で PR を作る</div>
+            <p class="step-body">
+              型チェックと lint の通過を確認して push したあと、<b>「手動 PR 作成リンクの案内は禁止」</b>として
+              <code>gh pr create --label auto-merge</code> を必ず実行させます。ラベルが無ければ先に作成します。
+              — ここで付く <code>auto-merge</code> ラベルが、そのまま1本目の自動マージにつながります。
+            </p>
+          </li>
+        </ol>
+
+        <div class="callout warn">
+          <p>
+            <strong>Teams から Worker への直結はまだ完了していません。</strong>
+            Power Automate の HTTP アクションが有料プラン（Premium）の機能のためです。
+            現状の運用は次の2つ。
+          </p>
+          <p>
+            ① GitHub の Web UI やモバイルアプリから <code>@claude</code> 付きの issue を作る<br>
+            ② Worker を curl で直接叩く
+          </p>
+        </div>
+
+<pre>curl -X POST "https://teams-to-github.&lt;subdomain&gt;.workers.dev" \
+  -H "Content-Type: application/json" \
+  -H "x-shared-secret: &lt;SHARED_SECRET&gt;" \
+  -d '{"text":"投票結果画面の背景色を変更","user":"chaki"}'</pre>
+
+        <p class="step-body" style="margin-top: 16px;">
+          ちなみに Expo 起動通知が無料枠で動くのは、向きが「外部 → Teams」で、プレミアム不要の Webhook トリガーを使えるからです。
+          issue 作成側は向きが逆なので、同じ手は使えません。
+        </p>
+      </section>
+
+      <!-- ================= 設定 ================= -->
+      <section id="ops">
+        <p class="eyebrow">リファレンス</p>
+        <h2>設定と緊急停止</h2>
+
+        <h3>鍵の置き場所</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>置き場所</th><th>名前</th><th>用途</th></tr></thead>
+            <tbody>
+              <tr><td>GitHub Secrets</td><td><code>ANTHROPIC_API_KEY</code></td><td>実装と自動修正</td></tr>
+              <tr><td>GitHub Secrets</td><td><code>OPENAI_API_KEY</code></td><td>Codex レビュー</td></tr>
+              <tr><td>GitHub Secrets</td><td><code>TEAMS_WEBHOOK_URL</code></td><td>マージ完了・レビュー停止の通知</td></tr>
+              <tr><td>GitHub Secrets</td><td><code>FIGMA_TOKEN</code></td><td>デザイン参照（任意）</td></tr>
+              <tr><td>Cloudflare Secrets</td><td><code>GITHUB_TOKEN</code></td><td>issue 作成用の PAT（Issues: Read and write）</td></tr>
+              <tr><td>Cloudflare Secrets</td><td><code>SHARED_SECRET</code></td><td>Worker の認証</td></tr>
+              <tr><td>ローカル <code>.env</code></td><td><code>TEAMS_WEBHOOK_URL</code></td><td>Expo 起動・停止通知</td></tr>
+              <tr><td>ローカル <code>.env</code></td><td><code>TEAMS_NOTIFY_NAME</code></td><td>通知に出す起動者名（任意）</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>リポジトリ側で必要な設定</h3>
+        <div class="tablewrap">
+          <table>
+            <tbody>
+              <tr><th>Actions</th><td>Read and write permissions ／ Allow GitHub Actions to create and approve pull requests</td></tr>
+              <tr><th>Pull Requests</th><td>Allow squash merging</td></tr>
+              <tr><th>App</th><td>Claude GitHub App をこのリポジトリにインストール</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>止めかた</h3>
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>止めたいもの</th><th>やること</th></tr></thead>
+            <tbody>
+              <tr><td>この PR だけマージさせたくない</td><td><code>auto-merge</code> ラベルを外す、または Draft にする</td></tr>
+              <tr><td>main への自動マージ全体</td><td><code>.github/workflows/auto-merge.yml</code> を削除して push</td></tr>
+              <tr><td>issue からの自動実装</td><td><code>.github/workflows/claude.yml</code> を削除して push</td></tr>
+              <tr><td>Worker が悪用されている</td><td><code>npx wrangler delete</code>／<code>SHARED_SECRET</code> を再生成して上書き</td></tr>
+              <tr><td>API コストを止めたい</td><td>Anthropic Console → Billing → Auto reload を OFF</td></tr>
+              <tr><td>ローカルへの取り込み</td><td><code>npm run sync:watch</code> のプロセスを終了する</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout warn">
+          <p>
+            <strong>CI が通ることと、正しく動くことは別です。</strong>
+            lint と型チェックを通過しても機能的に間違っている可能性は残ります。
+            本番デプロイは手動トリガーにして、「main にマージされた＝本番に出た」にしない運用が前提です。
+          </p>
+        </div>
+
+        <p class="footer">
+          対応する実装: <code>.github/workflows/</code>（ci / ai-review / auto-merge / claude / notify-teams-on-merge）、
+          <code>scripts/auto-sync.js</code>、<code>scripts/start-tunnel-notify.js</code>、<code>cloudflare-worker/src/index.ts</code>。
+          セットアップ手順の詳細は <code>docs/automation-setup.md</code> にあります。
+        </p>
+      </section>
+
+    </main>
+  </div>
+</div>
