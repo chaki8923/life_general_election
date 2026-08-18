@@ -57,6 +57,8 @@
     /* --font-sans はプラットフォーム既定のまま。新デザイン専用のファミリだけ足す */
     --font-flow: "NotoSansJP_700Bold";
     --font-flow-medium: "NotoSansJP_500Medium";
+    /* Figma のテキストボタン（モーダルの選択肢・「閉じる」）は Regular */
+    --font-flow-regular: "NotoSansJP_400Regular";
     --font-counter: "font42dotSans_700Bold";
     --font-counter-regular: "font42dotSans_400Regular";
   }

@@ -23,27 +23,38 @@ const ROTATE_CHARS = new Set([
 type Props = {
   text: string;
   fontSize: number;
-  className?: string;
+  lineHeight: number;
+  color: string;
 };
 
-export function VerticalText({ text, fontSize, className }: Props) {
+export function VerticalText({ text, fontSize, lineHeight, color }: Props) {
   return (
     <View className="items-center">
       {/* スプレッド構文ならサロゲートペア(絵文字等)も安全に分割できる */}
       {[...text].map((char, index) => (
-        <Text
+        // 1文字ぶんの高さをViewで固定する。Textだけだと実高さがプラットフォーム差
+        // (Androidのフォントパディング等)で lineHeight を上回り、列が計算より伸びて
+        // 氏名帯に潜り込むため。vertical-slogan.tsx の段組み計算はこの
+        // 「1文字 = ちょうど lineHeight」を前提にしている
+        <View
           key={`${index}-${char}`}
-          className={className}
-          style={{
-            fontSize,
-            lineHeight: fontSize * 1.12,
-            ...(ROTATE_CHARS.has(char)
-              ? { transform: [{ rotate: "90deg" }] }
-              : null),
-          }}
+          style={{ height: lineHeight, justifyContent: "center" }}
         >
-          {char}
-        </Text>
+          <Text
+            className="font-flow"
+            style={{
+              fontSize,
+              lineHeight,
+              color,
+              includeFontPadding: false,
+              ...(ROTATE_CHARS.has(char)
+                ? { transform: [{ rotate: "90deg" }] }
+                : null),
+            }}
+          >
+            {char}
+          </Text>
+        </View>
       ))}
     </View>
   );
