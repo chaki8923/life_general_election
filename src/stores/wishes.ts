@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { deleteManagedPosterPhoto } from "@/features/poster/photo-storage";
 import { createDefaultPosterSettings } from "@/features/poster/poster-settings";
 import type { PosterSettings, Wish } from "@/types";
 
@@ -27,6 +28,21 @@ type WishStore = {
   setPosterUri: (id: string, uri: string) => Wish | undefined;
   setHasHydrated: (v: boolean) => void;
 };
+
+/**
+ * version 2以前の保存値をいまのPosterImageSourceへ寄せる。
+ * version 1: posterSettings自体が無い / version 2: 廃止したAI生成画像(kind:"ai")が残る
+ */
+function migratePosterSettings(
+  settings: PosterSettings | undefined
+): PosterSettings {
+  if (!settings) return createDefaultPosterSettings();
+  // 型からは消えた旧kindを見るので、ここだけ緩い型で受ける
+  const image = settings.image as { kind: string; uri?: string };
+  if (image.kind !== "ai") return settings;
+  deleteManagedPosterPhoto(image.uri);
+  return { ...settings, image: { kind: "character" } };
+}
 
 export const useWishStore = create<WishStore>()(
   persist(
@@ -122,18 +138,17 @@ export const useWishStore = create<WishStore>()(
     }),
     {
       name: "lge-wishes",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ wishes: s.wishes }),
       migrate: (persistedState, version) => {
         const state = persistedState as Partial<WishStore>;
-        if (version >= 2 || !Array.isArray(state.wishes)) return state;
+        if (version >= 3 || !Array.isArray(state.wishes)) return state;
         return {
           ...state,
           wishes: state.wishes.map((wish) => ({
             ...wish,
-            posterSettings:
-              wish.posterSettings ?? createDefaultPosterSettings(),
+            posterSettings: migratePosterSettings(wish.posterSettings),
           })),
         };
       },

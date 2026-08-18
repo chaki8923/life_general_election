@@ -1,3 +1,5 @@
+import type { PresetAvatarId } from "@/features/avatar/preset-avatars";
+
 /** ユーザーの基本属性（オンボーディングで入力） */
 export type UserProfile = {
   nickname: string;
@@ -45,12 +47,8 @@ export type PosterPaletteId = "red" | "navy" | "pink";
 export type PosterImageSource =
   | { kind: "character" }
   | { kind: "photo"; uri: string }
-  | {
-      kind: "ai";
-      uri: string;
-      /** 生成元にした写真のURI。やり直し（再生成）で使う */
-      sourceUri?: string;
-    };
+  /** assets/avatar/ の既製イラスト。IDだけ保存し、実体はrequireで解決する */
+  | { kind: "preset"; id: PresetAvatarId };
 
 export type PosterSettings = {
   image: PosterImageSource;
