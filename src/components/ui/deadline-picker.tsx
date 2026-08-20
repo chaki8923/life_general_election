@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-import { Text, View } from "@/tw";
-import { OptionChip } from "@/components/ui/option-chip";
+import { Pressable, Text, View } from "@/tw";
 
 type DeadlinePickerProps = {
   value: number | null;
@@ -18,29 +17,39 @@ export function getDefaultDeadline() {
   return endOfDay(3);
 }
 
-export function DeadlinePicker({ value, onChange }: DeadlinePickerProps) {
+/** Figma 2609:22072 — 政策実行期日の選択チップ */
+export function GoalDeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   const options = useMemo(
     () => [
-      { label: "今日", value: endOfDay(0) },
-      { label: "明日", value: endOfDay(1) },
-      { label: "3日後", value: endOfDay(3) },
-      { label: "1週間後", value: endOfDay(7) },
+      { label: "3日以内", value: endOfDay(3) },
+      { label: "1週間以内", value: endOfDay(7) },
+      { label: "2週間以内", value: endOfDay(14) },
+      { label: "1ヵ月以内", value: endOfDay(30) },
     ],
     []
   );
 
   return (
-    <View>
-      <Text className="text-sm font-bold text-[#333333]">期日</Text>
-      <View className="mt-2 flex-row flex-wrap gap-2">
-        {options.map((option) => (
-          <OptionChip
-            key={option.label}
-            label={option.label}
-            selected={value === option.value}
-            onPress={() => onChange(option.value)}
-          />
-        ))}
+    <View className="rounded-lg border border-[#f6f6f6] bg-[#fff6f5] px-4 py-2">
+      <View className="flex-row flex-wrap gap-2">
+        {options.map((option) => {
+          const selected = value === option.value;
+          return (
+            <Pressable
+              key={option.label}
+              onPress={() => onChange(option.value)}
+              className={`h-9 items-center justify-center rounded-full border px-3 ${
+                selected
+                  ? "border-flow-pink bg-white"
+                  : "border-[#eaeef2] bg-white"
+              }`}
+            >
+              <Text className="font-flow-medium text-xs leading-[1.4] text-flow-ink">
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
     </View>
   );
