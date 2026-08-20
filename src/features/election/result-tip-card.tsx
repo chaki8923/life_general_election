@@ -117,7 +117,11 @@ function TipCardBody({
               {pageLabel}
             </Text>
           </View>
-          <TipChevron onPress={onNext} />
+          {slide.kind === "explain" ? (
+            <TipChevron onPress={onNext} />
+          ) : (
+            <View className="h-3 w-[7px]" />
+          )}
         </View>
       </View>
     </View>
