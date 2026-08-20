@@ -14,6 +14,10 @@ const FAB_OVERHANG = (FAB_SIZE - TAB_BAR_HEIGHT) / 2;
 const BAR_BOTTOM_GAP = 20;
 /** Figma: drop-shadow 0px 2px 4px rgba(51,51,51,0.08) */
 const BAR_SHADOW = "0px 2px 4px rgba(51,51,51,0.08)";
+/** FlowStepper と同じインク黒 */
+const TAB_INK = "#24292f";
+/** 黒背景上の表示色（投票 FAB など） */
+const TAB_ON_DARK = "#f6f8fa";
 
 const policyIcon = require("../../../assets/tabbar/policy.svg");
 const voteIcon = require("../../../assets/tabbar/vote.svg");
@@ -66,12 +70,12 @@ function SideTab({
     >
       <Image
         source={icon}
-        style={{ width: 24, height: 24 }}
+        style={{ width: 24, height: 24, tintColor: TAB_INK }}
         contentFit="contain"
       />
       <Text
         numberOfLines={1}
-        className="font-flow-medium text-[8px] leading-[11.2px] text-flow-ink-low"
+        className="font-flow-medium text-[8px] leading-[11.2px] text-flow-ink"
       >
         {label}
       </Text>
@@ -116,17 +120,21 @@ export function FlowTabBar({ active, onPress }: FlowTabBarProps) {
           accessibilityRole="button"
           accessibilityState={{ selected: active === "vote" }}
           accessibilityLabel="投票する"
-          className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px] bg-flow-pink px-[3px] py-[2px]"
-          style={{ width: FAB_SIZE, height: FAB_SIZE }}
+          className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px] px-[3px] py-[2px]"
+          style={{
+            width: FAB_SIZE,
+            height: FAB_SIZE,
+            backgroundColor: TAB_INK,
+          }}
         >
           <Image
             source={voteIcon}
-            style={{ width: 18, height: 19.476 }}
+            style={{ width: 18, height: 19.476, tintColor: TAB_ON_DARK }}
             contentFit="contain"
           />
           <Text
             numberOfLines={1}
-            className="font-flow-medium text-[8px] leading-[11.2px] text-white"
+            className="font-flow-medium text-[8px] leading-[11.2px] text-flow-onDark"
           >
             投票する
           </Text>

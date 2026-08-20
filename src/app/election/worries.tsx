@@ -195,7 +195,7 @@ export default function WorrySuggestScreen() {
       />
       <FlowHeader title="お悩み選択" />
       <View className="mt-3">
-        <FlowStepper current={2} showProfileStep />
+        <FlowStepper current={1} showProfileStep />
       </View>
 
       {/* ここから下はFigmaの絶対座標レイアウト。脳がはみ出すのでクリップする */}

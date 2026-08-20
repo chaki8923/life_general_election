@@ -8,6 +8,7 @@ import {
 import { GoalModal } from "@/features/election/goal-modal";
 import {
   MINORITY_PLEDGE_THEMES,
+  PLEDGE_RANK_THEMES,
   ResultMinorityPledgeCard,
   ResultPledgeCard,
   type PledgeRank,
@@ -79,6 +80,12 @@ const FIGMA_FALLBACK_MINORITY_CANDIDATES: Candidate[] = [
 /** Tipsカード（公約、政策とは？）と同じページ間隔に統一 */
 const MINORITY_CARD_GAP = 24;
 
+type ModalSelection = {
+  candidate: Candidate;
+  color: string;
+  accentBg: string;
+};
+
 export default function ElectionResultScreen() {
   const router = useRouter();
   const worry = useElectionStore((s) => s.worry);
@@ -87,7 +94,9 @@ export default function ElectionResultScreen() {
   const showProfileStep = useElectionStore((s) => s.showProfileStep);
   const addWish = useWishStore((s) => s.addWish);
   const hasSource = Boolean(worry && motivation);
-  const [modalCandidate, setModalCandidate] = useState<Candidate | null>(null);
+  const [modalSelection, setModalSelection] = useState<ModalSelection | null>(
+    null
+  );
   const [minorityPage, setMinorityPage] = useState(0);
   const [minorityWidth, setMinorityWidth] = useState(0);
   const tabBarPadding = useTabBarBottomPadding();
@@ -136,7 +145,7 @@ export default function ElectionResultScreen() {
   ];
   const minorityStride = minorityWidth + MINORITY_CARD_GAP;
   const registerGoal = (deadline: number) => {
-    const candidate = modalCandidate ?? topCandidate;
+    const candidate = modalSelection?.candidate ?? topCandidate;
     if (!candidate) return;
     const wish = addWish({
       text: candidate.label,
@@ -145,7 +154,7 @@ export default function ElectionResultScreen() {
       sourceElectionId: election.id,
     });
     mirrorWish(wish);
-    setModalCandidate(null);
+    setModalSelection(null);
     router.replace("/");
   };
 
@@ -199,14 +208,23 @@ export default function ElectionResultScreen() {
           </View>
 
           {/* 704:9825 / 704:9826 / 704:9827 — 1〜3位カード */}
-          {rankedCandidates.map(({ rank, candidate }) => (
-            <ResultPledgeCard
-              key={candidate.id}
-              candidate={candidate}
-              rank={rank}
-              onConfirm={() => setModalCandidate(candidate)}
-            />
-          ))}
+          {rankedCandidates.map(({ rank, candidate }) => {
+            const theme = PLEDGE_RANK_THEMES[rank];
+            return (
+              <ResultPledgeCard
+                key={candidate.id}
+                candidate={candidate}
+                rank={rank}
+                onConfirm={() =>
+                  setModalSelection({
+                    candidate,
+                    color: theme.color,
+                    accentBg: theme.avatarBg,
+                  })
+                }
+              />
+            );
+          })}
 
           {/* 1691:2848 + 1905:13968 → 886:3300 マイノリティカード */}
           <View className="gap-0">
@@ -237,7 +255,13 @@ export default function ElectionResultScreen() {
                       <ResultMinorityPledgeCard
                         candidate={slide.candidate}
                         theme={slide.theme}
-                        onConfirm={() => setModalCandidate(slide.candidate)}
+                        onConfirm={() =>
+                          setModalSelection({
+                            candidate: slide.candidate,
+                            color: slide.theme.color,
+                            accentBg: slide.theme.avatarBg,
+                          })
+                        }
                       />
                     </View>
                   ))}
@@ -269,10 +293,12 @@ export default function ElectionResultScreen() {
       />
 
       <GoalModal
-        visible={Boolean(modalCandidate)}
-        candidate={modalCandidate}
+        visible={Boolean(modalSelection)}
+        candidate={modalSelection?.candidate ?? null}
+        color={modalSelection?.color ?? "#f4728a"}
+        accentBg={modalSelection?.accentBg ?? "#fff6f5"}
         onRegister={registerGoal}
-        onClose={() => setModalCandidate(null)}
+        onClose={() => setModalSelection(null)}
       />
     </View>
   );

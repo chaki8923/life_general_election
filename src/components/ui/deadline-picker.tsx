@@ -4,6 +4,8 @@ import { Pressable, Text, View } from "@/tw";
 type DeadlinePickerProps = {
   value: number | null;
   onChange: (value: number) => void;
+  color?: string;
+  accentBg?: string;
 };
 
 function endOfDay(daysFromToday: number) {
@@ -18,7 +20,12 @@ export function getDefaultDeadline() {
 }
 
 /** Figma 2609:22072 — 政策実行期日の選択チップ（1行目3個 + 2行目1ヵ月） */
-export function GoalDeadlinePicker({ value, onChange }: DeadlinePickerProps) {
+export function GoalDeadlinePicker({
+  value,
+  onChange,
+  color = "#f4728a",
+  accentBg = "#fff6f5",
+}: DeadlinePickerProps) {
   const primaryOptions = useMemo(
     () => [
       { label: "3日以内", value: endOfDay(3) },
@@ -38,9 +45,10 @@ export function GoalDeadlinePicker({ value, onChange }: DeadlinePickerProps) {
       <Pressable
         key={option.label}
         onPress={() => onChange(option.value)}
-        className={`h-11 items-center justify-center rounded-full border px-4 ${
-          selected ? "border-flow-pink bg-white" : "border-[#eaeef2] bg-white"
-        }`}
+        className="h-11 items-center justify-center rounded-full border bg-white px-4"
+        style={{
+          borderColor: selected ? color : "#eaeef2",
+        }}
       >
         <Text className="font-flow-medium text-sm leading-[1.4] text-flow-ink">
           {option.label}
@@ -50,7 +58,10 @@ export function GoalDeadlinePicker({ value, onChange }: DeadlinePickerProps) {
   };
 
   return (
-    <View className="rounded-lg border border-[#f6f6f6] bg-[#fff6f5] px-4 py-3">
+    <View
+      className="rounded-lg border border-[#f6f6f6] px-4 py-3"
+      style={{ backgroundColor: accentBg }}
+    >
       <View className="flex-row flex-wrap gap-3">
         {primaryOptions.map(renderChip)}
       </View>

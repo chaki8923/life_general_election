@@ -19,6 +19,10 @@ const SHEET_HEIGHT_RATIO = 0.6;
 type GoalModalProps = {
   visible: boolean;
   candidate: Candidate | null;
+  /** 選択カードのアクセント色 */
+  color: string;
+  /** 選択カードの淡い背景色（avatarBg） */
+  accentBg: string;
   onRegister: (deadline: number) => void;
   onClose: () => void;
 };
@@ -27,10 +31,12 @@ function SectionLabel({
   icon,
   iconClassName,
   label,
+  color,
 }: {
   icon: number;
   iconClassName: string;
   label: string;
+  color: string;
 }) {
   return (
     <View className="flex-row items-center gap-1 py-1.5">
@@ -38,9 +44,12 @@ function SectionLabel({
         source={icon}
         className={iconClassName}
         contentFit="contain"
-        style={{ tintColor: "#f4728a" }}
+        style={{ tintColor: color }}
       />
-      <Text className="font-flow text-sm leading-[1.4] tracking-[-0.48px] text-flow-pink">
+      <Text
+        className="font-flow text-sm leading-[1.4] tracking-[-0.48px]"
+        style={{ color }}
+      >
         {label}
       </Text>
     </View>
@@ -53,6 +62,8 @@ function SectionLabel({
 export function GoalModal({
   visible,
   candidate,
+  color,
+  accentBg,
   onRegister,
   onClose,
 }: GoalModalProps) {
@@ -109,6 +120,7 @@ export function GoalModal({
                   icon={iconFlag}
                   iconClassName="h-4 w-4"
                   label="人生公約"
+                  color={color}
                 />
                 <Text className="font-flow-medium text-base leading-6 text-flow-ink">
                   {candidate?.label}
@@ -121,6 +133,7 @@ export function GoalModal({
                   icon={iconCheck}
                   iconClassName="h-[17px] w-[15px]"
                   label="掲げる政策"
+                  color={color}
                 />
                 <Text className="font-flow-medium text-base leading-6 text-flow-ink">
                   {candidate?.action}
@@ -133,13 +146,19 @@ export function GoalModal({
                   icon={iconCalendar}
                   iconClassName="h-5 w-5"
                   label="政策実行の期日"
+                  color={color}
                 />
                 <Text className="font-flow-medium text-sm leading-6 tracking-[0.6px] text-flow-ink">
                   忘れないようまずは
-                  <Text className="text-flow-pink">3日以内</Text>
+                  <Text style={{ color }}>3日以内</Text>
                   がおすすめ！
                 </Text>
-                <GoalDeadlinePicker value={deadline} onChange={setDeadline} />
+                <GoalDeadlinePicker
+                  value={deadline}
+                  onChange={setDeadline}
+                  color={color}
+                  accentBg={accentBg}
+                />
               </View>
             </View>
 
@@ -147,7 +166,7 @@ export function GoalModal({
               label="設定する"
               variant="primary"
               disabled={!canSubmit}
-              fillColor={canSubmit ? "#32383f" : "#d0d7de"}
+              fillColor={canSubmit ? color : "#d0d7de"}
               onPress={() => deadline !== null && onRegister(deadline)}
               className="h-14 w-full"
             />
