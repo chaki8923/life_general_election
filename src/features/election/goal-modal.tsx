@@ -1,7 +1,6 @@
 import { FlowButton } from "@/components/ui/flow-button";
 import {
   GoalDeadlinePicker,
-  getDefaultDeadline,
 } from "@/components/ui/deadline-picker";
 import { Pressable, Text, View } from "@/tw";
 import { Image } from "@/tw/image";
@@ -63,7 +62,7 @@ export function GoalModal({
   const [deadline, setDeadline] = useState<number | null>(null);
 
   useEffect(() => {
-    if (visible) setDeadline(getDefaultDeadline());
+    if (visible) setDeadline(null);
   }, [visible]);
 
   const canSubmit = Boolean(candidate && deadline !== null);
@@ -146,8 +145,9 @@ export function GoalModal({
 
             <FlowButton
               label="設定する"
-              variant={canSubmit ? "primary" : "gray"}
+              variant="primary"
               disabled={!canSubmit}
+              fillColor={canSubmit ? "#32383f" : "#d0d7de"}
               onPress={() => deadline !== null && onRegister(deadline)}
               className="h-14 w-full"
             />
