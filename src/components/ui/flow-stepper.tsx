@@ -64,7 +64,7 @@ export function FlowStepper({
   const displayCurrent = showProfileStep ? current : Math.max(0, current - 1);
 
   return (
-    <View className="h-[41px] w-[293px] self-center">
+    <View className="mt-2 h-[41px] w-[293px] self-center">
       <View className="h-3 flex-row items-center">
         {steps.map((label, i) => {
           const reached = i <= displayCurrent;
