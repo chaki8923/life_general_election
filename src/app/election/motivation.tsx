@@ -77,9 +77,11 @@ export default function MotivationSelectScreen() {
             contentFit="cover"
             pointerEvents="none"
           />
-          <View className="mt-3">
-            <FlowStepper current={2} showProfileStep={showProfileStep} />
-          </View>
+          {showProfileStep ? (
+            <View className="mt-3">
+              <FlowStepper current={1} showProfileStep />
+            </View>
+          ) : null}
 
           <View className="flex-1">
           <View
@@ -178,9 +180,11 @@ export default function MotivationSelectScreen() {
   return (
     <View className="flex-1 bg-flow-bg">
       <FlowHeader title="モチベーション" />
-      <View className="mt-3">
-        <FlowStepper current={1} showProfileStep={showProfileStep} />
-      </View>
+      {showProfileStep ? (
+        <View className="mt-3">
+          <FlowStepper current={1} showProfileStep />
+        </View>
+      ) : null}
 
       {/* Figma 1700:6638。見出しの下でそのまま炎を動かして選ぶ */}
       <View className="flex-1 overflow-hidden">

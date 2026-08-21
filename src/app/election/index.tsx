@@ -47,7 +47,9 @@ export default function InterestSelectScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerClassName="px-2 pb-44 pt-3"
       >
-        <FlowStepper current={0} showProfileStep={showProfileStep} />
+        {showProfileStep ? (
+          <FlowStepper current={0} showProfileStep />
+        ) : null}
 
         <Text className="mt-10 text-center font-flow text-xl text-flow-ink">
           興味・関心のあることを{"\n"}教えてください

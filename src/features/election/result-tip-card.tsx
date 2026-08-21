@@ -5,6 +5,7 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { ScrollView as RNScrollView } from "react-native";
 
 const tipCharacterExplain = require("../../../assets/election/result/tip-character-explain.png");
+const tipCharacterShadow = require("../../../assets/election/result/tip-character-shadow.png");
 const tipChevron = require("../../../assets/election/result/tip-chevron.svg");
 
 /** スワイプ中にカード同士がくっつかないようページ間のすき間 */
@@ -64,45 +65,48 @@ function TipCardBody({
   onNext: () => void;
 }) {
   return (
-    <View className="relative h-[82px] justify-center rounded-lg bg-[#f6f6f6]">
-      {/* Figma 1895:13877 — 表示58×66、ソース422×467（Retina向け） */}
+    <View className="relative h-[96px] justify-center overflow-hidden rounded-xl border border-[#f6f6f6] bg-white">
+      {/* Figma 1691:2843 Ellipse 10 — 25×64 / 36×10 を拡大カード比で配置 */}
+      <Image
+        pointerEvents="none"
+        source={tipCharacterShadow}
+        className="absolute"
+        style={{ left: 27, top: 72, width: 40, height: 11 }}
+        contentFit="fill"
+      />
+
+      {/* Figma 1895:13877 — 表示64×72 */}
       <Image
         pointerEvents="none"
         source={tipCharacterExplain}
-        className="absolute left-3 top-2"
-        style={{ width: 58, height: 66 }}
-        contentFit="cover"
-        contentPosition="top center"
+        className="absolute left-3 top-2.5"
+        style={{ width: 64, height: 72 }}
+        contentFit="contain"
         accessibilityLabel="説明キャラクター"
       />
-      {/* Figma 1691:2843 — Ellipse 10 */}
-      <View
-        pointerEvents="none"
-        className="absolute left-[26px] top-[65px] h-2.5 w-9 rounded-full bg-black/10"
-      />
 
-      <View className="ml-[87px] flex-row items-end gap-1.5 py-3 pr-3">
-        <View className="min-w-0 flex-1 gap-1">
-          <View className="self-start rounded-[10px] bg-flow-ink px-2.5">
-            <Text className="font-flow-medium text-[10px] leading-[1.4] text-white">
+      <View className="ml-[92px] flex-row items-end gap-1.5 py-3.5 pr-3">
+        <View className="min-w-0 flex-1 gap-1.5">
+          <View className="self-start rounded-[10px] bg-flow-ink px-2.5 py-0.5">
+            <Text className="font-flow-medium text-[11px] leading-[1.4] text-white">
               {slide.badge}
             </Text>
           </View>
 
           {slide.kind === "explain" ? (
-            <Text className="font-flow-medium text-xs leading-[1.4] text-flow-ink-mid">
-              <Text className="font-flow-medium text-xs text-flow-ink">
+            <Text className="font-flow-medium text-[13px] leading-[1.4] text-flow-ink-mid">
+              <Text className="font-flow-medium text-[13px] text-flow-ink">
                 公約
               </Text>
               は大きな目標、
-              <Text className="font-flow-medium text-xs text-flow-ink">
+              <Text className="font-flow-medium text-[13px] text-flow-ink">
                 政策
               </Text>
               はゴールに辿り着くための小さな目標のことだよ！
             </Text>
           ) : (
-            <Text className="font-flow-medium text-xs leading-[1.4] text-flow-ink-mid">
-              <Text className="font-flow text-xs leading-[1.4] text-flow-ink">
+            <Text className="font-flow-medium text-[13px] leading-[1.4] text-flow-ink-mid">
+              <Text className="font-flow text-[13px] leading-[1.4] text-flow-ink">
                 {slide.recommendTitle}
               </Text>
               {"\n"}
@@ -111,8 +115,8 @@ function TipCardBody({
           )}
         </View>
 
-        <View className="h-[52px] w-[35px] items-end justify-between pb-0.5">
-          <View className="rounded-full bg-white px-2.5">
+        <View className="h-[58px] w-[35px] items-end justify-between pb-0.5">
+          <View className="rounded-full bg-[#f6f6f6] px-2.5">
             <Text className="font-flow-medium text-[10px] leading-[1.4] text-flow-ink">
               {pageLabel}
             </Text>
@@ -130,7 +134,7 @@ function TipCardBody({
 
 /**
  * 開票結果の Tips カード（Figma 704:9787 / 1691:2830）
- * 横スワイプで 1/2 → 2/2。1枚目は gray/50 カード + ダークバッジ。
+ * 横スワイプで 1/2 → 2/2。白カード + ダークバッジ。
  */
 export function ResultTipCard({ recommendLabel }: ResultTipCardProps) {
   const scrollRef = useRef<RNScrollView>(null);
@@ -195,7 +199,7 @@ export function ResultTipCard({ recommendLabel }: ResultTipCardProps) {
           ))}
         </RNScrollView>
       ) : (
-        <View className="h-[82px]" />
+        <View className="h-[96px]" />
       )}
     </View>
   );

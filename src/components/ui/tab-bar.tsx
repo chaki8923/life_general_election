@@ -59,23 +59,30 @@ function SideTab({
   focused,
   onPress,
 }: SideTabProps) {
+  const ink = focused ? TAB_ON_DARK : TAB_INK;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: focused }}
       accessibilityLabel={accessibilityLabel}
-      hitSlop={12}
-      className="items-center gap-px"
+      hitSlop={8}
+      className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px]"
+      style={{
+        width: FAB_SIZE,
+        height: FAB_SIZE,
+        backgroundColor: focused ? TAB_INK : "transparent",
+      }}
     >
       <Image
         source={icon}
-        style={{ width: 24, height: 24, tintColor: TAB_INK }}
+        style={{ width: 24, height: 24, tintColor: ink }}
         contentFit="contain"
       />
       <Text
         numberOfLines={1}
-        className="font-flow-medium text-[8px] leading-[11.2px] text-flow-ink"
+        className="font-flow-medium text-[8px] leading-[11.2px]"
+        style={{ color: ink }}
       >
         {label}
       </Text>
@@ -88,6 +95,9 @@ function SideTab({
  * 角丸ピル + 中央の投票 FAB。タブ外の画面からも同じ見た目で使える。
  */
 export function FlowTabBar({ active, onPress }: FlowTabBarProps) {
+  const voteFocused = active === "vote";
+  const voteInk = voteFocused ? TAB_ON_DARK : TAB_INK;
+
   return (
     <View className="mx-5 h-[56px]" pointerEvents="box-none">
       <View
@@ -118,23 +128,24 @@ export function FlowTabBar({ active, onPress }: FlowTabBarProps) {
         <Pressable
           onPress={() => onPress("vote")}
           accessibilityRole="button"
-          accessibilityState={{ selected: active === "vote" }}
+          accessibilityState={{ selected: voteFocused }}
           accessibilityLabel="投票する"
-          className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px] px-[3px] py-[2px]"
+          className="items-center justify-center gap-0.5 overflow-hidden rounded-[99px]"
           style={{
             width: FAB_SIZE,
             height: FAB_SIZE,
-            backgroundColor: TAB_INK,
+            backgroundColor: voteFocused ? TAB_INK : "transparent",
           }}
         >
           <Image
             source={voteIcon}
-            style={{ width: 18, height: 19.476, tintColor: TAB_ON_DARK }}
+            style={{ width: 18, height: 19.476, tintColor: voteInk }}
             contentFit="contain"
           />
           <Text
             numberOfLines={1}
-            className="font-flow-medium text-[8px] leading-[11.2px] text-flow-onDark"
+            className="font-flow-medium text-[8px] leading-[11.2px]"
+            style={{ color: voteInk }}
           >
             投票する
           </Text>

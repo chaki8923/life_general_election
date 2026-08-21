@@ -100,6 +100,7 @@ export default function ElectionResultScreen() {
   const [minorityPage, setMinorityPage] = useState(0);
   const [minorityWidth, setMinorityWidth] = useState(0);
   const tabBarPadding = useTabBarBottomPadding();
+  const scrollBottomPadding = showProfileStep ? 32 : tabBarPadding;
 
   // 開票の生成は counting が担う。未開票なら投票中へ戻す。
   useEffect(() => {
@@ -165,18 +166,22 @@ export default function ElectionResultScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-flow-bg">
       {/* 704:9790 — FlowHeader（画像モックから差し替え） */}
       <FlowHeader title="投票結果" />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
+        contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
         showsVerticalScrollIndicator={false}
       >
         {/* 893:3409 — FlowStepper（画像モックから差し替え） */}
-        <View className="px-5 py-2">
-          <FlowStepper current={2} showProfileStep={showProfileStep} />
-        </View>
+        {showProfileStep ? (
+          <View className="px-5 py-2">
+            <FlowStepper current={2} showProfileStep />
+          </View>
+        ) : (
+          <View className="h-3" />
+        )}
 
         {/* 1691:2823 + 1905:13894 — 見出し + 開票ボード付きヒーロー */}
         <View className="relative h-[150px] w-[350px] right-5 self-center py-3">
@@ -282,15 +287,17 @@ export default function ElectionResultScreen() {
         </View>
       </ScrollView>
 
-      {/* 1679:8798 — BottomNav（投票するアクティブ） */}
-      <FlowTabBarOverlay
-        active="vote"
-        onPress={(id) => {
-          if (id === "index") router.replace("/");
-          else if (id === "vote") router.replace("/(tabs)/vote");
-          else router.replace("/(tabs)/achievements");
-        }}
-      />
+      {/* 1679:8798 — BottomNav（初回プロフ登録フローでは非表示） */}
+      {showProfileStep ? null : (
+        <FlowTabBarOverlay
+          active="vote"
+          onPress={(id) => {
+            if (id === "index") router.replace("/");
+            else if (id === "vote") router.replace("/(tabs)/vote");
+            else router.replace("/(tabs)/achievements");
+          }}
+        />
+      )}
 
       <GoalModal
         visible={Boolean(modalSelection)}
