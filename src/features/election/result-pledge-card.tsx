@@ -106,10 +106,7 @@ export function PledgeTagPill({
   iconClassName: string;
 }) {
   return (
-    <View
-      className="h-[22px] w-[98px] flex-row items-center justify-center gap-0.5 rounded-full border px-2"
-      style={{ borderColor: color }}
-    >
+    <View className="flex-row items-center gap-0.5">
       <View className="h-[13px] w-[13px] items-center justify-center overflow-hidden">
         <Image
           source={icon}
@@ -208,7 +205,7 @@ export function VoteCapGrid({ votes, color }: { votes: number; color: string }) 
 
   return (
     <View
-      className="ml-auto flex-row flex-wrap content-center justify-end"
+      className="ml-auto flex-row flex-wrap content-center justify-start"
       style={{ width: CAP_ROW_WIDTH, gap: CAP_GAP }}
     >
       {Array.from({ length: fullCaps }, (_, i) => (

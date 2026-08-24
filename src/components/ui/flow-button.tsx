@@ -41,8 +41,7 @@ export function FlowButton({
       ? "border-2 border-dashed border-black bg-white"
       : fill;
   const ink = isDashed && !disabled ? "text-[#060505]" : "text-white";
-  const customFill =
-    fillColor && !(disabled && !loading) ? { backgroundColor: fillColor } : undefined;
+  const customFill = fillColor ? { backgroundColor: fillColor } : undefined;
 
   return (
     <Pressable
