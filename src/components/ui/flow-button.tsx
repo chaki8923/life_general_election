@@ -13,6 +13,8 @@ type FlowButtonProps = {
   className?: string;
   /** variant の塗りを上書き（開票カード 2位橙 / 3位紫など） */
   fillColor?: string;
+  /** disabled 時の塗りを上書き。未指定なら既定の bg-flow-disabled */
+  disabledFillColor?: string;
 };
 
 /** 選挙フロー共通ボタン（Figma: h48 / rounded-full / 16px Bold / tracking 0.8） */
@@ -24,12 +26,15 @@ export function FlowButton({
   onPress,
   className = "",
   fillColor,
+  disabledFillColor,
 }: FlowButtonProps) {
   const interactionDisabled = disabled || loading;
   const isDashed = variant === "dashed" && !fillColor;
+  // loading 中は「押せないが見た目は有効のまま」を保つので、disabled 扱いにしない
+  const showDisabled = disabled && !loading;
   const fill = fillColor
     ? "active:opacity-80"
-    : disabled && !loading
+    : showDisabled
       ? "bg-flow-disabled"
       : variant === "pink"
         ? "bg-flow-pink active:opacity-80"
@@ -41,8 +46,13 @@ export function FlowButton({
       ? "border-2 border-dashed border-black bg-white"
       : fill;
   const ink = isDashed && !disabled ? "text-[#060505]" : "text-white";
-  const customFill =
-    fillColor && !(disabled && !loading) ? { backgroundColor: fillColor } : undefined;
+  const customFill = showDisabled
+    ? disabledFillColor
+      ? { backgroundColor: disabledFillColor }
+      : undefined
+    : fillColor
+      ? { backgroundColor: fillColor }
+      : undefined;
 
   return (
     <Pressable

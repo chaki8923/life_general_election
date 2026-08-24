@@ -1,6 +1,7 @@
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
+import { ProgressDots } from "@/components/ui/progress-dots";
 import {
   FlowTabBarOverlay,
   useTabBarBottomPadding,
@@ -12,7 +13,6 @@ import {
   ResultPledgeCard,
   type PledgeRank,
 } from "@/features/election/result-pledge-card";
-import { ResultProgressDots } from "@/features/election/result-progress-dots";
 import { ResultTipCard } from "@/features/election/result-tip-card";
 import { ResultUniqueVoicesSection } from "@/features/election/result-unique-voices-section";
 import { mirrorWish } from "@/services/firebase/mirror";
@@ -251,7 +251,7 @@ export default function ElectionResultScreen() {
 
         {/* 1012:3606 — ページドット */}
         <View className="mt-4">
-          <ResultProgressDots
+          <ProgressDots
             current={minorityPage}
             total={minoritySlides.length}
           />
