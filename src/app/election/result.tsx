@@ -9,6 +9,7 @@ import {
 import { GoalModal } from "@/features/election/goal-modal";
 import {
   MINORITY_PLEDGE_THEMES,
+  PLEDGE_RANK_THEMES,
   ResultMinorityPledgeCard,
   ResultPledgeCard,
   type PledgeRank,
@@ -79,6 +80,12 @@ const FIGMA_FALLBACK_MINORITY_CANDIDATES: Candidate[] = [
 /** Tipsカード（公約、政策とは？）と同じページ間隔に統一 */
 const MINORITY_CARD_GAP = 24;
 
+type ModalSelection = {
+  candidate: Candidate;
+  color: string;
+  accentBg: string;
+};
+
 export default function ElectionResultScreen() {
   const router = useRouter();
   const worry = useElectionStore((s) => s.worry);
@@ -87,10 +94,13 @@ export default function ElectionResultScreen() {
   const showProfileStep = useElectionStore((s) => s.showProfileStep);
   const addWish = useWishStore((s) => s.addWish);
   const hasSource = Boolean(worry && motivation);
-  const [modalCandidate, setModalCandidate] = useState<Candidate | null>(null);
+  const [modalSelection, setModalSelection] = useState<ModalSelection | null>(
+    null
+  );
   const [minorityPage, setMinorityPage] = useState(0);
   const [minorityWidth, setMinorityWidth] = useState(0);
   const tabBarPadding = useTabBarBottomPadding();
+  const scrollBottomPadding = showProfileStep ? 32 : tabBarPadding;
 
   // 開票の生成は counting が担う。未開票なら投票中へ戻す。
   useEffect(() => {
@@ -136,7 +146,7 @@ export default function ElectionResultScreen() {
   ];
   const minorityStride = minorityWidth + MINORITY_CARD_GAP;
   const registerGoal = (deadline: number) => {
-    const candidate = modalCandidate ?? topCandidate;
+    const candidate = modalSelection?.candidate ?? topCandidate;
     if (!candidate) return;
     const wish = addWish({
       text: candidate.label,
@@ -145,7 +155,7 @@ export default function ElectionResultScreen() {
       sourceElectionId: election.id,
     });
     mirrorWish(wish);
-    setModalCandidate(null);
+    setModalSelection(null);
     router.replace("/");
   };
 
@@ -156,18 +166,22 @@ export default function ElectionResultScreen() {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-flow-bg">
       {/* 704:9790 — FlowHeader（画像モックから差し替え） */}
       <FlowHeader title="投票結果" />
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom: tabBarPadding }}
+        contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
         showsVerticalScrollIndicator={false}
       >
         {/* 893:3409 — FlowStepper（画像モックから差し替え） */}
-        <View className="px-5 py-2">
-          <FlowStepper current={2} showProfileStep={showProfileStep} />
-        </View>
+        {showProfileStep ? (
+          <View className="px-5 py-2">
+            <FlowStepper current={2} showProfileStep />
+          </View>
+        ) : (
+          <View className="h-3" />
+        )}
 
         {/* 1691:2823 + 1905:13894 — 見出し + 開票ボード付きヒーロー */}
         <View className="relative h-[150px] w-[350px] right-5 self-center py-3">
@@ -199,14 +213,23 @@ export default function ElectionResultScreen() {
           </View>
 
           {/* 704:9825 / 704:9826 / 704:9827 — 1〜3位カード */}
-          {rankedCandidates.map(({ rank, candidate }) => (
-            <ResultPledgeCard
-              key={candidate.id}
-              candidate={candidate}
-              rank={rank}
-              onConfirm={() => setModalCandidate(candidate)}
-            />
-          ))}
+          {rankedCandidates.map(({ rank, candidate }) => {
+            const theme = PLEDGE_RANK_THEMES[rank];
+            return (
+              <ResultPledgeCard
+                key={candidate.id}
+                candidate={candidate}
+                rank={rank}
+                onConfirm={() =>
+                  setModalSelection({
+                    candidate,
+                    color: theme.color,
+                    accentBg: theme.avatarBg,
+                  })
+                }
+              />
+            );
+          })}
 
           {/* 1691:2848 + 1905:13968 → 886:3300 マイノリティカード */}
           <View className="gap-0">
@@ -237,7 +260,13 @@ export default function ElectionResultScreen() {
                       <ResultMinorityPledgeCard
                         candidate={slide.candidate}
                         theme={slide.theme}
-                        onConfirm={() => setModalCandidate(slide.candidate)}
+                        onConfirm={() =>
+                          setModalSelection({
+                            candidate: slide.candidate,
+                            color: slide.theme.color,
+                            accentBg: slide.theme.avatarBg,
+                          })
+                        }
                       />
                     </View>
                   ))}
@@ -258,21 +287,25 @@ export default function ElectionResultScreen() {
         </View>
       </ScrollView>
 
-      {/* 1679:8798 — BottomNav（投票するアクティブ） */}
-      <FlowTabBarOverlay
-        active="vote"
-        onPress={(id) => {
-          if (id === "index") router.replace("/");
-          else if (id === "vote") router.replace("/(tabs)/vote");
-          else router.replace("/(tabs)/achievements");
-        }}
-      />
+      {/* 1679:8798 — BottomNav（初回プロフ登録フローでは非表示） */}
+      {showProfileStep ? null : (
+        <FlowTabBarOverlay
+          active="vote"
+          onPress={(id) => {
+            if (id === "index") router.replace("/");
+            else if (id === "vote") router.replace("/(tabs)/vote");
+            else router.replace("/(tabs)/achievements");
+          }}
+        />
+      )}
 
       <GoalModal
-        visible={Boolean(modalCandidate)}
-        candidate={modalCandidate}
+        visible={Boolean(modalSelection)}
+        candidate={modalSelection?.candidate ?? null}
+        color={modalSelection?.color ?? "#f4728a"}
+        accentBg={modalSelection?.accentBg ?? "#fff6f5"}
         onRegister={registerGoal}
-        onClose={() => setModalCandidate(null)}
+        onClose={() => setModalSelection(null)}
       />
     </View>
   );
