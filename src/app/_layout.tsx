@@ -8,6 +8,7 @@ import { useFonts } from "expo-font";
 import { Image } from "expo-image";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 // パッケージ直下のindexは全ウェイト(1本5MB超)をrequireしてしまうので、必ずサブパスで読む
+import { NotoSansJP_400Regular } from "@expo-google-fonts/noto-sans-jp/400Regular";
 import { NotoSansJP_500Medium } from "@expo-google-fonts/noto-sans-jp/500Medium";
 import { NotoSansJP_700Bold } from "@expo-google-fonts/noto-sans-jp/700Bold";
 import { font42dotSans_400Regular } from "@expo-google-fonts/42dot-sans/400Regular";
@@ -38,6 +39,7 @@ export default function RootLayout() {
   const registered = useProfileStore((s) => s.profile !== null);
   // 選挙フローの見出し・カウンタはWebフォント前提のレイアウトなので、揃うまで描画しない
   const [fontsLoaded, fontError] = useFonts({
+    NotoSansJP_400Regular,
     NotoSansJP_500Medium,
     NotoSansJP_700Bold,
     font42dotSans_400Regular,
@@ -91,7 +93,6 @@ export default function RootLayout() {
               <Stack.Screen name="election/motivation" />
               <Stack.Screen name="election/counting" />
               <Stack.Screen name="election/result" />
-              <Stack.Screen name="poster/index" />
             </Stack.Protected>
             <Stack.Protected guard={!registered}>
               <Stack.Screen name="onboarding" />

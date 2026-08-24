@@ -4,9 +4,7 @@ import { FadeIn, FadeOut, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
-import { Image } from "@/tw/image";
 import { FlowButton } from "@/components/ui/flow-button";
-import { FlowHeader } from "@/components/ui/flow-header";
 import { Odometer, odometerTimeAtValue } from "@/components/ui/odometer";
 import { CountingBackground } from "@/features/election/counting-background";
 import { generateElection } from "@/features/election/generate";
@@ -17,9 +15,8 @@ import { useProfileStore } from "@/stores/profile";
 
 const TOTAL_VOTES = 1000;
 const COUNT_TARGET = TOTAL_VOTES;
-/** Figma 1700:7742。招集画面を見せてから開票を始める */
-const RECRUIT_DURATION_MS = 2000;
-const REDUCED_MOTION_RECRUIT_MS = 800;
+/** 縮小モーション時はカウントアップを飛ばし、1000票の完成状態だけ見せる */
+const REDUCED_MOTION_HOLD_MS = 800;
 const COUNT_DURATION_MS = 7000;
 /** 990台に入ったら失速させ、最後の数票をじっくり見せる */
 const COUNT_SLOW_FROM = 960;
@@ -35,7 +32,7 @@ const STAGES = [
   { at: 993, text: "もうすぐで\n結果が出ます" },
 ] as const;
 
-type PresentationPhase = "recruiting" | "counting" | "holding";
+type PresentationPhase = "counting" | "holding";
 
 export default function ElectionCountingScreen() {
   const router = useRouter();
@@ -49,7 +46,7 @@ export default function ElectionCountingScreen() {
   const profile = useProfileStore((state) => state.profile);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [phase, setPhase] = useState<PresentationPhase>("recruiting");
+  const [phase, setPhase] = useState<PresentationPhase>("counting");
   const [animationFinished, setAnimationFinished] = useState(false);
   const [stage, setStage] = useState(0);
 
@@ -73,39 +70,33 @@ export default function ElectionCountingScreen() {
     };
   }, [worry, motivation, profile, election, setElection, attempt]);
 
-  // 招集画面から開票へ移り、Figmaの票数に合わせて見出しを切り替える。
+  // 開票を始め、Figmaの票数に合わせて見出しを切り替える。
   useEffect(() => {
     if (reduceMotion) {
-      setPhase("recruiting");
+      setPhase("holding");
       setStage(STAGES.length - 1);
       setAnimationFinished(false);
-      const timer = setTimeout(() => {
-        setPhase("holding");
-        setAnimationFinished(true);
-      }, REDUCED_MOTION_RECRUIT_MS);
+      const timer = setTimeout(
+        () => setAnimationFinished(true),
+        REDUCED_MOTION_HOLD_MS
+      );
       return () => clearTimeout(timer);
     }
 
-    setPhase("recruiting");
+    setPhase("counting");
     setStage(0);
     setAnimationFinished(false);
-    const recruitTimer = setTimeout(
-      () => setPhase("counting"),
-      RECRUIT_DURATION_MS
-    );
     const timers = STAGES.slice(1).map((s2, i) =>
       setTimeout(
         () => setStage(i + 1),
-        RECRUIT_DURATION_MS +
-          COUNT_DURATION_MS *
-            odometerTimeAtValue(s2.at, COUNT_TARGET, {
-              slowFrom: COUNT_SLOW_FROM,
-              slowTimeRatio: COUNT_SLOW_TIME_RATIO,
-            })
+        COUNT_DURATION_MS *
+          odometerTimeAtValue(s2.at, COUNT_TARGET, {
+            slowFrom: COUNT_SLOW_FROM,
+            slowTimeRatio: COUNT_SLOW_TIME_RATIO,
+          })
       )
     );
     return () => {
-      clearTimeout(recruitTimer);
       timers.forEach(clearTimeout);
     };
   }, [reduceMotion, attempt]);
@@ -149,50 +140,12 @@ export default function ElectionCountingScreen() {
         <FlowButton
           label="もう一度開票する"
           onPress={() => {
-            setPhase("recruiting");
+            setPhase("counting");
             setAnimationFinished(false);
             setStage(0);
             setAttempt((current) => current + 1);
           }}
           className="mt-4"
-        />
-      </View>
-    );
-  }
-
-  if (phase === "recruiting") {
-    return (
-      <View className="flex-1 overflow-hidden bg-white">
-        {/* Figmaから書き出した招集背景。正式な動画が届けばsourceのみ差し替える。 */}
-        <Image
-          source={require("../../../assets/election/recruiting.png")}
-          className="absolute inset-0"
-          contentFit="cover"
-          pointerEvents="none"
-        />
-        {/* 背景画像内の仮ステータスバーとヘッダーを実UIで覆う。 */}
-        <FlowHeader title="モチベーション" />
-
-        <Text
-          className="text-center font-flow text-flow-ink"
-          style={{
-            position: "absolute",
-            left: s(34),
-            top: s(220),
-            width: s(322),
-            fontSize: s(28),
-            lineHeight: s(44),
-            letterSpacing: s(1.4),
-          }}
-        >
-          あなたに近い{"\n"}1000人を{"\n"}招集しています…
-        </Text>
-
-        {/* 画像内の仮ホームインジケーターを端末の実表示に置き換える。 */}
-        <View
-          pointerEvents="none"
-          className="absolute inset-x-0 bottom-0 bg-white"
-          style={{ height: insets.bottom }}
         />
       </View>
     );
