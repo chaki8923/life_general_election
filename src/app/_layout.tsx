@@ -93,6 +93,9 @@ export default function RootLayout() {
               <Stack.Screen name="election/motivation" />
               <Stack.Screen name="election/counting" />
               <Stack.Screen name="election/result" />
+              <Stack.Screen name="wishes/complete" />
+              <Stack.Screen name="wishes/excuse" />
+              <Stack.Screen name="wishes/excuse-complete" />
             </Stack.Protected>
             <Stack.Protected guard={!registered}>
               <Stack.Screen name="onboarding" />

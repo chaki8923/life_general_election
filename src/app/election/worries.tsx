@@ -59,6 +59,7 @@ export default function WorrySuggestScreen() {
     (state) => state.setWorryCandidates
   );
   const setWorry = useElectionStore((state) => state.setWorry);
+  const showProfileStep = useElectionStore((state) => state.showProfileStep);
   const profile = useProfileStore((state) => state.profile);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -194,9 +195,11 @@ export default function WorrySuggestScreen() {
         pointerEvents="none"
       />
       <FlowHeader title="お悩み選択" />
-      <View className="mt-3">
-        <FlowStepper current={2} showProfileStep />
-      </View>
+      {showProfileStep ? (
+        <View className="mt-3">
+          <FlowStepper current={1} showProfileStep />
+        </View>
+      ) : null}
 
       {/* ここから下はFigmaの絶対座標レイアウト。キャラがはみ出すのでクリップする */}
       <View className="flex-1 overflow-hidden">

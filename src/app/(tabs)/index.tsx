@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   FlatList,
@@ -7,12 +7,14 @@ import {
   type NativeSyntheticEvent,
   useWindowDimensions,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
+import { ProgressDots } from "@/components/ui/progress-dots";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
+import { MypageGuideModal } from "@/features/onboarding/mypage-guide-modal";
 import { deleteManagedPosterPhoto } from "@/features/poster/photo-storage";
-import { PosterCanvas } from "@/features/poster/poster-canvas";
+import { PosterCard } from "@/features/poster/poster-card";
 import { PosterDeleteModal } from "@/features/poster/poster-delete-modal";
 import { PosterEditModal } from "@/features/poster/poster-edit-modal";
 import {
@@ -23,10 +25,7 @@ import {
 import { RunningPledgeCard } from "@/features/poster/running-pledge-card";
 import { getPosterPalette } from "@/features/poster/templates";
 import { usePosterExport } from "@/features/poster/use-poster-export";
-import {
-  ReportModal,
-  type ReportAction,
-} from "@/features/wishes/report-modal";
+import { ReportModal } from "@/features/wishes/report-modal";
 import { useProfileStore } from "@/stores/profile";
 import { useWishStore } from "@/stores/wishes";
 import { Image } from "@/tw/image";
@@ -34,19 +33,9 @@ import { Pressable, ScrollView, Text, View } from "@/tw";
 import type { Wish } from "@/types";
 
 const helpIcon = require("../../../assets/poster/icon-help.svg");
-const editIcon = require("../../../assets/poster/icon-edit.svg");
-const downloadIcon = require("../../../assets/poster/icon-download.svg");
 
-/** Figma 2040:6120。本文は左右20pxの350px幅に収まる */
+/** Figma 2703:24267。本文は左右20pxの350px幅に収まる */
 const PAGE_HORIZONTAL_PADDING = 20;
-/** Figma 2040:6133 のカード枠線色 */
-const BORDER = "#f6f6f6";
-/**
- * ポスター右上の編集ボタン。SVGは影ぶんの余白込みで68.5、
- * 中の円(55.56)がカード座標で right 16.2 / top 17.2 に来る（Figma 2040:6168）
- */
-const EDIT_BUTTON_SIZE = 68.5;
-const EDIT_BUTTON_INSET = 10;
 
 export default function MyPageScreen() {
   const router = useRouter();
@@ -58,9 +47,10 @@ export default function MyPageScreen() {
   const removeWish = useWishStore((state) => state.removeWish);
   const nickname = useProfileStore((state) => state.profile?.nickname ?? "");
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [reportAction, setReportAction] = useState<ReportAction | null>(null);
+  const [doneOpen, setDoneOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
   const [photoReady, setPhotoReady] = useState(true);
   const bottomPadding = useTabBarBottomPadding();
 
@@ -79,6 +69,14 @@ export default function MyPageScreen() {
     currentWish !== null &&
     !busy &&
     (storedSettings.image.kind === "character" || photoReady);
+
+  // Figma 2665:19111「初回ガイド」。マイページに来るたび毎回出す
+  useFocusEffect(
+    useCallback(() => {
+      if (!hasHydrated) return;
+      setGuideOpen(true);
+    }, [hasHydrated])
+  );
 
   useEffect(() => {
     if (currentIndex === safeCurrentIndex) return;
@@ -120,19 +118,39 @@ export default function MyPageScreen() {
     setDeleteOpen(false);
   };
 
-  const renderPoster = ({ item, index }: { item: Wish; index: number }) => {
+  /** 1公約＝1ページ。実行中の政策カードと公約ポスターカードを縦に並べる（Figma 2703:24268 Body） */
+  const renderPledgePage = ({
+    item,
+    index,
+  }: {
+    item: Wish;
+    index: number;
+  }) => {
     const settings = resolvePosterSettings(item, nickname);
     const isCurrent = index === safeCurrentIndex;
     return (
-      <View style={{ width: carouselWidth }}>
-        <PosterCanvas
+      <View style={{ width: carouselWidth }} className="gap-[8px]">
+        <RunningPledgeCard
+          wish={item}
+          onDone={() => setDoneOpen(true)}
+          onFailed={() =>
+            router.push({
+              pathname: "/wishes/excuse",
+              params: { id: item.id },
+            })
+          }
+        />
+        <PosterCard
           settings={settings}
           slogan={item.text}
           palette={getPosterPalette(settings.paletteId)}
           // キャプチャは表示中の1枚だけを対象にする
           posterRef={isCurrent ? posterRef : undefined}
           onPhotoLoaded={isCurrent ? () => setPhotoReady(true) : undefined}
-          interactive={isCurrent && !busy}
+          onPressEdit={() => setEditOpen(true)}
+          onPressSave={saveToLibrary}
+          saveDisabled={!isCurrent || !exportable}
+          saving={busy}
         />
       </View>
     );
@@ -148,7 +166,7 @@ export default function MyPageScreen() {
             onPress={() =>
               Alert.alert(
                 "設定済みの公約・政策",
-                "選んだ公約のポスターです。右上の鉛筆で見た目を変えられます。期日までに実行できたら「できた！」を押してください。"
+                "選んだ公約のポスターです。期日までに実行できたら「できた！」を押してください。ポスターは右上のアイコンで保存、下のリンクで編集できます。"
               )
             }
             accessibilityRole="button"
@@ -166,7 +184,7 @@ export default function MyPageScreen() {
 
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingTop: 16, paddingBottom: bottomPadding }}
+        contentContainerStyle={{ paddingTop: 12, paddingBottom: bottomPadding }}
       >
         {!hasHydrated ? (
           <View className="items-center py-20">
@@ -193,101 +211,46 @@ export default function MyPageScreen() {
           </View>
         ) : (
           <>
-            {/* ページャ（Figma 2040:6125 progress-bar-step4） */}
+            {/* ページャ（Figma 2703:24269 progress-bar-step4） */}
             {activeWishes.length >= 2 ? (
-              <View className="flex-row items-center justify-center gap-3 px-4 py-2">
-                {activeWishes.map((wish, index) => (
-                  <View
-                    key={wish.id}
-                    className={`h-2 w-2 rounded-full ${
-                      index === safeCurrentIndex ? "bg-flow-ink" : "bg-[#d9d9d9]"
-                    }`}
-                  />
-                ))}
-              </View>
+              <ProgressDots
+                total={activeWishes.length}
+                current={safeCurrentIndex}
+              />
             ) : null}
 
-            <View className="mt-2">
-              <FlatList
-                ref={carouselRef}
-                horizontal
-                pagingEnabled
-                nestedScrollEnabled
-                showsHorizontalScrollIndicator={false}
-                data={activeWishes}
-                keyExtractor={(item) => item.id}
-                renderItem={renderPoster}
-                onMomentumScrollEnd={handlePageChange}
-                getItemLayout={(_, index) => ({
-                  length: carouselWidth,
-                  offset: carouselWidth * index,
-                  index,
-                })}
-                style={{
-                  width: carouselWidth,
-                  alignSelf: "center",
-                }}
-              />
+            <FlatList
+              ref={carouselRef}
+              horizontal
+              pagingEnabled
+              nestedScrollEnabled
+              showsHorizontalScrollIndicator={false}
+              data={activeWishes}
+              keyExtractor={(item) => item.id}
+              renderItem={renderPledgePage}
+              onMomentumScrollEnd={handlePageChange}
+              getItemLayout={(_, index) => ({
+                length: carouselWidth,
+                offset: carouselWidth * index,
+                index,
+              })}
+              style={{
+                width: carouselWidth,
+                alignSelf: "center",
+              }}
+            />
 
-              <Pressable
-                onPress={() => setEditOpen(true)}
-                accessibilityRole="button"
-                accessibilityLabel="ポスターを編集する"
-                hitSlop={8}
-                style={{
-                  position: "absolute",
-                  right: PAGE_HORIZONTAL_PADDING + EDIT_BUTTON_INSET,
-                  top: EDIT_BUTTON_INSET,
-                  width: EDIT_BUTTON_SIZE,
-                  height: EDIT_BUTTON_SIZE,
-                }}
-              >
-                <Image
-                  source={editIcon}
-                  style={{ width: "100%", height: "100%" }}
-                  contentFit="contain"
-                />
-              </Pressable>
-            </View>
-
-            <View
-              className="mt-4 gap-3"
-              style={{ paddingHorizontal: PAGE_HORIZONTAL_PADDING }}
+            {/* Figma 2703:24324。削除は下線のテキストリンク */}
+            <Pressable
+              onPress={() => setDeleteOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="公約を削除する"
+              className="items-center px-[24px] py-[12px] active:opacity-70"
             >
-              {currentWish ? (
-                <RunningPledgeCard
-                  wish={currentWish}
-                  onDone={() => setReportAction("done")}
-                  onFailed={() => setReportAction("excuse")}
-                />
-              ) : null}
-
-              <Pressable
-                onPress={saveToLibrary}
-                disabled={!exportable}
-                accessibilityRole="button"
-                accessibilityState={{ disabled: !exportable, busy }}
-                className={`flex-row items-center gap-2 rounded-xl bg-white p-3 ${
-                  exportable ? "active:opacity-80" : "opacity-50"
-                }`}
-                style={{ borderWidth: 1, borderColor: BORDER }}
-              >
-                <Text className="flex-1 font-flow-medium text-sm text-flow-ink">
-                  {busy ? "保存しています…" : "ポスターを保存する"}
-                </Text>
-                <Image
-                  source={downloadIcon}
-                  style={{ width: 18, height: 18 }}
-                  contentFit="contain"
-                />
-              </Pressable>
-
-              <FlowButton
-                label="公約を削除する"
-                variant="dashed"
-                onPress={() => setDeleteOpen(true)}
-              />
-            </View>
+              <Text className="font-flow text-[12px] leading-[20px] tracking-[0.6px] text-flow-ink-low underline">
+                公約を削除する
+              </Text>
+            </Pressable>
           </>
         )}
       </ScrollView>
@@ -311,14 +274,19 @@ export default function MyPageScreen() {
         </>
       ) : null}
 
-      {currentWish && reportAction ? (
+      {currentWish && doneOpen ? (
         <ReportModal
           visible
           wish={currentWish}
-          action={reportAction}
-          onClose={() => setReportAction(null)}
+          onClose={() => setDoneOpen(false)}
+          onCompleted={() => router.push("/wishes/complete")}
         />
       ) : null}
+
+      <MypageGuideModal
+        visible={guideOpen}
+        onClose={() => setGuideOpen(false)}
+      />
     </View>
   );
 }

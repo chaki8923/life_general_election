@@ -1,11 +1,27 @@
-const MOCK_EXCUSES = [
-  "今日は助走の日でした。本番の一歩は、元気を充電した明日の自分に託します。",
-  "やる気が迷子になりましたが、帰り道は覚えているはず。今日は休憩にします。",
-  "完璧なタイミングを待っていたら日が暮れました。次は小さく始めれば大丈夫。",
-  "心の会議が長引き、本日の実行は見送りに。再提出できるので問題ありません。",
-  "予定より自分をいたわる日になりました。休めた分だけ次の一歩が軽くなります。",
+/** AI が使えないときの理由候補（Figma 2665:17352 の文言） */
+const MOCK_REASONS = [
+  "このところ気温が暑すぎた",
+  "仕事を頑張りすぎた",
+  "プライベートが充実しすぎた",
 ];
 
-export function buildMockExcuse() {
-  return MOCK_EXCUSES[Math.floor(Math.random() * MOCK_EXCUSES.length)];
+/** 理由を選べなかったときのフォールバック文面 */
+const MOCK_EXCUSES = [
+  "今日は助走の日だったんだ\n本番の一歩は明日の君に任せよう",
+  "やる気が迷子になっただけだよ\n帰り道は覚えているから大丈夫",
+  "完璧なタイミングを待っていたんだ\n次は小さく始めれば うまくいく",
+  "心の会議が長引いただけだよ\n再提出できるから問題なし",
+  "今日は自分をいたわる日だったんだ\n休めた分だけ次の一歩が軽くなる",
+];
+
+export function buildMockReasons() {
+  return [...MOCK_REASONS];
+}
+
+/** reason があれば、それを織り込んだ2行の言い訳を組み立てる */
+export function buildMockExcuse(reason?: string) {
+  if (!reason?.trim()) {
+    return MOCK_EXCUSES[Math.floor(Math.random() * MOCK_EXCUSES.length)];
+  }
+  return `君は今回${reason.trim()}んだ\nゆっくり休んで また明日はじめよう`;
 }
