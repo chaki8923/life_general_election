@@ -1,10 +1,11 @@
+import { useDesignScale } from "@/features/election/layout";
 import { Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 
 const crowdBg = require("../../../assets/election/result/unique-voices-crowd-bg.png");
 const crowdRight = require("../../../assets/election/result/unique-voices-crowd-right.png");
 
-/** Figma 1905:13968 — Group 624883 */
+/** Figma 1905:13968 — Group 624883（デザインpx） */
 const CROWD_WIDTH = 251;
 const CROWD_HEIGHT = 76;
 /** 1905:13970 背景 */
@@ -21,28 +22,38 @@ const RIGHT_HEIGHT = 63;
  * マイノリティ公約カード直上に配置する。
  */
 export function ResultUniqueVoicesSection() {
+  const { s } = useDesignScale();
+  const crowdW = s(CROWD_WIDTH);
+  const crowdH = s(CROWD_HEIGHT);
+  const bgW = s(BG_WIDTH);
+  const bgH = s(BG_HEIGHT);
+
   return (
-    <View className="items-center gap-2.5">
-      <Text className="w-full text-center font-flow-medium text-base leading-[1.4] text-flow-ink">
+    <View className="w-full items-center" style={{ gap: s(10) }}>
+      <Text
+        className="w-full text-center font-flow-medium text-flow-ink"
+        style={{ fontSize: s(16), lineHeight: s(16 * 1.4) }}
+      >
         そのほかにもユニークな声が集まったよ！
       </Text>
 
       <View
-        style={{ width: CROWD_WIDTH, height: CROWD_HEIGHT }}
+        className="max-w-full self-center overflow-hidden"
+        style={{ width: crowdW, height: crowdH }}
         accessibilityLabel="ユニークな声のキャラクター"
       >
         {/* 1905:13970 — 左4体 + 背景（608×147 ソース） */}
         <View
           className="absolute left-0 top-0 overflow-hidden"
-          style={{ width: BG_WIDTH, height: BG_HEIGHT }}
+          style={{ width: bgW, height: bgH }}
         >
           <Image
             source={crowdBg}
             className="absolute top-0"
             style={{
-              height: BG_HEIGHT,
-              width: BG_WIDTH * 1.5007,
-              left: -(BG_WIDTH * 0.2221),
+              height: bgH,
+              width: bgW * 1.5007,
+              left: -(bgW * 0.2221),
             }}
             contentFit="cover"
           />
@@ -53,10 +64,10 @@ export function ResultUniqueVoicesSection() {
           source={crowdRight}
           className="absolute"
           style={{
-            left: RIGHT_X,
-            top: RIGHT_Y,
-            width: RIGHT_WIDTH,
-            height: RIGHT_HEIGHT,
+            left: s(RIGHT_X),
+            top: s(RIGHT_Y),
+            width: s(RIGHT_WIDTH),
+            height: s(RIGHT_HEIGHT),
           }}
           contentFit="contain"
         />

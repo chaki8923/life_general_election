@@ -1,4 +1,5 @@
 import { FlowButton } from "@/components/ui/flow-button";
+import { useDesignScale } from "@/features/election/layout";
 import { Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 import type { Candidate } from "@/types";
@@ -14,11 +15,11 @@ const rankBadgeTail = require("../../../assets/election/result/rank-badge-tail.s
 const iconFlag = require("../../../assets/election/result/icon-flag.svg");
 const iconCheck = require("../../../assets/election/result/icon-check.svg");
 
-/** Figma 1713:6380 — 帽子キャラ: 1個=10人、半分=5人、1行14個 */
+/** Figma 1713:6380 — 帽子キャラ: 1個=10人、半分=5人、1行14個（デザインpx） */
 const CAPS_PER_ROW = 14;
-const CAP_SIZE =  10;
+const CAP_SIZE = 10;
 /** 帽子の見た目倍率（セルサイズは固定） */
-const CAP_RENDER_SCALE = 1.3;
+const CAP_RENDER_SCALE = 1.15;
 const CAP_GAP = 4;
 const CAP_ROW_WIDTH = CAPS_PER_ROW * CAP_SIZE + (CAPS_PER_ROW - 1) * CAP_GAP;
 /** 上限: 14列×4行=56個（560人相当） */
@@ -73,21 +74,40 @@ type ResultPledgeCardProps = {
 
 /** Figma Group4 — 王冠付きリボン + 燕尾 + 順位数字 */
 export function RankBadge({ rank, color }: { rank: number; color: string }) {
+  const { s } = useDesignScale();
   return (
-    <View className="relative h-8 w-[19.5px] items-center">
+    <View
+      className="relative items-center"
+      style={{ height: s(32), width: s(19.5) }}
+    >
       <Image
         source={rankBadgeUnion}
-        className="absolute left-0 top-0 h-[20.55px] w-[19.5px]"
+        className="absolute left-0 top-0"
+        style={{
+          height: s(20.55),
+          width: s(19.5),
+          tintColor: color,
+        }}
         contentFit="fill"
-        style={{ tintColor: color }}
       />
       <Image
         source={rankBadgeTail}
-        className="absolute bottom-0 h-[14.89px] w-[12.62px]"
+        className="absolute bottom-0"
+        style={{
+          height: s(14.89),
+          width: s(12.62),
+          tintColor: color,
+        }}
         contentFit="fill"
-        style={{ tintColor: color }}
       />
-      <Text className="absolute top-1.5 text-[12px] font-bold leading-[1.4] text-white">
+      <Text
+        className="absolute font-bold text-white"
+        style={{
+          top: s(6),
+          fontSize: s(12),
+          lineHeight: s(12 * 1.4),
+        }}
+      >
         {rank}
       </Text>
     </View>
@@ -98,26 +118,40 @@ export function PledgeTagPill({
   label,
   color,
   icon,
-  iconClassName,
+  iconWidth,
+  iconHeight,
 }: {
   label: string;
   color: string;
   icon: number;
-  iconClassName: string;
+  iconWidth: number;
+  iconHeight: number;
 }) {
+  const { s } = useDesignScale();
   return (
-    <View className="flex-row items-center gap-0.5">
-      <View className="h-[13px] w-[13px] items-center justify-center overflow-hidden">
+    <View className="flex-row items-center" style={{ gap: s(2) }}>
+      <View
+        className="items-center justify-center overflow-hidden"
+        style={{ height: s(11), width: s(11) }}
+      >
         <Image
           source={icon}
-          className={iconClassName}
           contentFit="contain"
-          style={{ tintColor: color }}
+          style={{
+            width: s(iconWidth),
+            height: s(iconHeight),
+            tintColor: color,
+          }}
         />
       </View>
       <Text
-        className="font-flow-medium text-[10px] leading-[1.4] tracking-[-0.4px]"
-        style={{ color }}
+        className="font-flow-medium"
+        style={{
+          color,
+          fontSize: s(10),
+          lineHeight: s(10 * 1.4),
+          letterSpacing: s(-0.4),
+        }}
       >
         {label}
       </Text>
@@ -128,25 +162,38 @@ export function PledgeTagPill({
 export function PledgeField({
   tag,
   icon,
-  iconClassName,
+  iconWidth,
+  iconHeight,
   text,
   color,
 }: {
   tag: string;
   icon: number;
-  iconClassName: string;
+  iconWidth: number;
+  iconHeight: number;
   text: string;
   color: string;
 }) {
+  const { s } = useDesignScale();
   return (
-    <View className="gap-1">
+    <View style={{ gap: s(4) }}>
       <PledgeTagPill
         label={tag}
         color={color}
         icon={icon}
-        iconClassName={iconClassName}
+        iconWidth={iconWidth}
+        iconHeight={iconHeight}
       />
-      <Text className="font-flow text-base leading-6 tracking-[0.8px] text-flow-ink">
+      <Text
+        className="font-flow text-flow-ink"
+        style={{
+          fontSize: s(16),
+          lineHeight: s(24),
+          letterSpacing: s(0.8),
+        }}
+        numberOfLines={3}
+        ellipsizeMode="tail"
+      >
         {text}
       </Text>
     </View>
@@ -158,13 +205,15 @@ export function PledgeField({
  * half=true のとき左半分だけ表示（5人分）。
  */
 function CapUnit({ half = false, color }: { half?: boolean; color: string }) {
-  const iconSize = CAP_SIZE * CAP_RENDER_SCALE;
-  const iconOffset = (CAP_SIZE - iconSize) / 2;
+  const { s } = useDesignScale();
+  const cell = s(CAP_SIZE);
+  const iconSize = cell * CAP_RENDER_SCALE;
+  const iconOffset = (cell - iconSize) / 2;
 
   const inner = (
     <View
       className="shrink-0"
-      style={{ width: CAP_SIZE, height: CAP_SIZE }}
+      style={{ width: cell, height: cell }}
       pointerEvents="none"
     >
       <Image
@@ -186,7 +235,7 @@ function CapUnit({ half = false, color }: { half?: boolean; color: string }) {
     return (
       <View
         className="shrink-0 overflow-hidden"
-        style={{ width: CAP_SIZE / 2, height: CAP_SIZE }}
+        style={{ width: cell / 2, height: cell }}
       >
         {inner}
       </View>
@@ -200,13 +249,14 @@ function CapUnit({ half = false, color }: { half?: boolean; color: string }) {
  * votes: 実際の票数（1帽子=10人、半帽子=5人）
  */
 export function VoteCapGrid({ votes, color }: { votes: number; color: string }) {
+  const { s } = useDesignScale();
   const fullCaps = Math.min(MAX_CAP_UNITS, Math.floor(votes / 10));
   const hasHalf = votes % 10 >= 5 && fullCaps < MAX_CAP_UNITS;
 
   return (
     <View
-      className="ml-auto flex-row flex-wrap content-center justify-start"
-      style={{ width: CAP_ROW_WIDTH, gap: CAP_GAP }}
+      className="min-w-0 flex-1 flex-row flex-wrap content-center justify-start"
+      style={{ maxWidth: s(CAP_ROW_WIDTH), gap: s(CAP_GAP) }}
     >
       {Array.from({ length: fullCaps }, (_, i) => (
         <CapUnit key={i} color={color} />
@@ -219,7 +269,8 @@ export function VoteCapGrid({ votes, color }: { votes: number; color: string }) 
 export function PledgeAvatar({
   source,
   backgroundColor,
-  size = 64,
+  /** デザインpx。未指定時は 64 */
+  size,
   flipHorizontal = false,
 }: {
   source: number;
@@ -227,6 +278,9 @@ export function PledgeAvatar({
   size?: number;
   flipHorizontal?: boolean;
 }) {
+  const { s } = useDesignScale();
+  const designSize = size ?? 64;
+  const px = s(designSize);
   const avatarImageStyle = {
     left: "10%" as const,
     top: "6%" as const,
@@ -238,9 +292,9 @@ export function PledgeAvatar({
   return (
     <View
       className="overflow-hidden rounded-full"
-      style={{ width: size, height: size, backgroundColor }}
+      style={{ width: px, height: px, backgroundColor }}
     >
-      {size >= 64 ? (
+      {designSize >= 64 ? (
         <Image
           source={source}
           className="absolute"
@@ -261,20 +315,36 @@ export function PledgeAvatar({
 }
 
 function VoteCountBlock({ votes, color }: { votes: number; color: string }) {
+  const { s } = useDesignScale();
   return (
-    <View className="w-[50px] items-end">
-      <View className="flex-row items-center justify-end gap-px">
+    <View className="shrink-0 items-end" style={{ maxWidth: s(56), minWidth: s(44) }}>
+      <View className="flex-row items-center justify-end" style={{ gap: s(1) }}>
         <Text
-          className="font-flow-medium text-xl leading-[1.4] tracking-[-0.8px]"
-          style={{ color }}
+          className="font-flow-medium"
+          style={{
+            color,
+            fontSize: s(20),
+            lineHeight: s(20 * 1.4),
+            letterSpacing: s(-0.8),
+          }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
         >
           {votes}
         </Text>
-        <Text className="font-flow-medium text-xs leading-[1.4] text-flow-ink">
+        <Text
+          className="font-flow-medium text-flow-ink"
+          style={{ fontSize: s(12), lineHeight: s(12 * 1.4) }}
+        >
           人
         </Text>
       </View>
-      <Text className="font-flow-medium text-[10px] leading-[1.4] text-flow-ink-low">
+      <Text
+        className="font-flow-medium text-flow-ink-low"
+        style={{ fontSize: s(10), lineHeight: s(10 * 1.4) }}
+        numberOfLines={1}
+      >
         が選んだよ
       </Text>
     </View>
@@ -283,10 +353,14 @@ function VoteCountBlock({ votes, color }: { votes: number; color: string }) {
 
 /** 886:2904 — マイノリティ行のコンパクトキャップ（最大2個表示想定） */
 function MinorityCapRow({ count, color }: { count: number; color: string }) {
+  const { s } = useDesignScale();
   const fullCaps = Math.min(4, Math.max(1, Math.floor(count / 10)));
   const hasHalf = count % 10 >= 5 && fullCaps < 4;
   return (
-    <View className="h-2.5 flex-row items-center gap-0.5">
+    <View
+      className="flex-row items-center"
+      style={{ height: s(10), gap: s(2) }}
+    >
       {Array.from({ length: fullCaps }, (_, i) => (
         <CapUnit key={i} color={color} />
       ))}
@@ -303,12 +377,17 @@ export function ResultPledgeCard({
   rank,
   onConfirm,
 }: ResultPledgeCardProps) {
+  const { s } = useDesignScale();
   const theme = PLEDGE_RANK_THEMES[rank];
 
   return (
     <View
-      className="gap-3 rounded-2xl border border-[#f6f6f6] bg-white px-3 pb-4 pt-5"
+      className="rounded-2xl border border-[#f6f6f6] bg-white"
       style={{
+        gap: s(12),
+        paddingHorizontal: s(12),
+        paddingBottom: s(16),
+        paddingTop: s(20),
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.08,
@@ -316,32 +395,41 @@ export function ResultPledgeCard({
         elevation: 2,
       }}
     >
-      <View className="w-full flex-row items-center gap-3">
-        <RankBadge rank={rank} color={theme.color} />
-        <PledgeAvatar
-          source={theme.avatar}
-          backgroundColor={theme.avatarBg}
-          flipHorizontal={theme.flipAvatar}
-        />
+      <View
+        className="w-full flex-row items-center overflow-hidden"
+        style={{ gap: s(8) }}
+      >
+        <View className="shrink-0">
+          <RankBadge rank={rank} color={theme.color} />
+        </View>
+        <View className="shrink-0">
+          <PledgeAvatar
+            source={theme.avatar}
+            backgroundColor={theme.avatarBg}
+            flipHorizontal={theme.flipAvatar}
+          />
+        </View>
         <VoteCapGrid votes={candidate.votes} color={theme.color} />
         <VoteCountBlock votes={candidate.votes} color={theme.color} />
       </View>
 
-      <View className="h-px w-full bg-[#eef0f2]" />
+      <View className="w-full bg-[#eef0f2]" style={{ height: s(1) }} />
 
-      <View className="w-full gap-4">
-        <View className="gap-2">
+      <View className="w-full" style={{ gap: s(16) }}>
+        <View style={{ gap: s(8) }}>
           <PledgeField
             tag="人生公約"
             icon={iconFlag}
-            iconClassName="h-[13px] w-[13px]"
+            iconWidth={11}
+            iconHeight={11}
             text={candidate.label}
             color={theme.color}
           />
           <PledgeField
             tag="掲げる政策"
             icon={iconCheck}
-            iconClassName="h-[14px] w-[12.6px]"
+            iconWidth={10.8}
+            iconHeight={12}
             text={candidate.action}
             color={theme.color}
           />
@@ -373,10 +461,15 @@ export function ResultMinorityPledgeCard({
   onConfirm,
   theme = MINORITY_PLEDGE_THEME,
 }: ResultMinorityPledgeCardProps) {
+  const { s } = useDesignScale();
   return (
     <View
-      className="gap-3 rounded-2xl border border-[#f6f6f6] bg-white px-3 pb-4 pt-5"
+      className="rounded-2xl border border-[#f6f6f6] bg-white"
       style={{
+        gap: s(12),
+        paddingHorizontal: s(12),
+        paddingBottom: s(16),
+        paddingTop: s(20),
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
@@ -384,8 +477,11 @@ export function ResultMinorityPledgeCard({
         elevation: 3,
       }}
     >
-      <View className="w-full flex-row items-center justify-between">
-        <View className="flex-row items-center gap-2.5">
+      <View className="w-full flex-row items-center justify-between overflow-hidden">
+        <View
+          className="min-w-0 flex-1 flex-row items-center"
+          style={{ gap: s(10) }}
+        >
           <PledgeAvatar
             source={theme.avatar}
             backgroundColor={theme.avatarBg}
@@ -396,19 +492,21 @@ export function ResultMinorityPledgeCard({
         <VoteCountBlock votes={candidate.votes} color={theme.color} />
       </View>
 
-      <View className="w-full gap-4">
-        <View className="gap-2">
+      <View className="w-full" style={{ gap: s(16) }}>
+        <View style={{ gap: s(8) }}>
           <PledgeField
             tag="人生公約"
             icon={iconFlag}
-            iconClassName="h-[13px] w-[13px]"
+            iconWidth={11}
+            iconHeight={11}
             text={candidate.label}
             color={theme.color}
           />
           <PledgeField
             tag="掲げる政策"
             icon={iconCheck}
-            iconClassName="h-[14px] w-[12.6px]"
+            iconWidth={10.8}
+            iconHeight={12}
             text={candidate.action}
             color={theme.color}
           />

@@ -1,14 +1,13 @@
+import { useDesignScale } from "@/features/election/layout";
+import { ResultPagedRow } from "@/features/election/result-paged-row";
 import { Pressable, Text, View } from "@/tw";
 import { Image } from "@/tw/image";
-import { useRef, useState } from "react";
-import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
-import { ScrollView as RNScrollView } from "react-native";
 
 const tipCharacterExplain = require("../../../assets/election/result/tip-character-explain.png");
 const tipCharacterShadow = require("../../../assets/election/result/tip-character-shadow.png");
 const tipChevron = require("../../../assets/election/result/tip-chevron.svg");
 
-/** スワイプ中にカード同士がくっつかないようページ間のすき間 */
+/** スワイプ中にカード同士がくっつかないようページ間のすき間（デザインpx） */
 const SLIDE_GAP = 24;
 
 type TipSlide = {
@@ -38,6 +37,7 @@ type ResultTipCardProps = {
 };
 
 function TipChevron({ onPress }: { onPress: () => void }) {
+  const { s } = useDesignScale();
   return (
     <Pressable
       onPress={onPress}
@@ -48,7 +48,7 @@ function TipChevron({ onPress }: { onPress: () => void }) {
     >
       <Image
         source={tipChevron}
-        style={{ width: 7, height: 12 }}
+        style={{ width: s(7), height: s(12) }}
         contentFit="contain"
       />
     </Pressable>
@@ -64,49 +64,96 @@ function TipCardBody({
   pageLabel: string;
   onNext: () => void;
 }) {
+  const { s } = useDesignScale();
   return (
-    <View className="relative h-[96px] justify-center overflow-hidden rounded-xl border border-[#f6f6f6] bg-white">
-      {/* Figma 1691:2843 Ellipse 10 — 25×64 / 36×10 を拡大カード比で配置 */}
+    <View
+      className="relative w-full justify-center overflow-hidden rounded-xl border border-[#f6f6f6] bg-white"
+      style={{ minHeight: s(96) }}
+    >
       <Image
         pointerEvents="none"
         source={tipCharacterShadow}
         className="absolute"
-        style={{ left: 27, top: 72, width: 40, height: 11 }}
+        style={{
+          left: s(27),
+          bottom: s(13),
+          width: s(40),
+          height: s(11),
+        }}
         contentFit="fill"
       />
 
-      {/* Figma 1895:13877 — 表示64×72 */}
       <Image
         pointerEvents="none"
         source={tipCharacterExplain}
-        className="absolute left-3 top-2.5"
-        style={{ width: 64, height: 72 }}
+        className="absolute"
+        style={{
+          left: s(12),
+          top: s(10),
+          width: s(64),
+          height: s(72),
+        }}
         contentFit="contain"
         accessibilityLabel="説明キャラクター"
       />
 
-      <View className="ml-[92px] flex-row items-end gap-1.5 py-3.5 pr-3">
-        <View className="min-w-0 flex-1 gap-1.5">
-          <View className="self-start rounded-[10px] bg-flow-ink px-2.5 py-0.5">
-            <Text className="font-flow-medium text-[11px] leading-[1.4] text-white">
+      <View
+        className="min-w-0 flex-row items-end"
+        style={{
+          marginLeft: s(84),
+          gap: s(6),
+          paddingVertical: s(14),
+          paddingRight: s(12),
+        }}
+      >
+        <View className="min-w-0 flex-1" style={{ gap: s(6) }}>
+          <View
+            className="self-start bg-flow-ink"
+            style={{
+              borderRadius: s(10),
+              paddingHorizontal: s(10),
+              paddingVertical: s(2),
+            }}
+          >
+            <Text
+              className="font-flow-medium text-white"
+              style={{ fontSize: s(11), lineHeight: s(11 * 1.4) }}
+              numberOfLines={1}
+            >
               {slide.badge}
             </Text>
           </View>
 
           {slide.kind === "explain" ? (
-            <Text className="font-flow-medium text-[13px] leading-[1.4] text-flow-ink-mid">
-              <Text className="font-flow-medium text-[13px] text-flow-ink">
+            <Text
+              className="font-flow-medium text-flow-ink-mid"
+              style={{ fontSize: s(13), lineHeight: s(13 * 1.4) }}
+            >
+              <Text
+                className="font-flow-medium text-flow-ink"
+                style={{ fontSize: s(13) }}
+              >
                 公約
               </Text>
               は大きな目標、
-              <Text className="font-flow-medium text-[13px] text-flow-ink">
+              <Text
+                className="font-flow-medium text-flow-ink"
+                style={{ fontSize: s(13) }}
+              >
                 政策
               </Text>
               はゴールに辿り着くための小さな目標のことだよ！
             </Text>
           ) : (
-            <Text className="font-flow-medium text-[13px] leading-[1.4] text-flow-ink-mid">
-              <Text className="font-flow text-[13px] leading-[1.4] text-flow-ink">
+            <Text
+              className="font-flow-medium text-flow-ink-mid"
+              style={{ fontSize: s(13), lineHeight: s(13 * 1.4) }}
+              numberOfLines={4}
+            >
+              <Text
+                className="font-flow text-flow-ink"
+                style={{ fontSize: s(13), lineHeight: s(13 * 1.4) }}
+              >
                 {slide.recommendTitle}
               </Text>
               {"\n"}
@@ -115,16 +162,25 @@ function TipCardBody({
           )}
         </View>
 
-        <View className="h-[58px] w-[35px] items-end justify-between pb-0.5">
-          <View className="rounded-full bg-[#f6f6f6] px-2.5">
-            <Text className="font-flow-medium text-[10px] leading-[1.4] text-flow-ink">
+        <View
+          className="shrink-0 items-end justify-between"
+          style={{ height: s(58), width: s(35), paddingBottom: s(2) }}
+        >
+          <View
+            className="rounded-full bg-[#f6f6f6]"
+            style={{ paddingHorizontal: s(10) }}
+          >
+            <Text
+              className="font-flow-medium text-flow-ink"
+              style={{ fontSize: s(10), lineHeight: s(10 * 1.4) }}
+            >
               {pageLabel}
             </Text>
           </View>
           {slide.kind === "explain" ? (
             <TipChevron onPress={onNext} />
           ) : (
-            <View className="h-3 w-[7px]" />
+            <View style={{ height: s(12), width: s(7) }} />
           )}
         </View>
       </View>
@@ -137,9 +193,8 @@ function TipCardBody({
  * 横スワイプで 1/2 → 2/2。白カード + ダークバッジ。
  */
 export function ResultTipCard({ recommendLabel }: ResultTipCardProps) {
-  const scrollRef = useRef<RNScrollView>(null);
-  const [page, setPage] = useState(0);
-  const [pageWidth, setPageWidth] = useState(0);
+  const { s } = useDesignScale();
+  const slideGap = s(SLIDE_GAP);
 
   const slides: TipSlide[] = [
     SLIDES[0],
@@ -151,56 +206,18 @@ export function ResultTipCard({ recommendLabel }: ResultTipCardProps) {
     },
   ];
 
-  const slideStride = pageWidth + SLIDE_GAP;
-
-  const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    if (pageWidth <= 0) return;
-    setPage(Math.round(e.nativeEvent.contentOffset.x / slideStride));
-  };
-
-  const goNext = () => {
-    if (pageWidth <= 0 || page >= slides.length - 1) return;
-    const next = page + 1;
-    scrollRef.current?.scrollTo({ x: slideStride * next, animated: true });
-    setPage(next);
-  };
-
   return (
-    <View
-      className="overflow-hidden"
-      onLayout={(e) => setPageWidth(e.nativeEvent.layout.width)}
-    >
-      {pageWidth > 0 ? (
-        <RNScrollView
-          ref={scrollRef}
-          horizontal
-          nestedScrollEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onScrollEnd}
-          decelerationRate="fast"
-          snapToInterval={slideStride}
-          snapToAlignment="start"
-          disableIntervalMomentum
-        >
-          {slides.map((slide, index) => (
-            <View
-              key={slide.badge}
-              style={{
-                width: pageWidth,
-                marginRight: index < slides.length - 1 ? SLIDE_GAP : 0,
-              }}
-            >
-              <TipCardBody
-                slide={slide}
-                pageLabel={`${index + 1}/${slides.length}`}
-                onNext={goNext}
-              />
-            </View>
-          ))}
-        </RNScrollView>
-      ) : (
-        <View className="h-[96px]" />
+    <ResultPagedRow
+      pageCount={slides.length}
+      gap={slideGap}
+      placeholderHeight={s(96)}
+      renderPage={(index, { goToPage }) => (
+        <TipCardBody
+          slide={slides[index]}
+          pageLabel={`${index + 1}/${slides.length}`}
+          onNext={() => goToPage(index + 1)}
+        />
       )}
-    </View>
+    />
   );
 }
