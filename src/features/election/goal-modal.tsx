@@ -162,11 +162,13 @@ export function GoalModal({
               </View>
             </View>
 
+            {/* 期日未選択でも常時表示。未選択=#D0D7DE 非活性／選択後はカード色で活性 */}
             <FlowButton
               label="設定する"
               variant="primary"
               disabled={!canSubmit}
-              fillColor={canSubmit ? color : "#d0d7de"}
+              fillColor={color}
+              disabledFillColor="#D0D7DE"
               onPress={() => deadline !== null && onRegister(deadline)}
               className="h-14 w-full"
             />
