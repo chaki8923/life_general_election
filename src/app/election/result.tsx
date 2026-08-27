@@ -2,10 +2,6 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
 import { ProgressDots } from "@/components/ui/progress-dots";
-import {
-  FlowTabBarOverlay,
-  useTabBarBottomPadding,
-} from "@/components/ui/tab-bar";
 import { GoalModal } from "@/features/election/goal-modal";
 import {
   MINORITY_PLEDGE_THEMES,
@@ -99,8 +95,8 @@ export default function ElectionResultScreen() {
   );
   const [minorityPage, setMinorityPage] = useState(0);
   const [minorityWidth, setMinorityWidth] = useState(0);
-  const tabBarPadding = useTabBarBottomPadding();
-  const scrollBottomPadding = showProfileStep ? 32 : tabBarPadding;
+  // フッターメニューは「設定する」を押すまで非表示のため、常にメニュー分の余白は不要
+  const scrollBottomPadding = 32;
 
   // 開票の生成は counting が担う。未開票なら投票中へ戻す。
   useEffect(() => {
@@ -287,17 +283,7 @@ export default function ElectionResultScreen() {
         </View>
       </ScrollView>
 
-      {/* 1679:8798 — BottomNav（初回プロフ登録フローでは非表示） */}
-      {showProfileStep ? null : (
-        <FlowTabBarOverlay
-          active="vote"
-          onPress={(id) => {
-            if (id === "index") router.replace("/");
-            else if (id === "vote") router.replace("/(tabs)/vote");
-            else router.replace("/(tabs)/achievements");
-          }}
-        />
-      )}
+      {/* 1679:8798 — BottomNav。この公約・政策を「設定する」で確定するまでは非表示にする */}
 
       <GoalModal
         visible={Boolean(modalSelection)}
