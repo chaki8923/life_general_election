@@ -228,7 +228,7 @@ export default function ElectionResultScreen() {
           className="w-full"
           style={{ gap: s(20), paddingHorizontal: s(20) }}
         >
-          <View style={{ marginTop: s(12) }}>
+          <View style={{ marginTop: s(4) }}>
             <ResultTipCard recommendLabel={topCandidate?.label} />
           </View>
 

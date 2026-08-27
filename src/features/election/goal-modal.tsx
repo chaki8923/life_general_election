@@ -44,7 +44,7 @@ function SectionLabel({
   return (
     <View
       className="flex-row items-center"
-      style={{ gap: s(4), paddingVertical: s(6) }}
+      style={{ gap: s(4), paddingVertical: s(2) }}
     >
       <Image
         source={icon}
@@ -59,8 +59,8 @@ function SectionLabel({
         className="font-flow"
         style={{
           color,
-          fontSize: s(14),
-          lineHeight: s(14 * 1.4),
+          fontSize: s(11),
+          lineHeight: s(11 * 1.4),
           letterSpacing: s(-0.48),
         }}
       >
@@ -146,86 +146,88 @@ export function GoalModal({
               contentContainerStyle={{
                 flexGrow: 1,
                 justifyContent: "space-between",
-                gap: s(20),
+                gap: s(16),
                 paddingBottom: s(8),
               }}
             >
-              <Text
-                className="text-center font-flow text-flow-ink"
-                style={{ fontSize: s(18), lineHeight: s(28) }}
-              >
-                この公約・政策を目標に設定しますか？
-              </Text>
-
-              <View style={{ gap: s(20) }}>
-                <View
-                  className="border-b border-[#eaeef2]"
-                  style={{ gap: s(4), paddingBottom: s(16) }}
+              <View style={{ gap: s(12) }}>
+                <Text
+                  className="text-center font-flow text-flow-ink"
+                  style={{ fontSize: s(14), lineHeight: s(20) }}
                 >
-                  <SectionLabel
-                    icon={iconFlag}
-                    iconWidth={16}
-                    iconHeight={16}
-                    label="人生公約"
-                    color={color}
-                  />
-                  <Text
-                    className="font-flow-medium text-flow-ink"
-                    style={{ fontSize: s(16), lineHeight: s(24) }}
-                    numberOfLines={3}
-                    ellipsizeMode="tail"
-                  >
-                    {candidate?.label}
-                  </Text>
-                </View>
-
-                <View
-                  className="border-b border-[#eaeef2]"
-                  style={{ gap: s(4), paddingBottom: s(16) }}
-                >
-                  <SectionLabel
-                    icon={iconCheck}
-                    iconWidth={15}
-                    iconHeight={17}
-                    label="掲げる政策"
-                    color={color}
-                  />
-                  <Text
-                    className="font-flow-medium text-flow-ink"
-                    style={{ fontSize: s(16), lineHeight: s(24) }}
-                    numberOfLines={3}
-                    ellipsizeMode="tail"
-                  >
-                    {candidate?.action}
-                  </Text>
-                </View>
+                  この公約・政策を目標に設定しますか？
+                </Text>
 
                 <View style={{ gap: s(12) }}>
-                  <SectionLabel
-                    icon={iconCalendar}
-                    iconWidth={20}
-                    iconHeight={20}
-                    label="政策実行の期日"
-                    color={color}
-                  />
-                  <Text
-                    className="font-flow-medium text-flow-ink"
-                    style={{
-                      fontSize: s(14),
-                      lineHeight: s(24),
-                      letterSpacing: s(0.6),
-                    }}
+                  <View
+                    className="border-b border-[#eaeef2]"
+                    style={{ gap: s(4), paddingBottom: s(10) }}
                   >
-                    忘れないようまずは
-                    <Text style={{ color }}>3日以内</Text>
-                    がおすすめ！
-                  </Text>
-                  <GoalDeadlinePicker
-                    value={deadline}
-                    onChange={setDeadline}
-                    color={color}
-                    accentBg={accentBg}
-                  />
+                    <SectionLabel
+                      icon={iconFlag}
+                      iconWidth={13}
+                      iconHeight={13}
+                      label="人生公約"
+                      color={color}
+                    />
+                    <Text
+                      className="font-flow-medium text-flow-ink"
+                      style={{ fontSize: s(13), lineHeight: s(18) }}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
+                    >
+                      {candidate?.label}
+                    </Text>
+                  </View>
+
+                  <View
+                    className="border-b border-[#eaeef2]"
+                    style={{ gap: s(4), paddingBottom: s(10) }}
+                  >
+                    <SectionLabel
+                      icon={iconCheck}
+                      iconWidth={12}
+                      iconHeight={14}
+                      label="掲げる政策"
+                      color={color}
+                    />
+                    <Text
+                      className="font-flow-medium text-flow-ink"
+                      style={{ fontSize: s(13), lineHeight: s(18) }}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
+                    >
+                      {candidate?.action}
+                    </Text>
+                  </View>
+
+                  <View style={{ gap: s(10) }}>
+                    <SectionLabel
+                      icon={iconCalendar}
+                      iconWidth={14}
+                      iconHeight={14}
+                      label="政策実行の期日"
+                      color={color}
+                    />
+                    <Text
+                      className="font-flow-medium text-flow-ink"
+                      style={{
+                        fontSize: s(11),
+                        lineHeight: s(16),
+                        letterSpacing: s(0.6),
+                      }}
+                    >
+                      忘れないようまずは
+                      <Text style={{ color }}>3日以内</Text>
+                      がおすすめ！
+                    </Text>
+                    <GoalDeadlinePicker
+                      value={deadline}
+                      onChange={setDeadline}
+                      color={color}
+                      accentBg={accentBg}
+                    />
+                  </View>
                 </View>
               </View>
 
