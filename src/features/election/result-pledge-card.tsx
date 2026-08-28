@@ -255,7 +255,7 @@ export function VoteCapGrid({ votes, color }: { votes: number; color: string }) 
 
   return (
     <View
-      className="min-w-0 flex-1 flex-row flex-wrap content-center justify-start"
+      className="min-w-0 flex-row flex-wrap content-center justify-start"
       style={{ maxWidth: s(CAP_ROW_WIDTH), gap: s(CAP_GAP) }}
     >
       {Array.from({ length: fullCaps }, (_, i) => (
@@ -317,7 +317,14 @@ export function PledgeAvatar({
 function VoteCountBlock({ votes, color }: { votes: number; color: string }) {
   const { s } = useDesignScale();
   return (
-    <View className="shrink-0 items-end" style={{ maxWidth: s(52), minWidth: s(40) }}>
+    <View
+      className="shrink-0 items-end"
+      style={{
+        marginLeft: s(6),
+        maxWidth: s(56),
+        minWidth: s(44),
+      }}
+    >
       <View className="flex-row items-center justify-end" style={{ gap: s(1) }}>
         <Text
           className="font-flow-medium"
@@ -410,9 +417,16 @@ export function ResultPledgeCard({
             size={56}
           />
         </View>
-        <VoteCapGrid votes={candidate.votes} color={theme.color} />
-        <VoteCountBlock votes={candidate.votes} color={theme.color} />
+        <View
+          className="min-w-0 flex-1 flex-row items-center justify-between"
+          style={{ gap: s(4) }}
+        >
+          <VoteCapGrid votes={candidate.votes} color={theme.color} />
+          <VoteCountBlock votes={candidate.votes} color={theme.color} />
+        </View>
       </View>
+
+      <View className="w-full bg-[#eef0f2]" style={{ height: s(1) }} />
 
       <View className="w-full" style={{ gap: s(14) }}>
         <View style={{ gap: s(8) }}>
