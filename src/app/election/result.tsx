@@ -11,11 +11,11 @@ import { useDesignScale } from "@/features/election/layout";
 import { ResultPagedRow } from "@/features/election/result-paged-row";
 import {
   MINORITY_PLEDGE_THEMES,
-  PLEDGE_RANK_THEMES,
   ResultMinorityPledgeCard,
   ResultPledgeCard,
   type PledgeRank,
 } from "@/features/election/result-pledge-card";
+import { PLEDGE_RANK_THEME_IDS, PLEDGE_THEMES } from "@/features/election/pledge-themes";
 import { ResultTipCard } from "@/features/election/result-tip-card";
 import { ResultUniqueVoicesSection } from "@/features/election/result-unique-voices-section";
 import { mirrorWish } from "@/services/firebase/mirror";
@@ -23,7 +23,7 @@ import { useElectionStore } from "@/stores/election";
 import { useWishStore } from "@/stores/wishes";
 import { ScrollView, Text, View } from "@/tw";
 import { Image } from "@/tw/image";
-import type { Candidate } from "@/types";
+import type { Candidate, PledgeThemeId } from "@/types";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
@@ -82,8 +82,7 @@ const MINORITY_CARD_GAP = 24;
 
 type ModalSelection = {
   candidate: Candidate;
-  color: string;
-  accentBg: string;
+  pledgeThemeId: PledgeThemeId;
 };
 
 export default function ElectionResultScreen() {
@@ -141,17 +140,19 @@ export default function ElectionResultScreen() {
     );
   }
   const minoritySlides = [
-    { candidate: minorityCandidates[0], theme: MINORITY_PLEDGE_THEMES.green },
-    { candidate: minorityCandidates[1], theme: MINORITY_PLEDGE_THEMES.blue },
+    { candidate: minorityCandidates[0], pledgeThemeId: "green" as const },
+    { candidate: minorityCandidates[1], pledgeThemeId: "blue" as const },
   ];
   const registerGoal = (deadline: number) => {
     const candidate = modalSelection?.candidate ?? topCandidate;
     if (!candidate) return;
+    const pledgeThemeId = modalSelection?.pledgeThemeId ?? "pink";
     const wish = addWish({
       text: candidate.label,
       policy: candidate.action,
       deadline,
       sourceElectionId: election.id,
+      pledgeThemeId,
     });
     mirrorWish(wish);
     setModalSelection(null);
@@ -237,23 +238,19 @@ export default function ElectionResultScreen() {
             <ResultTipCard recommendLabel={topCandidate?.label} />
           </View>
 
-          {rankedCandidates.map(({ rank, candidate }) => {
-            const theme = PLEDGE_RANK_THEMES[rank];
-            return (
-              <ResultPledgeCard
-                key={candidate.id}
-                candidate={candidate}
-                rank={rank}
-                onConfirm={() =>
-                  setModalSelection({
-                    candidate,
-                    color: theme.color,
-                    accentBg: theme.avatarBg,
-                  })
-                }
-              />
-            );
-          })}
+          {rankedCandidates.map(({ rank, candidate }) => (
+            <ResultPledgeCard
+              key={candidate.id}
+              candidate={candidate}
+              rank={rank}
+              onConfirm={() =>
+                setModalSelection({
+                  candidate,
+                  pledgeThemeId: PLEDGE_RANK_THEME_IDS[rank],
+                })
+              }
+            />
+          ))}
 
           <View className="w-full">
             <ResultUniqueVoicesSection />
@@ -264,15 +261,15 @@ export default function ElectionResultScreen() {
               onPageChange={setMinorityPage}
               renderPage={(index) => {
                 const slide = minoritySlides[index];
+                const theme = MINORITY_PLEDGE_THEMES[slide.pledgeThemeId];
                 return (
                   <ResultMinorityPledgeCard
                     candidate={slide.candidate}
-                    theme={slide.theme}
+                    theme={theme}
                     onConfirm={() =>
                       setModalSelection({
                         candidate: slide.candidate,
-                        color: slide.theme.color,
-                        accentBg: slide.theme.avatarBg,
+                        pledgeThemeId: slide.pledgeThemeId,
                       })
                     }
                   />
@@ -301,8 +298,16 @@ export default function ElectionResultScreen() {
       <GoalModal
         visible={Boolean(modalSelection)}
         candidate={modalSelection?.candidate ?? null}
-        color={modalSelection?.color ?? "#f4728a"}
-        accentBg={modalSelection?.accentBg ?? "#fff6f5"}
+        color={
+          modalSelection
+            ? PLEDGE_THEMES[modalSelection.pledgeThemeId].color
+            : "#f4728a"
+        }
+        accentBg={
+          modalSelection
+            ? PLEDGE_THEMES[modalSelection.pledgeThemeId].avatarBg
+            : "#fff6f5"
+        }
         onRegister={registerGoal}
         onClose={() => setModalSelection(null)}
       />

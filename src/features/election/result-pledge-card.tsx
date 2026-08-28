@@ -1,14 +1,15 @@
 import { FlowButton } from "@/components/ui/flow-button";
 import { useDesignScale } from "@/features/election/layout";
+import {
+  MINORITY_PLEDGE_THEME,
+  PLEDGE_RANK_THEMES,
+  type PledgeRank,
+  type PledgeTheme
+} from "@/features/election/pledge-themes";
 import { Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 import type { Candidate } from "@/types";
 
-const avatarPink = require("../../../assets/election/result/avatar-pink.png");
-const avatarOrange = require("../../../assets/election/result/avatar-orange.png");
-const avatarPurple = require("../../../assets/election/result/avatar-purple.png");
-const avatarGreen = require("../../../assets/election/result/avatar-green.png");
-const avatarBlue = require("../../../assets/election/result/avatar-blue.png");
 const redCapAttached = require("../../../assets/election/result/red-cap-attached.png");
 const rankBadgeUnion = require("../../../assets/election/result/rank-badge-union.svg");
 const rankBadgeTail = require("../../../assets/election/result/rank-badge-tail.svg");
@@ -27,46 +28,14 @@ const MAX_CAP_UNITS = 56;
 /** ランキングカード — キャラアイコンと帽子列の追加間隔（行 gap に加算、デザインpx） */
 const AVATAR_TO_CAPS_EXTRA_GAP = 4;
 
-export type PledgeRank = 1 | 2 | 3;
+export {
+  MINORITY_PLEDGE_THEME,
+  MINORITY_PLEDGE_THEMES,
+  PLEDGE_RANK_THEMES
+} from "@/features/election/pledge-themes";
+export type { PledgeRank } from "@/features/election/pledge-themes";
 
-type RankTheme = {
-  color: string;
-  avatar: number;
-  avatarBg: string;
-  /** Figma Mask group 内の -scale-x-100（1713:6301 など） */
-  flipAvatar?: boolean;
-};
-
-/** Figma main/pink・orenge・purple */
-export const PLEDGE_RANK_THEMES: Record<PledgeRank, RankTheme> = {
-  1: { color: "#f4728a", avatar: avatarPink, avatarBg: "#fdf4f5" },
-  2: { color: "#fb930a", avatar: avatarOrange, avatarBg: "#fff8e8" },
-  3: {
-    color: "#9087e6",
-    avatar: avatarPurple,
-    avatarBg: "#f5f3fc",
-    flipAvatar: true,
-  },
-};
-
-/** Figma 886:3300 — マイノリティカード main/green */
-export const MINORITY_PLEDGE_THEME: RankTheme = {
-  color: "#80c826",
-  avatar: avatarGreen,
-  avatarBg: "#f5faf0",
-  flipAvatar: true,
-};
-
-/** Figma 886:3300 / 886:3133 — マイノリティ2カードのテーマ */
-export const MINORITY_PLEDGE_THEMES = {
-  green: MINORITY_PLEDGE_THEME,
-  blue: {
-    color: "#229ff7",
-    avatar: avatarBlue,
-    avatarBg: "#f1f7fd",
-    flipAvatar: true,
-  } satisfies RankTheme,
-} as const;
+type RankTheme = PledgeTheme;
 
 type ResultPledgeCardProps = {
   candidate: Candidate;
@@ -454,7 +423,7 @@ export function ResultPledgeCard({
           label="この公約と政策で進める"
           fillColor={theme.color}
           onPress={onConfirm}
-          className="h-15 w-full"
+          className="h-14 w-full"
         />
       </View>
     </View>
@@ -531,7 +500,7 @@ export function ResultMinorityPledgeCard({
           label="この公約と政策で進める"
           fillColor={theme.color}
           onPress={onConfirm}
-          className="h-15 w-full"
+          className="h-14 w-full"
         />
       </View>
     </View>

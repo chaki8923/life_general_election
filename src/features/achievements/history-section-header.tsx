@@ -25,20 +25,10 @@ export function HistorySectionTitle() {
   );
 }
 
-type HistorySectionHeaderProps = {
-  /** タイムラインに載せる日付（ms） */
-  dates: number[];
-  /** 達成日をバー下に表示 */
-  showDateLabels?: boolean;
-};
-
 /**
  * Figma 2317:23491 + 2317:23461 — 空状態用「過去の履歴」見出しと日付進捗バー。
  */
-export function HistorySectionHeader({
-  dates,
-  showDateLabels = false,
-}: HistorySectionHeaderProps) {
+export function HistorySectionHeader() {
   const { s } = useDesignScale();
 
   return (
@@ -57,7 +47,7 @@ export function HistorySectionHeader({
       >
         過去の履歴
       </Text>
-      <HistoryTimelineBar dates={dates} showDateLabels={showDateLabels} />
+      <HistoryTimelineBar />
     </View>
   );
 }

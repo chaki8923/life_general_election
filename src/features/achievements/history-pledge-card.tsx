@@ -1,5 +1,7 @@
-import { HistoryHappyCharacter } from "@/features/achievements/history-happy-character";
+import { HistoryDoneCharacter } from "@/features/achievements/history-happy-character";
+import { HistorySadCharacter } from "@/features/achievements/history-sad-character";
 import { useDesignScale } from "@/features/election/layout";
+import type { HistoryCardTheme } from "@/features/election/pledge-themes";
 import { formatDate } from "@/utils/date";
 import type { Wish } from "@/types";
 import { Image } from "@/tw/image";
@@ -7,7 +9,6 @@ import { Text, View } from "@/tw";
 
 const iconDone = require("../../../assets/poster/icon-done.svg");
 const iconFailed = require("../../../assets/poster/icon-failed.svg");
-const sadCharacter = require("../../../assets/poster/excuse-character.png");
 
 /** Figma 2317:23421 — カード幅 */
 export const HISTORY_CARD_WIDTH = 300;
@@ -27,28 +28,8 @@ const TITLE_MIN_HEIGHT = 64;
 const DATE_BLOCK_MIN_HEIGHT = 38;
 /** フッター（キャラ高さ 96） */
 const FOOTER_HEIGHT = 96;
-const CHAR_W = 64;
-const CHAR_H = 96;
 
-export type HistoryCardTheme = {
-  accent: string;
-  bubbleBg?: string;
-  /** できた！カードのキャラ（Figma happy-pink / happy-blue） */
-  doneCharacter?: "pink" | "blue";
-};
-
-const DONE_THEMES: HistoryCardTheme[] = [
-  { accent: "#f4728a", doneCharacter: "pink" },
-  { accent: "#229ff7", doneCharacter: "blue" },
-];
-
-const EXCUSED_THEMES: HistoryCardTheme[] = [
-  { accent: "#fb930a", bubbleBg: "#fff0dc" },
-  { accent: "#9087e6", bubbleBg: "#f1efff" },
-  { accent: "#80c826", bubbleBg: "#e1f6c8" },
-];
-
-export { DONE_THEMES, EXCUSED_THEMES };
+export type { HistoryCardTheme };
 
 type HistoryPledgeCardProps = {
   wish: Wish;
@@ -141,9 +122,7 @@ export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
           className="items-end justify-end"
           style={{ height: s(FOOTER_HEIGHT), width: "100%" }}
         >
-          <HistoryHappyCharacter
-            variant={theme.doneCharacter ?? "pink"}
-          />
+          <HistoryDoneCharacter themeId={theme.pledgeThemeId} />
         </View>
       ) : (
         <View
@@ -193,12 +172,7 @@ export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
               }}
             />
           </View>
-          <Image
-            source={sadCharacter}
-            style={{ width: s(CHAR_W), height: s(CHAR_H) }}
-            contentFit="contain"
-            accessibilityLabel="できなかったキャラクター"
-          />
+          <HistorySadCharacter themeId={theme.pledgeThemeId} />
         </View>
       )}
     </View>

@@ -31,12 +31,6 @@ export default function AchievementsScreen() {
   const resolvedWishes = useMemo(() => getResolvedWishes(wishes), [wishes]);
   const hasResolvedHistory = resolvedWishes.length > 0;
 
-  const timelineDates = useMemo(() => {
-    return wishes
-      .map((wish) => wish.deadline ?? wish.createdAt)
-      .filter((value): value is number => value != null);
-  }, [wishes]);
-
   const showEmpty = hasHydrated && !hasResolvedHistory;
   const contentGap = showEmpty
     ? s(EMPTY_STATE_SECTION_GAP)
@@ -59,10 +53,7 @@ export default function AchievementsScreen() {
         >
           {showEmpty ? (
             <>
-              <HistorySectionHeader
-                dates={timelineDates}
-                showDateLabels={false}
-              />
+              <HistorySectionHeader />
               <View className="min-h-[220px] flex-1 items-center justify-center py-6">
                 <HistoryEmptyState />
               </View>
@@ -73,7 +64,7 @@ export default function AchievementsScreen() {
               <HistoryRecordCarousel wishes={resolvedWishes} />
             </View>
           ) : (
-            <HistorySectionHeader dates={timelineDates} showDateLabels={false} />
+            <HistorySectionHeader />
           )}
         </View>
       </ScrollView>

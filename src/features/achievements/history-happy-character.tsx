@@ -1,54 +1,71 @@
 import { useDesignScale } from "@/features/election/layout";
 import { View } from "@/tw";
 import { Image } from "@/tw/image";
-import type { ImageContentFit } from "expo-image";
+import type { PledgeThemeId } from "@/types";
 
-/** Figma 2317:22007 — pink @4x（256×384、キラキラ込み） */
+/** Figma 2317:22264 — happy-pink @4x（256×384） */
 const happyPink = require("../../../assets/achievements/history-happy-pink.png");
-/** Figma 2317:22003 — blue @2x（148×192） */
+/** Figma 2317:22321 — happy-blue @4x（256×384） */
 const happyBlue = require("../../../assets/achievements/history-happy-blue.png");
+/** Figma 2317:22279 — happy-orange @4x（256×384） */
+const happyOrange = require("../../../assets/achievements/history-happy-orange.png");
+/** Figma 2317:22299 — happy-purple @4x（256×384） */
+const happyPurple = require("../../../assets/achievements/history-happy-purple.png");
+/** Figma 2317:22343 — happy-green @4x（256×384） */
+const happyGreen = require("../../../assets/achievements/history-happy-green.png");
 
-export type HistoryHappyVariant = "pink" | "blue";
+export type HistoryHappyVariant = PledgeThemeId;
 
-type VariantMeta = {
-  source: number;
-  width: number;
-  height: number;
-  contentFit: ImageContentFit;
+/** Figma happy インスタンス共通フレーム */
+const HAPPY_CHAR_WIDTH = 72;
+const HAPPY_CHAR_HEIGHT = 108;
+
+const HAPPY_SOURCES: Record<HistoryHappyVariant, number> = {
+  pink: happyPink,
+  blue: happyBlue,
+  orange: happyOrange,
+  purple: happyPurple,
+  green: happyGreen,
 };
 
 /**
  * Figma 2317:23408 — 「できた！」カードの達成キャラ。
- * 表示サイズは Figma フレーム寸法を s() でスケール。
+ * 全色同一サイズで表示。
  */
-const VARIANT_META: Record<HistoryHappyVariant, VariantMeta> = {
-  pink: { source: happyPink, width: 64, height: 96, contentFit: "contain" },
-  blue: { source: happyBlue, width: 74, height: 96, contentFit: "contain" },
-};
-
 export function HistoryHappyCharacter({
   variant,
 }: {
   variant: HistoryHappyVariant;
 }) {
   const { s } = useDesignScale();
-  const meta = VARIANT_META[variant];
 
   return (
     <View
       className="relative"
       style={{
-        width: s(meta.width),
-        height: s(meta.height),
+        width: s(HAPPY_CHAR_WIDTH),
+        height: s(HAPPY_CHAR_HEIGHT),
         overflow: "visible",
       }}
       accessibilityLabel="達成キャラクター"
     >
       <Image
-        source={meta.source}
-        style={{ width: s(meta.width), height: s(meta.height) }}
-        contentFit={meta.contentFit}
+        source={HAPPY_SOURCES[variant]}
+        style={{
+          width: s(HAPPY_CHAR_WIDTH),
+          height: s(HAPPY_CHAR_HEIGHT),
+        }}
+        contentFit="contain"
       />
     </View>
   );
+}
+
+/** 投票結果画面で選んだ色のジャンプ達成キャラを「できた！」カードに表示する。 */
+export function HistoryDoneCharacter({
+  themeId,
+}: {
+  themeId: PledgeThemeId;
+}) {
+  return <HistoryHappyCharacter variant={themeId} />;
 }

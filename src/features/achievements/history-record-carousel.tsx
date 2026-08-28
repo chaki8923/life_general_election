@@ -9,22 +9,13 @@ import { View } from "@/tw";
 import {
   HistoryPledgeCard,
   HISTORY_CARD_WIDTH,
-  type HistoryCardTheme,
-  DONE_THEMES,
-  EXCUSED_THEMES,
 } from "@/features/achievements/history-pledge-card";
+import { historyCardThemeForWish } from "@/features/election/pledge-themes";
 
 /** Figma 2317:23377 — タイムラインとカードの間隔 */
 const SECTION_GAP = 17;
 /** Figma 2317:23407 — カード間隔 */
 const SET_GAP = 20;
-
-function themeForWish(wish: Wish, index: number): HistoryCardTheme {
-  if (wish.status === "done") {
-    return DONE_THEMES[index % DONE_THEMES.length];
-  }
-  return EXCUSED_THEMES[index % EXCUSED_THEMES.length];
-}
 
 type HistoryRecordCarouselProps = {
   wishes: Wish[];
@@ -45,13 +36,12 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
     return wishes.map((wish) => {
       const slot =
         wish.status === "done" ? doneCount++ : excusedCount++;
-      const theme = themeForWish(wish, slot);
+      const theme = historyCardThemeForWish(wish, slot);
       const date = getWishAchievementDate(wish) ?? wish.createdAt;
       return { wish, theme, date };
     });
   }, [wishes]);
 
-  const dates = useMemo(() => slides.map((slide) => slide.date), [slides]);
   const setWidth = s(HISTORY_CARD_WIDTH);
   const setGap = s(SET_GAP);
   const stride = setWidth + setGap;
@@ -75,7 +65,7 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
     <View className="w-full" style={{ paddingHorizontal: s(20) }}>
       <View style={{ gap: s(SECTION_GAP) }}>
         <HistoryLinkedTimelineTrack
-          dates={dates}
+          dates={slides.map((slide) => slide.date)}
           cardWidth={HISTORY_CARD_WIDTH}
           cardGap={SET_GAP}
           scrollX={scrollX}
