@@ -12,6 +12,10 @@ import {
 import { Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
+import {
+  WORRIES_BACKGROUND,
+  WORRY_CHARACTER,
+} from "@/constants/election-images";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
@@ -189,7 +193,7 @@ export default function WorrySuggestScreen() {
   return (
     <View className="flex-1 bg-flow-bg">
       <Image
-        source={require("../../../assets/election/worries-bg.png")}
+        source={WORRIES_BACKGROUND}
         className="absolute inset-0"
         contentFit="fill"
         pointerEvents="none"
@@ -214,7 +218,7 @@ export default function WorrySuggestScreen() {
           }}
         >
           <Image
-            source={require("../../../assets/election/worry-character.png")}
+            source={WORRY_CHARACTER}
             style={{ width: "100%", height: "100%" }}
             contentFit="contain"
           />

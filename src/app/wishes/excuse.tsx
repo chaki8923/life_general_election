@@ -142,7 +142,7 @@ export default function WishExcuseScreen() {
               できなかった理由に{"\n"}一番近いものを選んでね
             </Text>
             <Text className="text-center font-flow-regular text-[14px] leading-[24px] tracking-[0.7px] text-flow-ink-low">
-              トビョッコが言い訳を考えてくれます
+              とぴょっこが言い訳を考えてくれます
             </Text>
           </View>
 

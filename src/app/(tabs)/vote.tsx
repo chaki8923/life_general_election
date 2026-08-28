@@ -1,17 +1,22 @@
 import { useRouter } from "expo-router";
 import { FlowButton } from "@/components/ui/flow-button";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
-import { resetAppData } from "@/features/dev/reset-app-data";
+import { INTEREST_IMAGES } from "@/constants/interests";
+import { usePreloadImages } from "@/hooks/use-preload-images";
+import { DevResetButton } from "@/features/dev/dev-reset-button";
 import { TopBackground } from "@/features/election/top-background";
 import { Image } from "@/tw/image";
-import { Pressable, Text, View } from "@/tw";
+import { Text, View } from "@/tw";
 
-const logo = require("../../../assets/election/logo-1000nin.png");
+const logo = require("../../../assets/election/logo-topyokko.webp");
 
-/** 総選挙トップ（Figma: TOP 1664-6457） */
+/** 総選挙トップ（Figma: TOP 2070:7821） */
 export default function VoteScreen() {
   const router = useRouter();
   const bottomPadding = useTabBarBottomPadding();
+
+  // 「始める」の遷移先がお悩み選択。2回目以降の導線でも待たせない
+  usePreloadImages(INTEREST_IMAGES);
 
   return (
     <View className="flex-1 bg-white">
@@ -21,19 +26,16 @@ export default function VoteScreen() {
         className="flex-1 items-center justify-center gap-[104px]"
         style={{ paddingBottom: bottomPadding }}
       >
-        {/* Figma: 324pxの半透明白丸に、ロゴと説明文を載せる */}
-        <View className="h-[324px] w-[324px] items-center justify-center gap-4 rounded-full bg-white/[0.62] p-12">
-          <View className="w-full items-center gap-4">
-            {/* 正式ロゴができたらこのファイルを差し替える */}
-            <Image
-              source={logo}
-              style={{ width: 196, height: 99.486 }}
-              contentFit="contain"
-            />
-            <Text className="text-center font-flow text-[12px] leading-5 tracking-[0.6px] text-black">
-              {"あなたの人生に、\nちょっとおせっかい。\n将来の漠然とした悩みを、\n具体的な一歩に変えるアプリです。"}
-            </Text>
-          </View>
+        {/* Figma: 324pxの半透明白丸に、ロゴとキャッチコピーを載せる */}
+        <View className="h-[324px] w-[324px] items-center justify-center gap-[6px] rounded-full bg-white/[0.62]">
+          <Image
+            source={logo}
+            style={{ width: 224, height: 113 }}
+            contentFit="contain"
+          />
+          <Text className="text-center font-flow text-[14px] leading-[24px] text-flow-ink">
+            あなたの人生に、ちょっとおせっかい。
+          </Text>
         </View>
 
         <View className="w-full px-5">
@@ -49,19 +51,7 @@ export default function VoteScreen() {
       {/* Figmaの「年代別ランキングを見る」は fetchThemeRanking() が
           年代別集計に未対応のため、実装できるまで非表示 */}
 
-      {__DEV__ && (
-        <Pressable
-          onPress={() => {
-            resetAppData().catch((e) => console.warn("[dev reset]", e));
-          }}
-          className="absolute inset-x-0 top-0 items-center pt-16"
-          hitSlop={12}
-        >
-          <Text className="text-xs text-election-ink/40">
-            🧹 [DEV] データをリセットして最初から
-          </Text>
-        </Pressable>
-      )}
+      <DevResetButton className="absolute inset-x-0 top-0 items-center pt-16" />
     </View>
   );
 }

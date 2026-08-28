@@ -17,7 +17,7 @@ type WishStore = {
   wishes: Wish[];
   /** AsyncStorageからの復元完了フラグ。復元前に「公約なし」と誤判定しないため */
   hasHydrated: boolean;
-  /** 追加したWishを返す。同一text+sourceElectionIdが既にあれば既存を返す */
+  /** 追加したWishを返す。同一text+sourceElectionIdの実行中Wishが既にあれば既存を返す */
   addWish: (input: WishInput) => Wish;
   markDone: (id: string) => Wish | undefined;
   /** 公約ごと削除する。ローカルのみ（Firestore側の削除APIは未実装） */
@@ -50,8 +50,11 @@ export const useWishStore = create<WishStore>()(
       wishes: [],
       hasHydrated: false,
       addWish: (input) => {
+        // 実行中のものだけ重複扱いにする。達成済み/言い訳済みの公約を選び直したときは
+        // 新しい期日で掲げ直したいので、別のWishとして作る
         const existing = get().wishes.find(
           (w) =>
+            w.status === "active" &&
             w.text === input.text &&
             w.sourceElectionId === input.sourceElectionId
         );

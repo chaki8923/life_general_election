@@ -11,6 +11,7 @@ export async function resetAppData() {
   await AsyncStorage.multiRemove([
     "lge-profile",
     "lge-wishes",
+    "lge-election-history",
     "lge:local-uid",
   ]);
   useWishStore.setState({ wishes: [] });
@@ -21,6 +22,7 @@ export async function resetAppData() {
     motivation: null,
     election: null,
     showProfileStep: false,
+    history: {},
   });
   // 最後にprofileを消すとStack.Protectedガードが反転し、即オンボーディングへ切り替わる
   useProfileStore.setState({ profile: null, tutorialSeen: false });
