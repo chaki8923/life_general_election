@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tab-bar";
 import { GoalModal } from "@/features/election/goal-modal";
 import { useDesignScale } from "@/features/election/layout";
+import { PLEDGE_RANK_THEME_IDS, PLEDGE_THEMES } from "@/features/election/pledge-themes";
 import { ResultPagedRow } from "@/features/election/result-paged-row";
 import {
   MINORITY_PLEDGE_THEMES,
@@ -15,7 +16,6 @@ import {
   ResultPledgeCard,
   type PledgeRank,
 } from "@/features/election/result-pledge-card";
-import { PLEDGE_RANK_THEME_IDS, PLEDGE_THEMES } from "@/features/election/pledge-themes";
 import { ResultTipCard } from "@/features/election/result-tip-card";
 import { ResultUniqueVoicesSection } from "@/features/election/result-unique-voices-section";
 import { mirrorWish } from "@/services/firebase/mirror";

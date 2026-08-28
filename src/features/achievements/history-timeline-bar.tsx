@@ -1,6 +1,6 @@
 import { useDesignScale } from "@/features/election/layout";
-import { formatDate } from "@/utils/date";
 import { Text, View } from "@/tw";
+import { formatDate } from "@/utils/date";
 
 /** Figma 2317:23379 — グラフ領域の高さ */
 const GRAPH_HEIGHT = 16;
