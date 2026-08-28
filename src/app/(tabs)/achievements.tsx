@@ -1,27 +1,46 @@
-import { useMemo } from "react";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
 import { CharacterWalk } from "@/features/achievements/character-walk";
 import { HistoryEmptyState } from "@/features/achievements/history-empty-state";
+import { HistoryRecordCarousel } from "@/features/achievements/history-record-carousel";
+import { HistorySectionHeader, HistorySectionTitle } from "@/features/achievements/history-section-header";
+import { getResolvedWishes } from "@/features/achievements/wish-history";
+import { useDesignScale } from "@/features/election/layout";
 import { useWishStore } from "@/stores/wishes";
 import { ScrollView, View } from "@/tw";
+import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+/** 動画下から見出し・日付バーまでの余白（デザインpx） */
+const HISTORY_SECTION_TOP_PADDING = 24;
+/** 進捗バー下からコンテンツまでの間隔（デザインpx） */
+const CONTENT_SECTION_GAP = 20;
+/** 空状態用の進捗バー下余白（デザインpx） */
+const EMPTY_STATE_SECTION_GAP = 80;
 
 /**
  * 過去の履歴タブ。
- * ヒーロー動画は常に表示。政策を一度も達成していないときは空状態を出す。
+ * 達成・未達成の履歴がないときは空状態。あるときはカード一覧を表示。
  */
 export default function AchievementsScreen() {
   const insets = useSafeAreaInsets();
+  const { s } = useDesignScale();
   const bottomPadding = useTabBarBottomPadding();
   const wishes = useWishStore((state) => state.wishes);
   const hasHydrated = useWishStore((state) => state.hasHydrated);
 
-  const hasCompletedPolicy = useMemo(
-    () => wishes.some((wish) => wish.status === "done"),
-    [wishes]
-  );
+  const resolvedWishes = useMemo(() => getResolvedWishes(wishes), [wishes]);
+  const hasResolvedHistory = resolvedWishes.length > 0;
 
-  const showEmpty = hasHydrated && !hasCompletedPolicy;
+  const timelineDates = useMemo(() => {
+    return wishes
+      .map((wish) => wish.deadline ?? wish.createdAt)
+      .filter((value): value is number => value != null);
+  }, [wishes]);
+
+  const showEmpty = hasHydrated && !hasResolvedHistory;
+  const contentGap = showEmpty
+    ? s(EMPTY_STATE_SECTION_GAP)
+    : s(CONTENT_SECTION_GAP);
 
   return (
     <View className="flex-1 bg-flow-bg" style={{ paddingTop: insets.top }}>
@@ -32,11 +51,31 @@ export default function AchievementsScreen() {
         bounces={false}
       >
         <CharacterWalk />
-        {showEmpty ? (
-          <View className="min-h-[280px] flex-1 items-center justify-center py-6">
-            <HistoryEmptyState />
-          </View>
-        ) : null}
+        <View
+          style={{
+            paddingTop: s(HISTORY_SECTION_TOP_PADDING),
+            gap: contentGap,
+          }}
+        >
+          {showEmpty ? (
+            <>
+              <HistorySectionHeader
+                dates={timelineDates}
+                showDateLabels={false}
+              />
+              <View className="min-h-[220px] flex-1 items-center justify-center py-6">
+                <HistoryEmptyState />
+              </View>
+            </>
+          ) : hasResolvedHistory ? (
+            <View style={{ gap: s(CONTENT_SECTION_GAP) }}>
+              <HistorySectionTitle />
+              <HistoryRecordCarousel wishes={resolvedWishes} />
+            </View>
+          ) : (
+            <HistorySectionHeader dates={timelineDates} showDateLabels={false} />
+          )}
+        </View>
       </ScrollView>
     </View>
   );

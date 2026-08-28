@@ -2,6 +2,10 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
 import { ProgressDots } from "@/components/ui/progress-dots";
+import {
+  FlowTabBarOverlay,
+  useTabBarBottomPadding,
+} from "@/components/ui/tab-bar";
 import { GoalModal } from "@/features/election/goal-modal";
 import { useDesignScale } from "@/features/election/layout";
 import { ResultPagedRow } from "@/features/election/result-paged-row";
@@ -95,7 +99,8 @@ export default function ElectionResultScreen() {
     null
   );
   const [minorityPage, setMinorityPage] = useState(0);
-  const scrollBottomPadding = s(32);
+  const tabBarBottomPadding = useTabBarBottomPadding();
+  const scrollBottomPadding = showProfileStep ? s(32) : tabBarBottomPadding;
   const minorityGap = s(MINORITY_CARD_GAP);
 
   useEffect(() => {
@@ -281,6 +286,17 @@ export default function ElectionResultScreen() {
           <ProgressDots current={minorityPage} total={minoritySlides.length} />
         </View>
       </ScrollView>
+
+      {!showProfileStep && (
+        <FlowTabBarOverlay
+          active="vote"
+          onPress={(id) => {
+            if (id === "index") router.replace("/");
+            else if (id === "vote") router.replace("/(tabs)/vote");
+            else router.replace("/(tabs)/achievements");
+          }}
+        />
+      )}
 
       <GoalModal
         visible={Boolean(modalSelection)}

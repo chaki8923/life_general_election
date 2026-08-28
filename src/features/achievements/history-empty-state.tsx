@@ -8,10 +8,9 @@ const cryCharacter = require("../../../assets/achievements/history-empty-cry-fig
 const ASSET_W = 247;
 const ASSET_H = 355;
 /** Figma 2317:23485 表示幅 */
-const CHAR_W = 55;
+const CHAR_W = 62;
 const GAP = 20;
 const IMAGE_BOTTOM_PAD = 24;
-
 /**
  * Figma 2317:23483 — 政策未達成ユーザー向けの空状態。
  */
