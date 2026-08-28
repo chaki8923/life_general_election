@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useDesignScale } from "@/features/election/layout";
 import { Pressable, Text, View } from "@/tw";
 
 type DeadlinePickerProps = {
@@ -26,6 +27,7 @@ export function GoalDeadlinePicker({
   color = "#f4728a",
   accentBg = "#fff6f5",
 }: DeadlinePickerProps) {
+  const { s } = useDesignScale();
   const primaryOptions = useMemo(
     () => [
       { label: "3日以内", value: endOfDay(3) },
@@ -45,12 +47,17 @@ export function GoalDeadlinePicker({
       <Pressable
         key={option.label}
         onPress={() => onChange(option.value)}
-        className="h-11 items-center justify-center rounded-full border bg-white px-4"
+        className="items-center justify-center rounded-full border bg-white"
         style={{
+          height: s(40),
+          paddingHorizontal: s(12),
           borderColor: selected ? color : "#eaeef2",
         }}
       >
-        <Text className="font-flow-medium text-sm leading-[1.4] text-flow-ink">
+        <Text
+          className="font-flow-medium text-flow-ink"
+          style={{ fontSize: s(11), lineHeight: s(11 * 1.4) }}
+        >
           {option.label}
         </Text>
       </Pressable>

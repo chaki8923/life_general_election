@@ -13,6 +13,11 @@ type FlowHeaderProps = {
   transparent?: boolean;
   /** 右端に置く要素（ヘルプアイコンなど）。Figma 2040:6175 */
   right?: ReactNode;
+  /**
+   * true（既定）: ステータスバー分の paddingTop を付ける。
+   * false: 外側で safe area を扱うとき（デザインスケール内にヘッダーを置く場合など）
+   */
+  includeSafeArea?: boolean;
 };
 
 /** 選挙フロー共通ヘッダー（Figma: 白地h42・中央タイトル・左20pxに戻る矢印） */
@@ -22,6 +27,7 @@ export function FlowHeader({
   hideBack = false,
   transparent = false,
   right,
+  includeSafeArea = true,
 }: FlowHeaderProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -30,7 +36,7 @@ export function FlowHeader({
   return (
     <View
       className={transparent ? "" : "bg-white"}
-      style={{ paddingTop: insets.top }}
+      style={includeSafeArea ? { paddingTop: insets.top } : undefined}
     >
       <View className="h-[42px] justify-center border-b border-[#f0f0f0]">
         <Text
