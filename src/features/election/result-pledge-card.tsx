@@ -24,6 +24,8 @@ const CAP_GAP = 3;
 const CAP_ROW_WIDTH = CAPS_PER_ROW * CAP_SIZE + (CAPS_PER_ROW - 1) * CAP_GAP;
 /** 上限: 14列×4行=56個（560人相当） */
 const MAX_CAP_UNITS = 56;
+/** ランキングカード — キャラアイコンと帽子列の追加間隔（行 gap に加算、デザインpx） */
+const AVATAR_TO_CAPS_EXTRA_GAP = 4;
 
 export type PledgeRank = 1 | 2 | 3;
 
@@ -419,7 +421,7 @@ export function ResultPledgeCard({
         </View>
         <View
           className="min-w-0 flex-1 flex-row items-center justify-between"
-          style={{ gap: s(4) }}
+          style={{ gap: s(4), marginLeft: s(AVATAR_TO_CAPS_EXTRA_GAP) }}
         >
           <VoteCapGrid votes={candidate.votes} color={theme.color} />
           <VoteCountBlock votes={candidate.votes} color={theme.color} />
