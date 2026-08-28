@@ -22,13 +22,13 @@ type HistoryRecordCarouselProps = {
 };
 
 /**
- * Figma 2317:23377 / 2317:23180 — 日付バーは固定、カードは自由スクロールで濃色が連動。
+ * Figma 2317:23377 / 2317:23180 — 日付バーは固定、カードは自由スクロール。
+ * 濃色バー幅はカード枚数に応じて最後の白丸まで固定（スクロール非連動）。
  */
 export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
   const { s } = useDesignScale();
   const [scrollX, setScrollX] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
-  const [contentWidth, setContentWidth] = useState(0);
 
   const slides = useMemo(() => {
     let doneCount = 0;
@@ -44,16 +44,11 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
 
   const setWidth = s(HISTORY_CARD_WIDTH);
   const setGap = s(SET_GAP);
-  const stride = setWidth + setGap;
   const cardsRowWidth =
     slides.length * setWidth + Math.max(slides.length - 1, 0) * setGap;
   /** 末尾カードを左端に揃えるための右余白（1枚目と同じ見え方） */
   const endInset =
     viewportWidth > setWidth ? viewportWidth - setWidth : 0;
-  const maxScrollX =
-    viewportWidth > 0 && contentWidth > 0
-      ? Math.max(0, contentWidth - viewportWidth)
-      : Math.max(0, (slides.length - 1) * stride);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setScrollX(event.nativeEvent.contentOffset.x);
@@ -69,7 +64,6 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
           cardWidth={HISTORY_CARD_WIDTH}
           cardGap={SET_GAP}
           scrollX={scrollX}
-          maxScrollX={maxScrollX}
         />
         <RNScrollView
           horizontal
@@ -79,9 +73,6 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
           contentContainerStyle={{ paddingRight: endInset }}
           onLayout={(event) => {
             setViewportWidth(event.nativeEvent.layout.width);
-          }}
-          onContentSizeChange={(width) => {
-            setContentWidth(width);
           }}
           onScroll={handleScroll}
         >

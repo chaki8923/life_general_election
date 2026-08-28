@@ -8,19 +8,12 @@ const GRAPH_HEIGHT = 16;
 const TRACK_HEIGHT_INNER = 12;
 /** グレートラックの上オフセット（(16-12)/2） */
 const TRACK_TOP_INSET = 2;
-/** Figma 2317:23401 — 1枚目表示時の濃色バー幅 */
-const FIRST_PROGRESS_WIDTH = 52;
 /** Figma 2317:23381 — カード左端から白丸左端までのオフセット */
 const LINKED_DOT_INSET = 20;
 /** Figma 2317:23382 — 白丸間隔はカード1枚分+2px（322px） */
 const LINKED_DOT_STRIDE_EXTRA = 2;
-/**
- * Figma 濃色バー幅（カード番号ごと）
- * 1枚目 2317:23295 / 2枚目 2317:23202 / 3枚目 2317:23232 / 4枚目 2317:23263
- */
-const LINKED_PROGRESS_WIDTHS = [52, 371, 696, 1018] as const;
-/** 末尾スクロール付近で濃色を最後まで届かせる許容px */
-const PROGRESS_NEAR_END_EPSILON = 8;
+/** 白丸右端から濃色バー右端までの余白（1枚目 52px = 20+12+20） */
+const PROGRESS_TAIL_AFTER_DOT = LINKED_DOT_INSET;
 /** Figma 2317:23379 — 日付ラベルありトラック高さ */
 const TRACK_HEIGHT_LABELED = GRAPH_HEIGHT;
 /** Figma Ellipse r=6 on 16px track → 直径12 */
@@ -82,47 +75,18 @@ type HistoryLinkedTimelineTrackProps = {
   cardWidth: number;
   /** カード間隔（デザインpx） */
   cardGap: number;
-  /** カード列の横スクロール量（実機px） */
+  /** カード列の横スクロール量（実機px）。白丸・ラベルの同期移動に使用 */
   scrollX?: number;
-  /** カード列の最大スクロール量（実機px） */
-  maxScrollX?: number;
 };
 
-function getLinkedProgressWidth(
-  scrollX: number,
-  count: number,
-  maxScrollX: number,
-  scale: (value: number) => number,
-  cardWidth: number,
-  cardGap: number
+/** 最後のカード白丸右端まで濃色バーを固定表示（Figma 2317:23180） */
+function getFixedProgressWidth(
+  dotLefts: number[],
+  dotSize: number,
+  scale: (value: number) => number
 ): number {
-  const maxIndex = count - 1;
-  if (maxIndex <= 0) return scale(LINKED_PROGRESS_WIDTHS[0]);
-
-  const progressAt = (index: number) => {
-    if (index < LINKED_PROGRESS_WIDTHS.length) {
-      return scale(LINKED_PROGRESS_WIDTHS[index]);
-    }
-    const dotStride = cardWidth + cardGap + LINKED_DOT_STRIDE_EXTRA;
-    return scale(
-      LINKED_DOT_INSET + index * dotStride + FIRST_PROGRESS_WIDTH - LINKED_DOT_INSET
-    );
-  };
-
-  if (maxScrollX <= 0) {
-    return progressAt(maxIndex);
-  }
-
-  let clampedScroll = Math.min(Math.max(scrollX, 0), maxScrollX);
-  if (maxScrollX - clampedScroll <= PROGRESS_NEAR_END_EPSILON) {
-    clampedScroll = maxScrollX;
-  }
-  const rawIndex = (clampedScroll / maxScrollX) * maxIndex;
-  const index = Math.min(maxIndex, Math.floor(rawIndex));
-  const t = Math.min(1, Math.max(0, rawIndex - index));
-
-  if (index >= maxIndex) return progressAt(maxIndex);
-  return progressAt(index) + (progressAt(index + 1) - progressAt(index)) * t;
+  const lastDotLeft = dotLefts[dotLefts.length - 1] ?? 0;
+  return lastDotLeft + dotSize + scale(PROGRESS_TAIL_AFTER_DOT);
 }
 
 /** カード列と同期する繋がった日付バー（Figma 2317:23180 ほか） */
@@ -131,7 +95,6 @@ export function HistoryLinkedTimelineTrack({
   cardWidth,
   cardGap,
   scrollX = 0,
-  maxScrollX,
 }: HistoryLinkedTimelineTrackProps) {
   const { s } = useDesignScale();
   const count = dates.length;
@@ -139,7 +102,6 @@ export function HistoryLinkedTimelineTrack({
 
   const scaledCardWidth = s(cardWidth);
   const scaledGap = s(cardGap);
-  const stride = scaledCardWidth + scaledGap;
   const scaledDotStride = s(cardWidth + cardGap + LINKED_DOT_STRIDE_EXTRA);
   const trackWidth =
     count * scaledCardWidth + Math.max(count - 1, 0) * scaledGap;
@@ -153,16 +115,7 @@ export function HistoryLinkedTimelineTrack({
     { length: count },
     (_, index) => dotInset + index * scaledDotStride
   );
-  const resolvedMaxScrollX =
-    maxScrollX ?? Math.max(0, (count - 1) * stride);
-  const progressWidth = getLinkedProgressWidth(
-    scrollX,
-    count,
-    resolvedMaxScrollX,
-    s,
-    cardWidth,
-    cardGap
-  );
+  const progressWidth = getFixedProgressWidth(dotLefts, dotSize, s);
 
   const contentWidth = Math.max(
     trackWidth,
