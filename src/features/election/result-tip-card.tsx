@@ -4,8 +4,8 @@ import { Pressable, Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 import type { ReactNode } from "react";
 
-const tipCharacterExplain = require("../../../assets/election/result/tip-character-explain.png");
-const tipCharacterShadow = require("../../../assets/election/result/tip-character-shadow.png");
+const tipCharacterExplain = require("../../../assets/election/result/tip-character-explain.webp");
+const tipCharacterShadow = require("../../../assets/election/result/tip-character-shadow.webp");
 const tipChevron = require("../../../assets/election/result/tip-chevron.svg");
 
 /** スワイプ中にカード同士がくっつかないようページ間のすき間（デザインpx） */

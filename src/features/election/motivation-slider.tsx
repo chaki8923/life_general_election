@@ -246,7 +246,7 @@ export function MotivationSlider({ level, onChange }: MotivationSliderProps) {
           ]}
         >
           <Image
-            source={require("../../../assets/election/fire.png")}
+            source={require("../../../assets/election/fire.webp")}
             style={{ width: "100%", height: "100%" }}
             contentFit="contain"
           />
