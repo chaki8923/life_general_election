@@ -1,29 +1,68 @@
-import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "@/tw";
-import { OptionChip } from "@/components/ui/option-chip";
-import { AGE_RANGES, GENDERS } from "@/constants/options";
+import { useEffect, useRef, useState } from "react";
+import { BirthDateField } from "@/components/ui/birth-date-field";
+import { FlowButton } from "@/components/ui/flow-button";
+import { FlowHeader } from "@/components/ui/flow-header";
+import { FlowStepper } from "@/components/ui/flow-stepper";
+import { GENDERS } from "@/constants/options";
+import { DevResetButton } from "@/features/dev/dev-reset-button";
+import { toAgeRange } from "@/features/onboarding/age-range";
 import { markElectionHandoff } from "@/features/onboarding/handoff";
+import { SummoningOverlay } from "@/features/onboarding/summoning-overlay";
 import { ensureSignedIn } from "@/services/firebase/auth";
 import { mirrorProfile } from "@/services/firebase/mirror";
 import { useProfileStore } from "@/stores/profile";
+import { Pressable, ScrollView, Text, TextInput, View } from "@/tw";
 import type { UserProfile } from "@/types";
 
-/** プロフィール登録フォーム（ニックネーム必須・年代必須・性別任意） */
+const BORDER_EMPTY = "#afb8c1";
+const BORDER_IDLE = "#f6f6f6";
+const BORDER_FILLED = "#f4728a";
+const NICKNAME_MAX_LENGTH = 20;
+/** 招集演出を見せる時間。選挙フローへの受け渡しはこの後に行う */
+const SUMMONING_MS = 2200;
+
+function FieldLabel({ children }: { children: string }) {
+  return (
+    <Text className="font-flow text-[14px] leading-[21px] text-flow-ink">
+      {children}
+    </Text>
+  );
+}
+
+/** Figma 2052:18454 — ニックネーム必須・生年月日必須・性別任意 */
 export function ProfileForm() {
   const setProfile = useProfileStore((s) => s.setProfile);
   const [nickname, setNickname] = useState("");
-  const [ageRange, setAgeRange] = useState<string | null>(null);
   const [gender, setGender] = useState<string | null>(null);
+  const [birthDate, setBirthDate] = useState<string | null>(null);
+  const [summoning, setSummoning] = useState(false);
+  const pendingProfile = useRef<UserProfile | null>(null);
 
-  const canSubmit = Boolean(nickname.trim() && ageRange);
+  const trimmedNickname = nickname.trim();
+  const canSubmit = Boolean(trimmedNickname && birthDate);
+
+  // 招集演出を見せ切ってからプロフィールを確定する。
+  // setProfileでStack.Protectedのガードが反転し、この画面はアンマウントされる
+  useEffect(() => {
+    if (!summoning) return;
+    const timer = setTimeout(() => {
+      const profile = pendingProfile.current;
+      if (!profile) return;
+      markElectionHandoff();
+      setProfile(profile);
+    }, SUMMONING_MS);
+    return () => clearTimeout(timer);
+  }, [summoning, setProfile]);
 
   const handleSubmit = () => {
-    if (!nickname.trim() || !ageRange) return;
+    if (!trimmedNickname || !birthDate || summoning) return;
 
     // Firestoreはundefined値を受け付けないため、未選択の性別はキーごと省略する
     const profile: UserProfile = {
-      nickname: nickname.trim(),
-      ageRange,
+      nickname: trimmedNickname,
+      // 年代はAIプロンプトとFirestoreミラーが読むので、生年月日から埋めておく
+      ageRange: toAgeRange(birthDate),
+      birthDate,
       ...(gender ? { gender } : {}),
     };
 
@@ -34,81 +73,87 @@ export function ProfileForm() {
         if (__DEV__) console.warn("[profile]", e);
       });
 
-    // 保存するとStack.Protectedガード反転でホームへ遷移し、
-    // ホーム側がハンドオフフラグを消費して選挙フロー（興味関心）へ直行する
-    markElectionHandoff();
-    setProfile(profile);
+    pendingProfile.current = profile;
+    setSummoning(true);
   };
 
+  if (summoning) return <SummoningOverlay />;
+
   return (
-    <View className="flex-1 bg-election-cream">
-      <ScrollView contentContainerClassName="px-6 pb-40 pt-16">
-        <Text className="text-sm font-bold tracking-widest text-election-red">
-          有権者登録
-        </Text>
-        <Text className="mt-2 text-3xl font-bold text-election-ink">
-          あなたのことを{"\n"}教えてください
-        </Text>
-        <Text className="mt-2 text-sm text-election-ink/60">
-          あなたに近い1000人を集めるために使います。あとから変わっても大丈夫。
-        </Text>
+    <View className="flex-1 bg-flow-bg">
+      <FlowHeader title="プロフィール登録" hideBack />
 
-        <Text className="mt-8 text-sm font-bold text-election-ink/60">
-          ニックネーム
-        </Text>
-        <TextInput
-          value={nickname}
-          onChangeText={setNickname}
-          placeholder="例: がんばるぞう"
-          placeholderTextColor="#2b2b2b55"
-          maxLength={20}
-          className="mt-2 rounded-2xl border-2 border-election-ink/10 bg-election-paper px-4 py-3 text-base text-election-ink"
-        />
-
-        <Text className="mt-8 text-sm font-bold text-election-ink/60">
-          年代
-        </Text>
-        <View className="mt-2 flex-row flex-wrap gap-2">
-          {AGE_RANGES.map((age) => (
-            <OptionChip
-              key={age}
-              label={age}
-              selected={age === ageRange}
-              onPress={() => setAgeRange(age)}
-            />
-          ))}
-        </View>
-
-        <Text className="mt-8 text-sm font-bold text-election-ink/60">
-          性別（任意）
-        </Text>
-        <View className="mt-2 flex-row flex-wrap gap-2">
-          {GENDERS.map((g) => (
-            <OptionChip
-              key={g}
-              label={g}
-              selected={g === gender}
-              onPress={() => setGender((prev) => (prev === g ? null : g))}
-            />
-          ))}
-        </View>
-      </ScrollView>
-
-      <View className="absolute inset-x-0 bottom-0 bg-election-cream/95 px-6 pb-10 pt-3">
-        <Pressable
-          onPress={handleSubmit}
-          disabled={!canSubmit}
-          className={`items-center rounded-full border-2 py-4 shadow-lg ${
-            canSubmit
-              ? "border-election-gold bg-election-red shadow-election-red/50 active:bg-election-red-dark"
-              : "border-transparent bg-election-ink/20 shadow-none"
-          }`}
-        >
-          <Text className="text-lg font-bold tracking-wide text-white">
-            ✅ 登録して選挙へ
+      <ScrollView
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        contentContainerClassName="pb-16"
+      >
+        {/* ステッパーと見出しまでは白地、カードから下が薄いグレー地 */}
+        <View className="bg-white px-5 pb-3">
+          <FlowStepper current={0} showProfileStep />
+          <Text className="mt-3 text-center font-flow text-[18px] leading-[27px] text-flow-ink">
+            {"まずはあなたについて\n教えて下さい"}
           </Text>
-        </Pressable>
-      </View>
+        </View>
+
+        <View className="mx-5 mt-5 gap-[32px] rounded-[20px] border border-[#f6f6f6] bg-white p-[20px]">
+          <View className="gap-[8px]">
+            <FieldLabel>ニックネーム</FieldLabel>
+            <TextInput
+              value={nickname}
+              onChangeText={setNickname}
+              placeholder="あなたのお名前"
+              placeholderTextColor="#6e7781"
+              maxLength={NICKNAME_MAX_LENGTH}
+              className="h-[36px] rounded-[8px] border bg-white px-4 font-flow text-[14px] text-[#1f1f1f]"
+              style={{
+                borderColor: trimmedNickname ? BORDER_FILLED : BORDER_EMPTY,
+              }}
+            />
+          </View>
+
+          <View className="gap-[8px]">
+            <FieldLabel>性別</FieldLabel>
+            <View className="flex-row gap-[8px]">
+              {GENDERS.map((g) => {
+                const selected = g === gender;
+                return (
+                  <Pressable
+                    key={g}
+                    onPress={() => setGender((prev) => (prev === g ? null : g))}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    className="h-[50px] flex-1 justify-center rounded-[8px] border bg-white px-5"
+                    style={{
+                      borderColor: selected ? BORDER_FILLED : BORDER_IDLE,
+                    }}
+                  >
+                    <Text className="font-flow text-[12px] text-[#1f1f1f]">
+                      {g}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View className="gap-[8px]">
+            <FieldLabel>生年月日</FieldLabel>
+            <BirthDateField value={birthDate} onChange={setBirthDate} />
+          </View>
+
+          <FlowButton
+            label="次へ進む"
+            size="sm"
+            disabled={!canSubmit}
+            disabledFillColor="#d0d7de"
+            onPress={handleSubmit}
+            className="w-full"
+          />
+        </View>
+
+        <DevResetButton className="mt-10 items-center" />
+      </ScrollView>
     </View>
   );
 }

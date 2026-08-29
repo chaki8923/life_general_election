@@ -1,5 +1,6 @@
 /** オンボーディングの選択肢マスタ */
 
+/** 表示には使わないが、birthDateからの年代算出（features/onboarding/age-range.ts）が参照する */
 export const AGE_RANGES = [
   "20代前半",
   "20代後半",
@@ -8,7 +9,7 @@ export const AGE_RANGES = [
   "40代以上",
 ] as const;
 
-export const GENDERS = ["男性", "女性", "その他", "回答しない"] as const;
+export const GENDERS = ["男性", "女性"] as const;
 
 export const RELATIONSHIP_STATUSES = [
   "独身（恋人なし）",

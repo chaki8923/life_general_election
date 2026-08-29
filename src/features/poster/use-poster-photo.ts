@@ -18,9 +18,16 @@ export function usePosterPhoto(
 ) {
   const pickFromLibrary = async () => {
     try {
-      // PHPicker / Photo Picker のため事前パーミッション不要
+      // allowsEditing の間は PHPicker ではなくレガシーの UIImagePickerController /
+      // Photo Picker 経路になる。どちらも事前パーミッションの要求は不要
       const result = await ImagePicker.launchImageLibraryAsync(PICKER_OPTIONS);
-      if (!result.canceled) await onPicked(result.assets[0]);
+      if (result.canceled) {
+        // ユーザーのキャンセルと、ネイティブ側の握り潰し（モーダル競合など）を
+        // 切り分けられるようにログだけ残す
+        if (__DEV__) console.warn("[poster/photo] library canceled");
+        return;
+      }
+      await onPicked(result.assets[0]);
     } catch (e) {
       if (__DEV__) console.warn("[poster/photo]", e);
       Alert.alert("写真を読み込めませんでした…");
@@ -46,7 +53,11 @@ export function usePosterPhoto(
         return;
       }
       const result = await ImagePicker.launchCameraAsync(PICKER_OPTIONS);
-      if (!result.canceled) await onPicked(result.assets[0]);
+      if (result.canceled) {
+        if (__DEV__) console.warn("[poster/photo] camera canceled");
+        return;
+      }
+      await onPicked(result.assets[0]);
     } catch (e) {
       if (__DEV__) console.warn("[poster/photo]", e);
       Alert.alert("撮影に失敗しました…");

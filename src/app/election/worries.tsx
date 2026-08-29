@@ -12,6 +12,10 @@ import {
 import { Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
+import {
+  WORRIES_BACKGROUND,
+  WORRY_CHARACTER,
+} from "@/constants/election-images";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
@@ -59,6 +63,7 @@ export default function WorrySuggestScreen() {
     (state) => state.setWorryCandidates
   );
   const setWorry = useElectionStore((state) => state.setWorry);
+  const showProfileStep = useElectionStore((state) => state.showProfileStep);
   const profile = useProfileStore((state) => state.profile);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -188,15 +193,17 @@ export default function WorrySuggestScreen() {
   return (
     <View className="flex-1 bg-flow-bg">
       <Image
-        source={require("../../../assets/election/worries-bg.png")}
+        source={WORRIES_BACKGROUND}
         className="absolute inset-0"
         contentFit="fill"
         pointerEvents="none"
       />
       <FlowHeader title="お悩み選択" />
-      <View className="mt-3">
-        <FlowStepper current={2} showProfileStep />
-      </View>
+      {showProfileStep ? (
+        <View className="mt-3">
+          <FlowStepper current={1} showProfileStep />
+        </View>
+      ) : null}
 
       {/* ここから下はFigmaの絶対座標レイアウト。キャラがはみ出すのでクリップする */}
       <View className="flex-1 overflow-hidden">
@@ -211,7 +218,7 @@ export default function WorrySuggestScreen() {
           }}
         >
           <Image
-            source={require("../../../assets/election/worry-character.png")}
+            source={WORRY_CHARACTER}
             style={{ width: "100%", height: "100%" }}
             contentFit="contain"
           />

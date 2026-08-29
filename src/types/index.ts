@@ -3,7 +3,10 @@ import type { PresetAvatarId } from "@/features/avatar/preset-avatars";
 /** ユーザーの基本属性（オンボーディングで入力） */
 export type UserProfile = {
   nickname: string;
+  /** birthDateから算出した年代。AIプロンプトとFirestoreミラーの互換のため保持する */
   ageRange: string;
+  /** "YYYY-MM-DD"。Dateにすると保存/復元で型が嘘になるので文字列。v1ユーザーは持たない */
+  birthDate?: string;
   gender?: string;
   relationshipStatus?: string;
   savingsRange?: string;
@@ -19,10 +22,10 @@ export type ThemeSuggestion = {
   emoji: string;
 };
 
-/** 総選挙の候補（似た境遇の1000人が踏み出した小さな一歩） */
+/** 総選挙の候補（似た境遇の1000人が選んだ「これから踏み出す小さな一歩」） */
 export type Candidate = {
   id: string;
-  label: string; // 例: 「求人サイトで1件だけ求人を見た」
+  label: string; // これから掲げる公約なので現在形。例: 「求人サイトで1件だけ求人を見る」
   votes: number;
   isMinority: boolean; // マイノリティな一歩（低得票・ハードル激低枠）
   comment: string; // 投票者の一言
@@ -41,6 +44,9 @@ export type Election = {
 };
 
 export type WishStatus = "active" | "done" | "excused";
+
+/** 投票結果画面の公約カード色（ランキング1〜3位 + マイノリティ green/blue） */
+export type PledgeThemeId = "pink" | "orange" | "purple" | "green" | "blue";
 
 export type PosterPaletteId = "red" | "navy" | "pink";
 
@@ -66,6 +72,8 @@ export type Wish = {
   excuse?: string;
   excusedAt?: number;
   sourceElectionId?: string;
+  /** 投票結果画面で選んだ公約カードの色テーマ */
+  pledgeThemeId?: PledgeThemeId;
   posterSettings?: PosterSettings;
   /** @deprecated version 1で保存した完成ポスター。新UIの描画元には使わない */
   posterUri?: string;
