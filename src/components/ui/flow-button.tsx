@@ -57,6 +57,8 @@ export function FlowButton({
       ? { backgroundColor: fillColor }
       : undefined;
 
+  const heightClass = /\bh-\d+\b/.test(className) ? "" : "h-12";
+
   return (
     <Pressable
       onPress={onPress}

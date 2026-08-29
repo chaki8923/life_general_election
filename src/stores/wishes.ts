@@ -5,11 +5,14 @@ import { deleteManagedPosterPhoto } from "@/features/poster/photo-storage";
 import { createDefaultPosterSettings } from "@/features/poster/poster-settings";
 import type { PosterSettings, Wish } from "@/types";
 
+import type { PledgeThemeId } from "@/types";
+
 type WishInput = {
   text: string;
   policy?: string;
   deadline?: number;
   sourceElectionId?: string;
+  pledgeThemeId?: PledgeThemeId;
 };
 
 type WishStore = {
@@ -67,6 +70,9 @@ export const useWishStore = create<WishStore>()(
           ...(input.deadline !== undefined ? { deadline: input.deadline } : {}),
           ...(input.sourceElectionId !== undefined
             ? { sourceElectionId: input.sourceElectionId }
+            : {}),
+          ...(input.pledgeThemeId !== undefined
+            ? { pledgeThemeId: input.pledgeThemeId }
             : {}),
           posterSettings: createDefaultPosterSettings(),
           status: "active",

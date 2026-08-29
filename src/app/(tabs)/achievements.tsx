@@ -1,129 +1,70 @@
-import { useMemo, useState } from "react";
-import { FlowHeader } from "@/components/ui/flow-header";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
 import { CharacterWalk } from "@/features/achievements/character-walk";
-import { MilestoneBar } from "@/features/achievements/milestone-bar";
-import {
-  getDefaultMilestoneIndex,
-  getWishesForMilestone,
-  MILESTONES,
-} from "@/features/achievements/milestones";
-import { PolicyRecordCard } from "@/features/achievements/policy-record-card";
+import { HistoryEmptyState } from "@/features/achievements/history-empty-state";
+import { HistoryRecordCarousel } from "@/features/achievements/history-record-carousel";
+import { HistorySectionHeader, HistorySectionTitle } from "@/features/achievements/history-section-header";
+import { getResolvedWishes } from "@/features/achievements/wish-history";
+import { useDesignScale } from "@/features/election/layout";
 import { useWishStore } from "@/stores/wishes";
-import { Pressable, ScrollView, Text, View } from "@/tw";
+import { ScrollView, View } from "@/tw";
+import { useMemo } from "react";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type Segment = "done" | "excused";
+/** 動画下から見出し・日付バーまでの余白（デザインpx） */
+const HISTORY_SECTION_TOP_PADDING = 24;
+/** 進捗バー下からコンテンツまでの間隔（デザインpx） */
+const CONTENT_SECTION_GAP = 20;
+/** 空状態用の進捗バー下余白（デザインpx） */
+const EMPTY_STATE_SECTION_GAP = 80;
 
+/**
+ * 過去の履歴タブ。
+ * 達成・未達成の履歴がないときは空状態。あるときはカード一覧を表示。
+ */
 export default function AchievementsScreen() {
-  const wishes = useWishStore((state) => state.wishes);
-  const [segment, setSegment] = useState<Segment>("done");
+  const insets = useSafeAreaInsets();
+  const { s } = useDesignScale();
   const bottomPadding = useTabBarBottomPadding();
+  const wishes = useWishStore((state) => state.wishes);
+  const hasHydrated = useWishStore((state) => state.hasHydrated);
 
-  const doneWishes = useMemo(
-    () => wishes.filter((wish) => wish.status === "done"),
-    [wishes]
-  );
-  const excusedWishes = useMemo(
-    () =>
-      wishes
-        .filter((wish) => wish.status === "excused")
-        .sort((a, b) => (b.excusedAt ?? 0) - (a.excusedAt ?? 0)),
-    [wishes]
-  );
+  const resolvedWishes = useMemo(() => getResolvedWishes(wishes), [wishes]);
+  const hasResolvedHistory = resolvedWishes.length > 0;
 
-  const doneCount = doneWishes.length;
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  // 未選択のうちは現在地に追従させ、タップ後はその選択を尊重する
-  const activeIndex = selectedIndex ?? getDefaultMilestoneIndex(doneCount);
-  const selectedMilestone = MILESTONES[activeIndex];
-
-  const milestoneWishes = useMemo(
-    () => getWishesForMilestone(doneWishes, activeIndex),
-    [doneWishes, activeIndex]
-  );
-
-  const shownWishes = segment === "done" ? milestoneWishes : excusedWishes;
+  const showEmpty = hasHydrated && !hasResolvedHistory;
+  const contentGap = showEmpty
+    ? s(EMPTY_STATE_SECTION_GAP)
+    : s(CONTENT_SECTION_GAP);
 
   return (
-    <View className="flex-1 bg-flow-bg">
-      <FlowHeader title="実績" hideBack />
+    <View className="flex-1 bg-flow-bg" style={{ paddingTop: insets.top }}>
       <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        contentContainerStyle={{ paddingBottom: bottomPadding }}
+        className="flex-1"
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: bottomPadding }}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
       >
         <CharacterWalk />
-
-        <View className="mt-6">
-          <MilestoneBar
-            doneCount={doneCount}
-            selectedIndex={activeIndex}
-            onSelect={setSelectedIndex}
-          />
-        </View>
-
-        <View className="mt-2 px-5">
-          <Text className="text-center text-xs text-[#737373]">
-            達成した政策 {doneCount}件 ／ 達成ポイントをタップすると、その時の政策が見られます
-          </Text>
-        </View>
-
-        <View className="mt-6 px-5">
-          <View className="flex-row rounded-full bg-[#e5e5e5] p-1">
-            <Pressable
-              onPress={() => setSegment("done")}
-              className={`h-10 flex-1 items-center justify-center rounded-full ${
-                segment === "done" ? "bg-flow-gray" : ""
-              }`}
-            >
-              <Text
-                className={`text-sm font-bold ${
-                  segment === "done" ? "text-white" : "text-[#737373]"
-                }`}
-              >
-                できた({doneCount})
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setSegment("excused")}
-              className={`h-10 flex-1 items-center justify-center rounded-full ${
-                segment === "excused" ? "bg-flow-gray" : ""
-              }`}
-            >
-              <Text
-                className={`text-sm font-bold ${
-                  segment === "excused" ? "text-white" : "text-[#737373]"
-                }`}
-              >
-                できなかった({excusedWishes.length})
-              </Text>
-            </Pressable>
-          </View>
-
-          <Text className="mt-4 text-center text-sm font-bold text-flow-ink">
-            {segment === "done"
-              ? `${selectedMilestone.title}（${selectedMilestone.requiredCount}件）で実行した政策`
-              : "できなかった政策"}
-          </Text>
-          {segment === "excused" ? (
-            <Text className="mt-1 text-center text-xs text-[#999999]">
-              達成ポイントには含まれないため、すべて表示しています
-            </Text>
-          ) : null}
-
-          {shownWishes.length === 0 ? (
-            <View className="mt-4 items-center rounded-2xl bg-white px-6 py-10">
-              <Text className="text-center text-sm text-[#737373]">
-                {segment === "done"
-                  ? "この達成ポイントで実行した政策はまだありません"
-                  : "できなかった政策はありません"}
-              </Text>
+        <View
+          style={{
+            paddingTop: s(HISTORY_SECTION_TOP_PADDING),
+            gap: contentGap,
+          }}
+        >
+          {showEmpty ? (
+            <>
+              <HistorySectionHeader />
+              <View className="min-h-[220px] flex-1 items-center justify-center py-6">
+                <HistoryEmptyState />
+              </View>
+            </>
+          ) : hasResolvedHistory ? (
+            <View style={{ gap: s(CONTENT_SECTION_GAP) }}>
+              <HistorySectionTitle />
+              <HistoryRecordCarousel wishes={resolvedWishes} />
             </View>
           ) : (
-            <View className="mt-4 gap-3">
-              {shownWishes.map((wish) => (
-                <PolicyRecordCard key={wish.id} wish={wish} />
-              ))}
-            </View>
+            <HistorySectionHeader />
           )}
         </View>
       </ScrollView>

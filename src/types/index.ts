@@ -45,6 +45,9 @@ export type Election = {
 
 export type WishStatus = "active" | "done" | "excused";
 
+/** 投票結果画面の公約カード色（ランキング1〜3位 + マイノリティ green/blue） */
+export type PledgeThemeId = "pink" | "orange" | "purple" | "green" | "blue";
+
 export type PosterPaletteId = "red" | "navy" | "pink";
 
 export type PosterImageSource =
@@ -69,6 +72,8 @@ export type Wish = {
   excuse?: string;
   excusedAt?: number;
   sourceElectionId?: string;
+  /** 投票結果画面で選んだ公約カードの色テーマ */
+  pledgeThemeId?: PledgeThemeId;
   posterSettings?: PosterSettings;
   /** @deprecated version 1で保存した完成ポスター。新UIの描画元には使わない */
   posterUri?: string;
