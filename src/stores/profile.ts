@@ -27,9 +27,25 @@ export const useProfileStore = create<ProfileStore>()(
     }),
     {
       name: "lge-profile",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ profile: s.profile, tutorialSeen: s.tutorialSeen }),
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<ProfileStore>;
+        // 想定外の形は素通しする。ここでprofileを失うと_layoutのガードが反転し、
+        // 登録済みユーザー全員がオンボーディングへ落ちてしまう
+        if (version >= 2 || !state.profile) return state;
+        // v1は性別4択だった。2択に変わったので範囲外の値はキーごと落とす
+        // （Firestoreはundefinedを受け付けないため、既存コードと同じ条件スプレッド）
+        const { gender, ...rest } = state.profile;
+        return {
+          ...state,
+          profile: {
+            ...rest,
+            ...(gender === "男性" || gender === "女性" ? { gender } : {}),
+          },
+        };
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },

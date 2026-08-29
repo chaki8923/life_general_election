@@ -13,7 +13,8 @@ import { useVideoPlayer, type VideoPlayer } from "expo-video";
 export type BackgroundVideoId =
   | "electionTop"
   | "counting"
-  | "achievementWalk";
+  | "achievementWalk"
+  | "summoning";
 
 type BackgroundVideoOptions = {
   /** falseの間は再生しない（「視差効果を減らす」設定など） */
@@ -29,6 +30,7 @@ const countingSource = require("../../assets/video/vort_complete.mp4");
 const achievementWalkSource = require(
   "../../assets/video/character-walk-in-place-right-v3.mp4"
 );
+const summoningSource = require("../../assets/video/summoning.mp4");
 
 function configureBackgroundVideo(player: VideoPlayer) {
   player.loop = true;
@@ -46,10 +48,11 @@ export function BackgroundVideoProvider({ children }: PropsWithChildren) {
     achievementWalkSource,
     configureBackgroundVideo
   );
+  const summoning = useVideoPlayer(summoningSource, configureBackgroundVideo);
 
   const players = useMemo(
-    () => ({ electionTop, counting, achievementWalk }),
-    [electionTop, counting, achievementWalk]
+    () => ({ electionTop, counting, achievementWalk, summoning }),
+    [electionTop, counting, achievementWalk, summoning]
   );
 
   return (

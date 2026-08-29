@@ -24,15 +24,20 @@ function pickStrings(values: string[] | undefined) {
   );
 }
 
-/** できなかった理由の候補。AIが使えないときは固定の3つを返す */
+/** policy 未設定の古い公約では、公約そのものを政策として扱う（プロンプト側と同じ寄せ方） */
+function resolvePolicy(wish: Wish) {
+  return wish.policy?.trim() || wish.text;
+}
+
+/** できなかった理由の候補。AIが使えないときは政策から組み立てた3つを返す */
 export async function generateExcuseReasons({ wish }: { wish: Wish }) {
   const response = await generateJson<GeminiReasonsResponse>(
     buildExcuseReasonsPrompt(wish)
   );
   const reasons = pickStrings(response?.reasons)?.map((reason) => reason.trim());
-  if (!reasons?.length) return buildMockReasons();
   // 多すぎ・少なすぎのどちらでもレイアウトが崩れないよう、必ず3件にそろえる
-  const fallback = buildMockReasons();
+  const fallback = buildMockReasons(resolvePolicy(wish));
+  if (!reasons?.length) return fallback;
   return Array.from(
     { length: EXCUSE_REASON_COUNT },
     (_, index) => reasons[index] ?? fallback[index]
@@ -50,6 +55,6 @@ export async function generateExcuse({
     buildExcusePrompt(wish, reason)
   );
   const excuses = pickStrings(response?.excuses);
-  if (!excuses?.length) return buildMockExcuse(reason);
+  if (!excuses?.length) return buildMockExcuse(reason, resolvePolicy(wish));
   return excuses[Math.floor(Math.random() * excuses.length)].trim();
 }

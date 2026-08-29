@@ -3,6 +3,7 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
+import { WORRIES_BACKGROUND } from "@/constants/election-images";
 import { useDesignScale } from "./layout";
 import { WorryBubbleCloud } from "./worry-bubble-cloud";
 import {
@@ -45,7 +46,7 @@ export function WorryConfirmModal({
       exiting={FadeOut.duration(180)}
     >
       <Image
-        source={require("../../../assets/election/worries-bg.png")}
+        source={WORRIES_BACKGROUND}
         className="absolute inset-0"
         contentFit="fill"
         pointerEvents="none"

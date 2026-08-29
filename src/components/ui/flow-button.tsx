@@ -5,6 +5,8 @@ type FlowButtonProps = {
   label: string;
   /** primary = 濃紺塗り / gray = Figmaのprimary-button（#737373） / pink = アクセント塗り / dashed = 白抜き破線（「選び直す」など） */
   variant?: "primary" | "gray" | "pink" | "dashed";
+  /** md = h48（既定） / sm = h40（Figmaのカード内ボタン） */
+  size?: "md" | "sm";
   disabled?: boolean;
   /** 処理中はラベルをスピナーへ置き換え、連打を防ぐ */
   loading?: boolean;
@@ -21,6 +23,7 @@ type FlowButtonProps = {
 export function FlowButton({
   label,
   variant = "primary",
+  size = "md",
   disabled = false,
   loading = false,
   onPress,
@@ -64,7 +67,10 @@ export function FlowButton({
       accessibilityLabel={loading ? `${label}、読み込み中` : label}
       accessibilityState={{ disabled: interactionDisabled, busy: loading }}
       style={customFill}
-      className={`${heightClass} items-center justify-center rounded-full px-6 ${container} ${className}`}
+      // 高さはclassNameで上書きされると解決順が不定になるのでsizeで持つ
+      className={`${
+        size === "sm" ? "h-[40px]" : "h-12"
+      } items-center justify-center rounded-full px-6 ${container} ${className}`}
     >
       <View>
         {loading ? (
