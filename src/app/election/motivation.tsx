@@ -155,7 +155,7 @@ export default function MotivationSelectScreen() {
                     {Array.from({ length: level + 1 }, (_, i) => (
                       <Image
                         key={i}
-                        source={require("../../../assets/election/fire.png")}
+                        source={require("../../../assets/election/fire.webp")}
                         style={{
                           width: s(FLAME_WIDTH),
                           height: s(FLAME_HEIGHT),

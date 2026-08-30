@@ -10,7 +10,7 @@ import { useWishStore } from "@/stores/wishes";
 import { Image } from "@/tw/image";
 import { Text, View } from "@/tw";
 
-const excuseImage = require("../../../assets/poster/excuse-character.png");
+const excuseImage = require("../../../assets/poster/excuse-character.webp");
 
 /** Figma 2780:25977 */
 const IMAGE_WIDTH = 180;

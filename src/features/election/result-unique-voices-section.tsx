@@ -2,8 +2,8 @@ import { useDesignScale } from "@/features/election/layout";
 import { Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 
-const crowdBg = require("../../../assets/election/result/unique-voices-crowd-bg.png");
-const crowdRight = require("../../../assets/election/result/unique-voices-crowd-right.png");
+const crowdBg = require("../../../assets/election/result/unique-voices-crowd-bg.webp");
+const crowdRight = require("../../../assets/election/result/unique-voices-crowd-right.webp");
 
 /** Figma 1905:13968 — Group 624883（デザインpx） */
 const CROWD_WIDTH = 251;

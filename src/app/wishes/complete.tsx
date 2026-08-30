@@ -8,7 +8,7 @@ import {
 import { Image } from "@/tw/image";
 import { Text, View } from "@/tw";
 
-const congratsImage = require("../../../assets/poster/congrats-character.png");
+const congratsImage = require("../../../assets/poster/congrats-character.webp");
 
 /** Figma 2780:25801 img */
 const IMAGE_SIZE = 275;
