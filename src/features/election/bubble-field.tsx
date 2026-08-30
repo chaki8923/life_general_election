@@ -14,7 +14,6 @@ import { Animated } from "@/tw/animated";
 import { DESIGN_WIDTH, FONT, useDesignScale } from "./layout";
 import { ThoughtBubble } from "./thought-bubble";
 import {
-  BUBBLE_FONT_SIZE,
   CONFIRM_CENTER_Y,
   WORRY_BUBBLE_SLOTS,
   getConfirmCloudRect,
@@ -29,6 +28,8 @@ const CONFIRM_CENTER_X = DESIGN_WIDTH / 2;
 
 type BubbleFieldProps = {
   candidates: WorrySuggestion[];
+  /** 5枚で共通の文字サイズ（アートボード基準）。fitBubbleFontSize() の結果 */
+  fontSize: number;
   selectedId: string | null;
   onSelect: (candidate: WorrySuggestion) => void;
   /** 選ばれた吹き出しが確認画面の位置に着いた通知 */
@@ -112,6 +113,7 @@ function TouchHint({
 /** 悩み候補5件を雲の吹き出しとして配置し、1つずつポコポコ出す */
 export function BubbleField({
   candidates,
+  fontSize,
   selectedId,
   onSelect,
   onFocusEnd,
@@ -151,7 +153,7 @@ export function BubbleField({
             top={s(slot.y)}
             width={s(slot.w)}
             height={s(slot.h)}
-            fontSize={s(BUBBLE_FONT_SIZE)}
+            fontSize={s(fontSize)}
             originX={s(originX)}
             originY={s(originY)}
             onPress={() => onSelect(candidate)}

@@ -31,6 +31,21 @@ export type PosterPalette = {
   stroke: string;
 };
 
+/** Figma 2040:6126 の既定。surface/primary はデザイン実測値 */
+const PINK_PALETTE: PosterPalette = {
+  id: "pink",
+  label: "ピンク",
+  primary: "#f4728a",
+  surface: "#fff0f3",
+  stroke: "#f4728a",
+};
+
+/**
+ * pink 以外の4色は既製アバター（assets/avatar/）の色味に対応する。
+ * 値は pledge-themes.ts の PLEDGE_THEMES と揃えている
+ * （primary/stroke = color、surface = avatarBg）。
+ * PLEDGE_THEMES を直接 import するとアバター画像5枚の require も引き込むためリテラルで持つ。
+ */
 export const POSTER_PALETTES: PosterPalette[] = [
   {
     id: "red",
@@ -46,18 +61,37 @@ export const POSTER_PALETTES: PosterPalette[] = [
     surface: "#eef0f5",
     stroke: "#1a2744",
   },
+  PINK_PALETTE,
   {
-    // Figma 2040:6126 の既定。surface/primary はデザイン実測値
-    id: "pink",
-    label: "ピンク",
-    primary: "#f4728a",
-    surface: "#fff0f3",
-    stroke: "#f4728a",
+    id: "orange",
+    label: "オレンジ",
+    primary: "#fb930a",
+    surface: "#fff8e8",
+    stroke: "#fb930a",
+  },
+  {
+    id: "purple",
+    label: "紫",
+    primary: "#9087e6",
+    surface: "#f5f3fc",
+    stroke: "#9087e6",
+  },
+  {
+    id: "green",
+    label: "緑",
+    primary: "#80c826",
+    surface: "#f5faf0",
+    stroke: "#80c826",
+  },
+  {
+    id: "blue",
+    label: "青",
+    primary: "#229ff7",
+    surface: "#f1f7fd",
+    stroke: "#229ff7",
   },
 ];
 
 export function getPosterPalette(id: PosterPaletteId) {
-  return (
-    POSTER_PALETTES.find((palette) => palette.id === id) ?? POSTER_PALETTES[2]
-  );
+  return POSTER_PALETTES.find((palette) => palette.id === id) ?? PINK_PALETTE;
 }

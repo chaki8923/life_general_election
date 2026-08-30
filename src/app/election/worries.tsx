@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import {
   Extrapolation,
@@ -22,6 +22,7 @@ import { FlowStepper } from "@/components/ui/flow-stepper";
 import { BubbleField } from "@/features/election/bubble-field";
 import { generateWorrySuggestions } from "@/features/election/generate-worries";
 import { CONTENT_TOP, useDesignScale } from "@/features/election/layout";
+import { fitBubbleFontSize } from "@/features/election/worry-bubble-slots";
 import { WorryConfirmModal } from "@/features/election/worry-confirm-modal";
 import { mirrorWorry } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
@@ -75,6 +76,12 @@ export default function WorrySuggestScreen() {
     ? (worryCandidates?.findIndex((candidate) => candidate.id === selected.id) ??
       -1)
     : -1;
+  // 5枚バラバラに詰めると1枚だけ極端に小さくなるので、全部を同じサイズに揃える。
+  // 確認画面も同じ値を相似拡大するので改行位置が一致する
+  const bubbleFontSize = useMemo(
+    () => fitBubbleFontSize((worryCandidates ?? []).map((c) => c.label)),
+    [worryCandidates]
+  );
 
   const intro = useSharedValue(1);
   const introShift = s(406);
@@ -248,6 +255,7 @@ export default function WorrySuggestScreen() {
         {picking && worryCandidates ? (
           <BubbleField
             candidates={worryCandidates}
+            fontSize={bubbleFontSize}
             selectedId={selected?.id ?? null}
             onSelect={handleSelect}
             onFocusEnd={() => setConfirming(true)}
@@ -305,6 +313,7 @@ export default function WorrySuggestScreen() {
             visible
             candidate={selected}
             bubbleIndex={selectedBubbleIndex}
+            fontSize={bubbleFontSize}
             onConfirm={handleConfirm}
             onReselect={handleReselect}
           />
