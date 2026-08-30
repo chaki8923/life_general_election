@@ -29,7 +29,6 @@ export const WORRY_BUBBLE_SLOTS = [
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
     flipX: false,
-    quoted: false,
     hint: { x: 145, y: 52.706 },
   },
   {
@@ -44,7 +43,6 @@ export const WORRY_BUBBLE_SLOTS = [
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
     flipX: true,
-    quoted: true,
     hint: null,
   },
   {
@@ -59,7 +57,6 @@ export const WORRY_BUBBLE_SLOTS = [
     textWidthRatio: 0.62,
     textHeightRatio: 0.56,
     flipX: true,
-    quoted: true,
     hint: { x: 72, y: 235.706 },
   },
   {
@@ -74,7 +71,6 @@ export const WORRY_BUBBLE_SLOTS = [
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
     flipX: false,
-    quoted: true,
     hint: { x: 149, y: 353.706 },
   },
   {
@@ -89,7 +85,6 @@ export const WORRY_BUBBLE_SLOTS = [
     textWidthRatio: 0.6,
     textHeightRatio: 0.54,
     flipX: true,
-    quoted: true,
     hint: { x: 336, y: 331.706 },
   },
 ] as const;
