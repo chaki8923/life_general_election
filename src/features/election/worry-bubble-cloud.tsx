@@ -1,5 +1,6 @@
 import { Text, View } from "@/tw";
 import { Image } from "@/tw/image";
+import { phraseWrap } from "@/utils/phrase-wrap";
 import { FONT } from "./layout";
 import { WORRY_BUBBLE_SHAPES } from "./worry-bubble-slots";
 import type { WorryBubbleSlot } from "./worry-bubble-slots";
@@ -10,6 +11,7 @@ type WorryBubbleCloudProps = {
   /** 実機px。fontSizeはwidthと同じ倍率で渡すこと（改行位置を揃えるため） */
   width: number;
   height: number;
+  /** fitBubbleFontSize() で5枚ぶんまとめて決めた値をスケールしたもの */
   fontSize: number;
 };
 
@@ -25,12 +27,6 @@ export function WorryBubbleCloud({
   fontSize,
 }: WorryBubbleCloudProps) {
   const displayLabel = slot.quoted ? `『${label}』` : label;
-  const labelLength = [...displayLabel].length;
-  // adjustsFontSizeToFitだけに頼らず、長さに応じて初期サイズから確実に下げる
-  const lengthScale =
-    labelLength > 20 ? 0.78 : labelLength > 16 ? 0.86 : labelLength > 12 ? 0.92 : 1;
-  // 反転後はローブの安全領域が狭くなるため、少し余白を増やす
-  const fittedFontSize = fontSize * lengthScale * (slot.flipX ? 0.94 : 1);
   const textWidth = width * slot.textWidthRatio;
   const textHeight = height * slot.textHeightRatio;
   const effectiveTextCenterX = slot.flipX
@@ -63,21 +59,23 @@ export function WorryBubbleCloud({
           overflow: "hidden",
         }}
       >
+        {/* サイズは fitBubbleFontSize() で枠に収まるところまで下げてあるので、
+            adjustsFontSizeToFit は使わない。使うとフォントだけ縮んで lineHeight が
+            取り残され、1枚だけ極端に小さく行間の広い見た目になる。
+            numberOfLines と ellipsizeMode は見積もりが外れたときの保険 */}
         <Text
           numberOfLines={4}
-          adjustsFontSizeToFit
-          minimumFontScale={0.55}
           maxFontSizeMultiplier={1}
           ellipsizeMode="tail"
           style={{
             textAlign: "center",
             fontFamily: FONT.bold,
-            fontSize: fittedFontSize,
-            lineHeight: fittedFontSize * 1.32,
+            fontSize,
+            lineHeight: fontSize * 1.32,
             color: "#ffffff",
           }}
         >
-          {displayLabel}
+          {phraseWrap(displayLabel)}
         </Text>
       </View>
     </>

@@ -21,10 +21,10 @@ import { PosterEditModal } from "@/features/poster/poster-edit-modal";
 import {
   createDefaultPosterSettings,
   getPosterImageUri,
+  resolvePosterPalette,
   resolvePosterSettings,
 } from "@/features/poster/poster-settings";
 import { RunningPledgeCard } from "@/features/poster/running-pledge-card";
-import { getPosterPalette } from "@/features/poster/templates";
 import { usePosterExport } from "@/features/poster/use-poster-export";
 import { ReportModal } from "@/features/wishes/report-modal";
 import { useProfileStore } from "@/stores/profile";
@@ -151,7 +151,7 @@ export default function MyPageScreen() {
         <PosterCard
           settings={settings}
           slogan={item.text}
-          palette={getPosterPalette(settings.paletteId)}
+          palette={resolvePosterPalette(settings)}
           // キャプチャは表示中の1枚だけを対象にする
           posterRef={isCurrent ? posterRef : undefined}
           onPhotoLoaded={isCurrent ? () => setPhotoReady(true) : undefined}
