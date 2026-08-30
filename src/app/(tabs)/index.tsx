@@ -12,6 +12,7 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { ProgressDots } from "@/components/ui/progress-dots";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
+import { DevGuideButton } from "@/features/dev/dev-guide-button";
 import { MypageGuideModal } from "@/features/onboarding/mypage-guide-modal";
 import { deleteManagedPosterPhoto } from "@/features/poster/photo-storage";
 import { PosterCard } from "@/features/poster/poster-card";
@@ -46,6 +47,11 @@ export default function MyPageScreen() {
   const hasHydrated = useWishStore((state) => state.hasHydrated);
   const removeWish = useWishStore((state) => state.removeWish);
   const nickname = useProfileStore((state) => state.profile?.nickname ?? "");
+  const profileHydrated = useProfileStore((state) => state.hasHydrated);
+  const mypageGuideSeen = useProfileStore((state) => state.mypageGuideSeen);
+  const markMypageGuideSeen = useProfileStore(
+    (state) => state.markMypageGuideSeen
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [doneOpen, setDoneOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -70,12 +76,14 @@ export default function MyPageScreen() {
     !busy &&
     (storedSettings.image.kind === "character" || photoReady);
 
-  // Figma 2665:19111「初回ガイド」。マイページに来るたび毎回出す
+  // Figma 2665:19111「初回ガイド」。初回訪問の1回だけ出す。
+  // profileHydratedを見ないと、復元前の既定値(false)で既読ユーザーにも一瞬出てしまう
   useFocusEffect(
     useCallback(() => {
-      if (!hasHydrated) return;
+      if (!hasHydrated || !profileHydrated) return;
+      if (mypageGuideSeen) return;
       setGuideOpen(true);
-    }, [hasHydrated])
+    }, [hasHydrated, profileHydrated, mypageGuideSeen])
   );
 
   useEffect(() => {
@@ -253,6 +261,11 @@ export default function MyPageScreen() {
             </Pressable>
           </>
         )}
+
+        <DevGuideButton
+          onPress={() => setGuideOpen(true)}
+          className="items-center py-2"
+        />
       </ScrollView>
 
       {currentWish ? (
@@ -285,7 +298,10 @@ export default function MyPageScreen() {
 
       <MypageGuideModal
         visible={guideOpen}
-        onClose={() => setGuideOpen(false)}
+        onClose={() => {
+          setGuideOpen(false);
+          markMypageGuideSeen();
+        }}
       />
     </View>
   );

@@ -56,6 +56,7 @@
   "scripts": {
     "start": "expo start",
     "start:tunnel": "node ./scripts/start-tunnel-notify.js",
+    "start:demo": "expo start --lan --no-dev --minify",
     "sync": "node ./scripts/auto-sync.js --once",
     "sync:watch": "node ./scripts/auto-sync.js",
     "reset-project": "node ./scripts/reset-project.js",

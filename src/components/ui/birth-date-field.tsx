@@ -85,11 +85,18 @@ function WheelColumn({ values, value, onChange, suffix }: WheelColumnProps) {
       onLayout={() => scrollToIndex(index, false)}
       style={{ flex: 1, height: ROW_HEIGHT * VISIBLE_ROWS }}
     >
-      {values.map((v) => (
-        <View
+      {values.map((v, i) => (
+        <Pressable
           key={v}
           style={{ height: ROW_HEIGHT }}
           className="items-center justify-center"
+          accessibilityRole="button"
+          accessibilityLabel={`${v}${suffix}`}
+          onPress={() => {
+            // タップした数字を中央へスクロールし、その場でアクティブ化する
+            scrollToIndex(i, true);
+            if (v !== value) onChange(v);
+          }}
         >
           <Text
             className={`font-flow text-[16px] ${
@@ -99,7 +106,7 @@ function WheelColumn({ values, value, onChange, suffix }: WheelColumnProps) {
             {v}
             {suffix}
           </Text>
-        </View>
+        </Pressable>
       ))}
     </RNScrollView>
   );

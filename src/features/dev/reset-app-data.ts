@@ -25,5 +25,9 @@ export async function resetAppData() {
     history: {},
   });
   // 最後にprofileを消すとStack.Protectedガードが反転し、即オンボーディングへ切り替わる
-  useProfileStore.setState({ profile: null, tutorialSeen: false });
+  useProfileStore.setState({
+    profile: null,
+    tutorialSeen: false,
+    mypageGuideSeen: false,
+  });
 }

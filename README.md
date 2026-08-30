@@ -24,6 +24,26 @@ cp .env.example .env   # 必要に応じてAPIキーを設定（空でも起動�
 
 iOSシミュレータは `i`、Androidエミュレータは `a`、実機は Expo Go でQRコードを読み取り。
 
+## 多人数にQRを配るとき（ハッカソン等）
+
+```bash
+npm run start:demo   # expo start --lan --no-dev --minify
+```
+
+Expo Go は初回起動時にdevサーバーから約37MB（フォント20.6MB / 動画6.2MB / JSバンドル10.2MB）を引く。
+台数分がそのまま帯域に乗るので、以下を守らないと10台前後で詰まる。
+
+- **`--tunnel` を使わない**。ngrok は分あたり接続数と転送量に上限があり真っ先に詰まる
+  （tunnel使用中は `http://127.0.0.1:4040` で実スループットとエラーを確認できる）
+- **自前のトラベルルーターを持ち込む**。会場のゲストWi-Fiは client isolation が入っていることが多く、
+  その場合 LAN 配布はそもそも成立しない
+- Mac は有線でルーターに繋ぐ（詰まるのは Mac の上り）
+- 可能なら**事前に一度スキャンしてもらう**。expo-asset がコンテンツハッシュでキャッシュするので
+  2回目以降は再取得しない
+
+`start:demo` は `__DEV__` が false になるため fast refresh が効かず、`src/features/dev/` の
+デバッグ用ボタンも消える。**開発中は従来どおり `npm start` を使うこと。**
+
 ## origin/main の自動同期
 
 Teams「/claude …」の依頼が issue → PR → main へ自動マージされた後、ローカル環境にも自動で取り込みたい場合に使用する。
