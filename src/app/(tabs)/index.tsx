@@ -292,7 +292,12 @@ export default function MyPageScreen() {
           visible
           wish={currentWish}
           onClose={() => setDoneOpen(false)}
-          onCompleted={() => router.push("/wishes/complete")}
+          onCompleted={() =>
+            router.push({
+              pathname: "/wishes/complete",
+              params: { id: currentWish.id },
+            })
+          }
         />
       ) : null}
 
