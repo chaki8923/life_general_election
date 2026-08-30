@@ -1,20 +1,20 @@
 import { FlowButton } from "@/components/ui/flow-button";
-import {
-  GoalDeadlinePicker,
-} from "@/components/ui/deadline-picker";
-import { Pressable, Text, View } from "@/tw";
+import { GoalDeadlinePicker } from "@/components/ui/deadline-picker";
+import { DESIGN_HEIGHT, useDesignScale } from "@/features/election/layout";
+import { Pressable, ScrollView, Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 import type { Candidate } from "@/types";
 import { useEffect, useState } from "react";
-import { Modal, useWindowDimensions } from "react-native";
+import { Modal } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const iconFlag = require("../../../assets/election/result/icon-flag.svg");
 const iconCheck = require("../../../assets/election/result/icon-check.svg");
 const iconCalendar = require("../../../assets/election/result/icon-calendar.svg");
 
-/** 画面高さの 3/5（Figma ボトムシート） */
+/** Figma アートボード高さに対するシート比率 */
 const SHEET_HEIGHT_RATIO = 0.6;
+const SHEET_DESIGN_HEIGHT = Math.round(DESIGN_HEIGHT * SHEET_HEIGHT_RATIO);
 
 type GoalModalProps = {
   visible: boolean;
@@ -29,26 +29,40 @@ type GoalModalProps = {
 
 function SectionLabel({
   icon,
-  iconClassName,
+  iconWidth,
+  iconHeight,
   label,
   color,
 }: {
   icon: number;
-  iconClassName: string;
+  iconWidth: number;
+  iconHeight: number;
   label: string;
   color: string;
 }) {
+  const { s } = useDesignScale();
   return (
-    <View className="flex-row items-center gap-1 py-1.5">
+    <View
+      className="flex-row items-center"
+      style={{ gap: s(4), paddingVertical: s(2) }}
+    >
       <Image
         source={icon}
-        className={iconClassName}
         contentFit="contain"
-        style={{ tintColor: color }}
+        style={{
+          width: s(iconWidth),
+          height: s(iconHeight),
+          tintColor: color,
+        }}
       />
       <Text
-        className="font-flow text-sm leading-[1.4] tracking-[-0.48px]"
-        style={{ color }}
+        className="font-flow"
+        style={{
+          color,
+          fontSize: s(11),
+          lineHeight: s(11 * 1.4),
+          letterSpacing: s(-0.48),
+        }}
       >
         {label}
       </Text>
@@ -58,6 +72,7 @@ function SectionLabel({
 
 /**
  * Figma 2609:22043 — 公約・政策を目標に設定するボトムシート
+ * 高さは幅スケールと画面高さの小さい方に収め、溢れたら内部スクロール。
  */
 export function GoalModal({
   visible,
@@ -67,9 +82,11 @@ export function GoalModal({
   onRegister,
   onClose,
 }: GoalModalProps) {
+  const { s, height: windowHeight } = useDesignScale();
   const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
-  const sheetHeight = windowHeight * SHEET_HEIGHT_RATIO;
+  const bottomPad = Math.max(insets.bottom, 16) + s(24);
+  const maxSheet = Math.max(0, windowHeight - insets.top - s(24));
+  const sheetHeight = Math.min(s(SHEET_DESIGN_HEIGHT), maxSheet);
   const [deadline, setDeadline] = useState<number | null>(null);
 
   useEffect(() => {
@@ -94,10 +111,10 @@ export function GoalModal({
         />
 
         <View
-          className="rounded-t-[20px] border border-[#f6f6f6] bg-white px-8 pt-5"
+          className="overflow-hidden rounded-t-[20px] border border-[#f6f6f6] bg-white"
           style={{
             height: sheetHeight,
-            paddingBottom: Math.max(insets.bottom, 16) + 24,
+            paddingBottom: bottomPad,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: -4 },
             shadowOpacity: 0.08,
@@ -105,71 +122,125 @@ export function GoalModal({
             elevation: 8,
           }}
         >
-          {/* 2609:22089 — グラブハンドル */}
-          <View className="mb-4 h-1 w-[101px] self-center rounded-2xl bg-[#d9d9d9]" />
-
-          <View className="flex-1 justify-evenly">
-            <Text className="text-center font-flow text-lg leading-7 text-flow-ink">
-              この公約・政策を目標に設定しますか？
-            </Text>
-
-            <View className="gap-5">
-              {/* 人生公約 */}
-              <View className="gap-1 border-b border-[#eaeef2] pb-4">
-                <SectionLabel
-                  icon={iconFlag}
-                  iconClassName="h-4 w-4"
-                  label="人生公約"
-                  color={color}
-                />
-                <Text className="font-flow-medium text-base leading-6 text-flow-ink">
-                  {candidate?.label}
-                </Text>
-              </View>
-
-              {/* 掲げる政策 */}
-              <View className="gap-1 border-b border-[#eaeef2] pb-4">
-                <SectionLabel
-                  icon={iconCheck}
-                  iconClassName="h-[17px] w-[15px]"
-                  label="掲げる政策"
-                  color={color}
-                />
-                <Text className="font-flow-medium text-base leading-6 text-flow-ink">
-                  {candidate?.action}
-                </Text>
-              </View>
-
-              {/* 政策実行の期日 */}
-              <View className="gap-3">
-                <SectionLabel
-                  icon={iconCalendar}
-                  iconClassName="h-5 w-5"
-                  label="政策実行の期日"
-                  color={color}
-                />
-                <Text className="font-flow-medium text-sm leading-6 tracking-[0.6px] text-flow-ink">
-                  忘れないようまずは
-                  <Text style={{ color }}>3日以内</Text>
-                  がおすすめ！
-                </Text>
-                <GoalDeadlinePicker
-                  value={deadline}
-                  onChange={setDeadline}
-                  color={color}
-                  accentBg={accentBg}
-                />
-              </View>
-            </View>
-
-            <FlowButton
-              label="設定する"
-              variant="primary"
-              disabled={!canSubmit}
-              fillColor={canSubmit ? color : "#d0d7de"}
-              onPress={() => deadline !== null && onRegister(deadline)}
-              className="h-14 w-full"
+          <View
+            style={{
+              paddingHorizontal: s(32),
+              paddingTop: s(20),
+              flex: 1,
+            }}
+          >
+            {/* 2609:22089 — グラブハンドル */}
+            <View
+              className="self-center rounded-2xl bg-[#d9d9d9]"
+              style={{
+                marginBottom: s(16),
+                height: s(4),
+                width: s(101),
+              }}
             />
+
+            <ScrollView
+              className="flex-1"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              contentContainerStyle={{
+                flexGrow: 1,
+                justifyContent: "space-between",
+                gap: s(16),
+                paddingBottom: s(8),
+              }}
+            >
+              <View style={{ gap: s(12) }}>
+                <Text
+                  className="text-center font-flow text-flow-ink"
+                  style={{ fontSize: s(14), lineHeight: s(20) }}
+                >
+                  この公約・政策を目標に設定しますか？
+                </Text>
+
+                <View style={{ gap: s(12) }}>
+                  <View
+                    className="border-b border-[#eaeef2]"
+                    style={{ gap: s(4), paddingBottom: s(10) }}
+                  >
+                    <SectionLabel
+                      icon={iconFlag}
+                      iconWidth={13}
+                      iconHeight={13}
+                      label="人生公約"
+                      color={color}
+                    />
+                    <Text
+                      className="font-flow-medium text-flow-ink"
+                      style={{ fontSize: s(13), lineHeight: s(18) }}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
+                    >
+                      {candidate?.label}
+                    </Text>
+                  </View>
+
+                  <View
+                    className="border-b border-[#eaeef2]"
+                    style={{ gap: s(4), paddingBottom: s(10) }}
+                  >
+                    <SectionLabel
+                      icon={iconCheck}
+                      iconWidth={12}
+                      iconHeight={14}
+                      label="掲げる政策"
+                      color={color}
+                    />
+                    <Text
+                      className="font-flow-medium text-flow-ink"
+                      style={{ fontSize: s(13), lineHeight: s(18) }}
+                      numberOfLines={3}
+                      ellipsizeMode="tail"
+                    >
+                      {candidate?.action}
+                    </Text>
+                  </View>
+
+                  <View style={{ gap: s(10) }}>
+                    <SectionLabel
+                      icon={iconCalendar}
+                      iconWidth={14}
+                      iconHeight={14}
+                      label="政策実行の期日"
+                      color={color}
+                    />
+                    <Text
+                      className="font-flow-medium text-flow-ink"
+                      style={{
+                        fontSize: s(11),
+                        lineHeight: s(16),
+                        letterSpacing: s(0.6),
+                      }}
+                    >
+                      忘れないようまずは
+                      <Text style={{ color }}>3日以内</Text>
+                      がおすすめ！
+                    </Text>
+                    <GoalDeadlinePicker
+                      value={deadline}
+                      onChange={setDeadline}
+                      color={color}
+                      accentBg={accentBg}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <FlowButton
+                label="設定する"
+                variant="primary"
+                disabled={!canSubmit}
+                fillColor={color}
+                disabledFillColor="#D0D7DE"
+                onPress={() => deadline !== null && onRegister(deadline)}
+                className="h-14 w-full"
+              />
+            </ScrollView>
           </View>
         </View>
       </View>

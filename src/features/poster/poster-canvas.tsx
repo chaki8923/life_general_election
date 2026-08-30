@@ -15,7 +15,7 @@ import {
 } from "./templates";
 import { VerticalSlogan } from "./vertical-slogan";
 
-const DEFAULT_CHARACTER = require("../../../assets/poster/default-character.png");
+const DEFAULT_CHARACTER = require("../../../assets/poster/default-character.webp");
 
 /** 以下すべて Figma 2040:6126 Avatar-Frame（350×400）基準の座標 */
 const CARD_RADIUS = 16;

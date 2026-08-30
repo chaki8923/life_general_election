@@ -1,14 +1,16 @@
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import {
   FlowTabBarOverlay,
   useTabBarBottomPadding,
 } from "@/components/ui/tab-bar";
+import { useElectionStore } from "@/stores/election";
+import { useWishStore } from "@/stores/wishes";
 import { Image } from "@/tw/image";
 import { Text, View } from "@/tw";
 
-const congratsImage = require("../../../assets/poster/congrats-character.png");
+const congratsImage = require("../../../assets/poster/congrats-character.webp");
 
 /** Figma 2780:25801 img */
 const IMAGE_SIZE = 275;
@@ -19,7 +21,23 @@ const IMAGE_SIZE = 275;
  */
 export default function WishCompleteScreen() {
   const router = useRouter();
+  const { id } = useLocalSearchParams<{ id?: string }>();
+  const wish = useWishStore((state) =>
+    state.wishes.find((item) => item.id === id)
+  );
+  const restoreElection = useElectionStore((state) => state.restoreElection);
   const bottomPadding = useTabBarBottomPadding();
+
+  const handleNext = () => {
+    // 「できなかった」時と同様、達成した公約を出した回の開票結果を復元して
+    // 同じ選挙の中から次の政策を選び直させる。
+    // アーカイブが無い（開票結果を保存する前に作られた公約）ときは総選挙からやり直す。
+    if (wish?.sourceElectionId && restoreElection(wish.sourceElectionId)) {
+      router.replace("/election/result");
+      return;
+    }
+    router.replace("/election");
+  };
 
   return (
     <View className="flex-1 bg-flow-bg">
@@ -46,7 +64,7 @@ export default function WishCompleteScreen() {
           <FlowButton
             label="次の政策を決めよう！"
             className="h-[48px]"
-            onPress={() => router.replace("/election")}
+            onPress={handleNext}
           />
         </View>
       </View>

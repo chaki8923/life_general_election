@@ -9,7 +9,7 @@ import { Image } from "@/tw/image";
 import { Pressable, Text, View } from "@/tw";
 
 const reportImage = require("../../../assets/poster/guide-report.png");
-const posterImage = require("../../../assets/poster/guide-poster.png");
+const posterImage = require("../../../assets/poster/guide-poster.webp");
 
 /** Figma 2665:19118 の btn は gray/900。FlowButton 既定の #32383f とは別 */
 const BUTTON_FILL = "#24292f";
@@ -91,7 +91,8 @@ export function MypageGuideModal({ visible, onClose }: Props) {
         onPress={onClose}
         accessibilityRole="button"
         accessibilityLabel="閉じる"
-        className="flex-1 justify-end bg-black/50"
+        className="flex-1 justify-end"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
       >
         {/* シート内のタップで閉じないよう、ここでタッチを止める */}
         <Animated.View

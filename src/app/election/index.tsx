@@ -1,24 +1,123 @@
 import { useState } from "react";
+import { useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { Pressable, ScrollView, Text, TextInput, View } from "@/tw";
-import { Image } from "@/tw/image";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
-import { INTERESTS } from "@/constants/interests";
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  CHARACTER_WIDTH,
+  CHARACTER_X,
+  CHARACTER_Y,
+  INTERESTS,
+  LABEL_INSET,
+  type Interest,
+} from "@/constants/interests";
+import { WORRIES_IMAGES } from "@/constants/election-images";
+import { CustomInterestModal } from "@/features/election/custom-interest-modal";
+import { usePreloadImages } from "@/hooks/use-preload-images";
 import { incrementThemeStat } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
+import { Image } from "@/tw/image";
+import { Pressable, ScrollView, Text, View } from "@/tw";
 
 const OTHER_INTEREST_ID = "other";
-const CUSTOM_INTEREST_MAX_LENGTH = 40;
+/** 画面左右のpadding(20)とカード間のgap(8) */
+const GRID_PADDING = 20;
+const GRID_GAP = 8;
+const CARD_BORDER = "#f6f6f6";
+
+type InterestCardProps = {
+  item: Interest;
+  label: string;
+  selected: boolean;
+  /** Figmaのカード171px幅から実機幅への縮尺 */
+  scale: number;
+  onPress: () => void;
+};
+
+function InterestCard({
+  item,
+  label,
+  selected,
+  scale,
+  onPress,
+}: InterestCardProps) {
+  const s = (value: number) => value * scale;
+  const art = selected ? item.iconActive : item.iconIdle;
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      className="overflow-hidden rounded-[8px] border"
+      style={{
+        width: s(CARD_WIDTH),
+        height: s(CARD_HEIGHT),
+        borderColor: CARD_BORDER,
+        backgroundColor: selected ? item.activeBg : "#ffffff",
+      }}
+    >
+      <Image
+        source={item.icon}
+        contentFit="contain"
+        style={{
+          position: "absolute",
+          left: s(art.x),
+          top: s(art.y),
+          width: s(art.w),
+          height: s(art.h),
+        }}
+      />
+      <Text
+        numberOfLines={1}
+        className="absolute font-flow-medium text-[#1f1f1f]"
+        style={{
+          left: s(LABEL_INSET),
+          top: s(LABEL_INSET),
+          width: s(CARD_WIDTH - LABEL_INSET * 2),
+          fontSize: s(14),
+          lineHeight: s(19.6),
+        }}
+      >
+        {label}
+      </Text>
+      {/* とぴょっこは最前面。カード下端からはみ出す前提でoverflow-hiddenで切る */}
+      {selected ? (
+        <Image
+          source={item.character}
+          contentFit="contain"
+          style={{
+            position: "absolute",
+            left: s(CHARACTER_X),
+            top: s(CHARACTER_Y),
+            width: s(CHARACTER_WIDTH),
+            height: s(item.characterHeight),
+          }}
+        />
+      ) : null}
+    </Pressable>
+  );
+}
 
 export default function InterestSelectScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { fromProfile } = useLocalSearchParams<{ fromProfile?: string }>();
   const showProfileStep = fromProfile === "1";
   const setInterest = useElectionStore((s) => s.setInterest);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [customInterest, setCustomInterest] = useState("");
+  const [customOpen, setCustomOpen] = useState(false);
+
+  // テーマを選んでいる間に、次の悩み候補画面の重い背景とキャラを読んでおく
+  usePreloadImages(WORRIES_IMAGES);
+
+  const cardWidth = (width - GRID_PADDING * 2 - GRID_GAP) / 2;
+  const scale = cardWidth / CARD_WIDTH;
 
   const selected = INTERESTS.find((i) => i.id === selectedId);
   const isOtherSelected = selected?.id === OTHER_INTEREST_ID;
@@ -27,6 +126,15 @@ export default function InterestSelectScreen() {
     ? normalizedCustomInterest
     : selected?.label;
   const canSubmit = Boolean(resolvedInterest);
+
+  const handleSelect = (item: Interest) => {
+    // 「その他」は自由入力が本体なので、カードを押したら入力モーダルを開く
+    if (item.id === OTHER_INTEREST_ID) {
+      setCustomOpen(true);
+      return;
+    }
+    setSelectedId(item.id);
+  };
 
   const handleSubmit = () => {
     if (!selected || !resolvedInterest) return;
@@ -40,73 +148,58 @@ export default function InterestSelectScreen() {
 
   return (
     <View className="flex-1 bg-flow-bg">
-      <FlowHeader title="興味・関心" />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        keyboardDismissMode="interactive"
-        keyboardShouldPersistTaps="handled"
-        contentContainerClassName="px-2 pb-44 pt-3"
-      >
-        {showProfileStep ? (
-          <FlowStepper current={0} showProfileStep />
-        ) : null}
+      <FlowHeader title="お悩み選択" />
 
-        <Text className="mt-10 text-center font-flow text-xl text-flow-ink">
-          興味・関心のあることを{"\n"}教えてください
-        </Text>
-
-        <View className="mt-9 flex-row flex-wrap justify-center gap-x-6 gap-y-2">
-          {INTERESTS.map((item) => {
-            const isSelected = item.id === selectedId;
-            return (
-              <Pressable
-                key={item.id}
-                onPress={() => setSelectedId(item.id)}
-                className={`h-28 w-40 items-center gap-3 rounded-xl border-2 bg-white px-4 py-5 shadow-md shadow-black/10 ${
-                  isSelected ? "border-flow-pink" : "border-transparent"
-                }`}
-              >
-                <Text className="font-flow text-base text-flow-ink">
-                  {item.label}
-                </Text>
-                <Image
-                  source={item.icon}
-                  style={{ width: 48, height: 40 }}
-                  contentFit="contain"
-                />
-              </Pressable>
-            );
-          })}
+      <ScrollView contentContainerClassName="pb-12">
+        <View className="bg-white pb-3">
+          <FlowStepper current={1} showProfileStep={showProfileStep} />
+          <Text className="mt-3 text-center font-flow text-[18px] leading-[27px] text-flow-ink">
+            {"興味・関心のあることを\n１つ教えてください！"}
+          </Text>
         </View>
 
-        {isOtherSelected ? (
-          <View className="mx-4 mt-6 gap-2">
-            <Text className="font-flow text-sm text-flow-ink-mid">
-              興味・関心を自由に入力してください
-            </Text>
-            <TextInput
-              value={customInterest}
-              onChangeText={setCustomInterest}
-              placeholder="例：子育て、地域活動、ペット"
-              placeholderTextColor="#6e7781"
-              autoFocus
-              returnKeyType="done"
-              maxLength={CUSTOM_INTEREST_MAX_LENGTH}
-              onSubmitEditing={handleSubmit}
-              className="rounded-2xl border-2 border-flow-pink bg-white px-4 py-3 text-base text-flow-ink"
-              accessibilityLabel="その他の興味・関心"
+        <View
+          className="mt-5 flex-row flex-wrap"
+          style={{ paddingHorizontal: GRID_PADDING, gap: GRID_GAP }}
+        >
+          {INTERESTS.map((item) => (
+            <InterestCard
+              key={item.id}
+              item={item}
+              // 「その他」を確定済みのときは入力内容をカードに出す
+              label={
+                item.id === OTHER_INTEREST_ID && normalizedCustomInterest
+                  ? normalizedCustomInterest
+                  : item.shortLabel
+              }
+              selected={item.id === selectedId}
+              scale={scale}
+              onPress={() => handleSelect(item)}
             />
-            <Text className="text-right text-xs text-flow-ink-low">
-              {customInterest.length}/{CUSTOM_INTEREST_MAX_LENGTH}
-            </Text>
-          </View>
-        ) : null}
+          ))}
+        </View>
 
+        <View className="mt-6 px-5">
+          <FlowButton
+            label="次へ進む"
+            size="sm"
+            disabled={!canSubmit}
+            disabledFillColor="#d0d7de"
+            onPress={handleSubmit}
+          />
+        </View>
       </ScrollView>
 
-      <View className="absolute inset-x-0 bottom-0 bg-flow-bg/95 px-5 pb-10 pt-3">
-        <FlowButton label="次へ" disabled={!canSubmit} onPress={handleSubmit} />
-      </View>
+      <CustomInterestModal
+        visible={customOpen}
+        value={customInterest}
+        onClose={() => setCustomOpen(false)}
+        onConfirm={(value) => {
+          setCustomInterest(value);
+          setSelectedId(OTHER_INTEREST_ID);
+          setCustomOpen(false);
+        }}
+      />
     </View>
   );
 }

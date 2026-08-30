@@ -24,7 +24,7 @@ export function WorryBubbleCloud({
   height,
   fontSize,
 }: WorryBubbleCloudProps) {
-  const displayLabel = slot.quoted ? `『${label}』` : label;
+  const displayLabel = label;
   const labelLength = [...displayLabel].length;
   // adjustsFontSizeToFitだけに頼らず、長さに応じて初期サイズから確実に下げる
   const lengthScale =
