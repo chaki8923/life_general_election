@@ -5,11 +5,11 @@ import { VerticalText } from "./vertical-text";
 
 /**
  * ポスターの縦書きスローガン（Figma 2040:6130-6132）。
- * 右→左に列を送り、列ごとに少しずつ下へずらす。末尾に「!!」を添える。
+ * 右→左に列を送り、列ごとに少しずつ下へずらす。末尾に「!」を添える。
  * 座標はすべて 350×400 アートボード基準。
  */
 
-/** 1列目の右端。Figma: left 74.8 + 字幅 40 */
+/** 段組みを収める領域の右端。Figma: 1列目 left 74.8 + 字幅 40 */
 const AREA_RIGHT = 114.8;
 /** 最終列の左端の下限。ここを割るとカードからはみ出す */
 const AREA_LEFT = 14;
@@ -26,7 +26,7 @@ const FONT_STEPS = [40, 34, 28, 24, 20, 16, 14, 12];
 const LINE_HEIGHT_RATIO = 1.1;
 /** 列の左端どうしの間隔。Figma: (74.8 - 24) / 40 = 1.27 */
 const COLUMN_GAP_RATIO = 1.27;
-/** 末尾「!!」の上に空ける間隔（lineHeight比） */
+/** 末尾「!」の上に空ける間隔（lineHeight比） */
 const BANG_MARGIN_RATIO = 0.05;
 /** 縁取りが下へはみ出す量。stroked-text.tsx のオフセットと同じ比率 */
 const STROKE_RATIO = 0.075;
@@ -38,7 +38,7 @@ function columnCapacity(fontSize: number) {
 }
 
 /**
- * 列の実高さ。最終列は末尾の「!!」（間隔＋1行）が付く。
+ * 列の実高さ。最終列は末尾の「!」（間隔＋1行）が付く。
  * 縁取りは文字の外へ広がるので、どの列でも足しておく。
  */
 function columnHeight(len: number, fontSize: number, isLast: boolean) {
@@ -50,7 +50,7 @@ function columnHeight(len: number, fontSize: number, isLast: boolean) {
   );
 }
 
-/** そのフォントサイズで1列に何字入るか。「!!」と縁取りのぶんを引いて数える */
+/** そのフォントサイズで1列に何字入るか。「!」と縁取りのぶんを引いて数える */
 function charCapacity(fontSize: number) {
   const lineHeight = fontSize * LINE_HEIGHT_RATIO;
   const reserved = columnHeight(0, fontSize, true);
@@ -130,6 +130,10 @@ export function VerticalSlogan({ text, s, fillColor, strokeColor }: Props) {
   const { fontSize, lineHeight, columns, stagger } = layoutSlogan(chars);
   const columnGap = fontSize * COLUMN_GAP_RATIO;
   const lastIndex = columns.length - 1;
+  // 右端固定だと、フォントが40から落ちたとき左だけ余白が残る。領域の中央に置く。
+  // columnCapacity() が blockWidth <= 領域幅 を保証するのでオフセットは負にならない
+  const blockWidth = fontSize + lastIndex * columnGap;
+  const blockRight = AREA_RIGHT - (AREA_RIGHT - AREA_LEFT - blockWidth) / 2;
 
   return (
     <View
@@ -138,7 +142,7 @@ export function VerticalSlogan({ text, s, fillColor, strokeColor }: Props) {
       accessibilityLabel={text}
     >
       {columns.map((column, index) => {
-        const left = AREA_RIGHT - fontSize - index * columnGap;
+        const left = blockRight - fontSize - index * columnGap;
         const top = AREA_TOP + index * stagger;
         return (
           <View
@@ -163,7 +167,8 @@ export function VerticalSlogan({ text, s, fillColor, strokeColor }: Props) {
                 />
               )}
             />
-            {/* 「!!」は最終列の真下に横並びで置く（Figma 2040:6132）。
+            {/* 末尾の「!」は最終列の真下に置く。Figmaは「!!」だが、列幅は1文字ぶん
+                しかなく2文字だと ellipsize されて三点リーダが切れ残るため1つにしている。
                 高さは1行ぶんに固定して columnHeight() の計算と一致させる */}
             {index === lastIndex ? (
               <View
@@ -185,12 +190,11 @@ export function VerticalSlogan({ text, s, fillColor, strokeColor }: Props) {
                       style={{
                         fontSize: s(fontSize),
                         lineHeight: s(lineHeight),
-                        letterSpacing: s(3.2),
                         includeFontPadding: false,
                         color,
                       }}
                     >
-                      !!
+                      !
                     </Text>
                   )}
                 />

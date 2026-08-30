@@ -165,7 +165,7 @@ export function PosterEditModal({
             }}
           >
             <Text className="w-full text-center font-flow text-[18px] leading-[26px] text-flow-ink">
-              ポスターをAI編集する
+              ポスターを編集する
             </Text>
 
             {/* 4行を1枚のグループ枠に収め、行間はヘアラインで区切る */}
