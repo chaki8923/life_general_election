@@ -8,25 +8,18 @@ const GRAPH_HEIGHT = 16;
 const TRACK_HEIGHT_INNER = 12;
 /** グレートラックの上オフセット（(16-12)/2） */
 const TRACK_TOP_INSET = 2;
-/** Figma 2317:23401 — 1枚目表示時の濃色バー幅 */
-const FIRST_PROGRESS_WIDTH = 52;
 /** Figma 2317:23381 — カード左端から白丸左端までのオフセット */
 const LINKED_DOT_INSET = 20;
+/** Figma 2317:23377 / 2317:23491 — 見出し・カード左端・日付ラベルの開始位置 */
+export const HISTORY_TIMELINE_LEAD_INSET = 20;
+/** 1枚目白丸の左側／最後の白丸の右側に見せるバー延長（デザインpx） */
+const PROGRESS_LEAD_BEFORE_DOT = 23;
 /** Figma 2317:23382 — 白丸間隔はカード1枚分+2px（322px） */
 const LINKED_DOT_STRIDE_EXTRA = 2;
-/**
- * Figma 濃色バー幅（カード番号ごと）
- * 1枚目 2317:23295 / 2枚目 2317:23202 / 3枚目 2317:23232 / 4枚目 2317:23263
- */
-const LINKED_PROGRESS_WIDTHS = [52, 371, 696, 1018] as const;
-/** 末尾スクロール付近で濃色を最後まで届かせる許容px */
-const PROGRESS_NEAR_END_EPSILON = 8;
 /** Figma 2317:23379 — 日付ラベルありトラック高さ */
 const TRACK_HEIGHT_LABELED = GRAPH_HEIGHT;
 /** Figma Ellipse r=6 on 16px track → 直径12 */
 const DOT_SIZE_ON_16 = 12;
-/** Figma 2317:23462 — 空状態の白丸位置（cx=26 相当） */
-const EMPTY_DOT_EDGE_INSET = 26;
 /** Figma 2317:23404 — YYYY/MM/DD ラベル幅（12px・10文字） */
 const LABEL_WIDTH = 80;
 /** トラックと日付ラベルの間隔（Figma 2317:23378 gap 12） */
@@ -38,14 +31,29 @@ const TRACK_BG = "#d8d8d8";
 /** Figma 2317:23448 経過部分（text/high） */
 const PROGRESS_BG = "#24292f";
 
+function useHistoryTimelineLayout() {
+  const { s } = useDesignScale();
+  const cardLead = s(HISTORY_TIMELINE_LEAD_INSET);
+  const dotLead = cardLead + s(LINKED_DOT_INSET);
+  const barLead = s(PROGRESS_LEAD_BEFORE_DOT);
+  const barStart = dotLead - barLead;
+
+  return {
+    s,
+    trackTopInset: s(TRACK_TOP_INSET),
+    trackInnerHeight: s(TRACK_HEIGHT_INNER),
+    dotSize: s(DOT_SIZE_ON_16),
+    cardLead,
+    dotLead,
+    barStart,
+  };
+}
+
 /** Figma 2317:23462 — 公約数に依存しない固定日付バー（白丸1個） */
 function HistoryEmptyTimelineTrack() {
-  const { s } = useDesignScale();
+  const { s, trackTopInset, trackInnerHeight, dotSize, dotLead, barStart } =
+    useHistoryTimelineLayout();
   const trackHeight = s(GRAPH_HEIGHT);
-  const trackInnerHeight = s(TRACK_HEIGHT_INNER);
-  const trackTopInset = s(TRACK_TOP_INSET);
-  const dotSize = s(DOT_SIZE_ON_16);
-  const dotCenter = s(EMPTY_DOT_EDGE_INSET);
 
   return (
     <View className="w-full overflow-hidden" style={{ height: trackHeight }}>
@@ -53,10 +61,10 @@ function HistoryEmptyTimelineTrack() {
         <View
           style={{
             position: "absolute",
-            left: 0,
+            left: barStart,
             top: trackTopInset,
             height: trackInnerHeight,
-            width: "100%",
+            right: 0,
             borderRadius: trackInnerHeight / 2,
             backgroundColor: TRACK_BG,
           }}
@@ -67,7 +75,7 @@ function HistoryEmptyTimelineTrack() {
           style={{
             width: dotSize,
             height: dotSize,
-            left: dotCenter - dotSize / 2,
+            left: dotLead,
             top: trackTopInset + (trackInnerHeight - dotSize) / 2,
           }}
         />
@@ -82,47 +90,18 @@ type HistoryLinkedTimelineTrackProps = {
   cardWidth: number;
   /** カード間隔（デザインpx） */
   cardGap: number;
-  /** カード列の横スクロール量（実機px） */
+  /** カード列の横スクロール量（実機px）。白丸・ラベルの同期移動に使用 */
   scrollX?: number;
-  /** カード列の最大スクロール量（実機px） */
-  maxScrollX?: number;
 };
 
-function getLinkedProgressWidth(
-  scrollX: number,
-  count: number,
-  maxScrollX: number,
-  scale: (value: number) => number,
-  cardWidth: number,
-  cardGap: number
+/** 最後のカード白丸右端まで濃色バーを固定表示（Figma 2317:23180） */
+function getFixedProgressWidth(
+  dotLefts: number[],
+  dotSize: number,
+  scale: (value: number) => number
 ): number {
-  const maxIndex = count - 1;
-  if (maxIndex <= 0) return scale(LINKED_PROGRESS_WIDTHS[0]);
-
-  const progressAt = (index: number) => {
-    if (index < LINKED_PROGRESS_WIDTHS.length) {
-      return scale(LINKED_PROGRESS_WIDTHS[index]);
-    }
-    const dotStride = cardWidth + cardGap + LINKED_DOT_STRIDE_EXTRA;
-    return scale(
-      LINKED_DOT_INSET + index * dotStride + FIRST_PROGRESS_WIDTH - LINKED_DOT_INSET
-    );
-  };
-
-  if (maxScrollX <= 0) {
-    return progressAt(maxIndex);
-  }
-
-  let clampedScroll = Math.min(Math.max(scrollX, 0), maxScrollX);
-  if (maxScrollX - clampedScroll <= PROGRESS_NEAR_END_EPSILON) {
-    clampedScroll = maxScrollX;
-  }
-  const rawIndex = (clampedScroll / maxScrollX) * maxIndex;
-  const index = Math.min(maxIndex, Math.floor(rawIndex));
-  const t = Math.min(1, Math.max(0, rawIndex - index));
-
-  if (index >= maxIndex) return progressAt(maxIndex);
-  return progressAt(index) + (progressAt(index + 1) - progressAt(index)) * t;
+  const lastDotLeft = dotLefts[dotLefts.length - 1] ?? 0;
+  return lastDotLeft + dotSize + scale(PROGRESS_LEAD_BEFORE_DOT);
 }
 
 /** カード列と同期する繋がった日付バー（Figma 2317:23180 ほか） */
@@ -131,7 +110,6 @@ export function HistoryLinkedTimelineTrack({
   cardWidth,
   cardGap,
   scrollX = 0,
-  maxScrollX,
 }: HistoryLinkedTimelineTrackProps) {
   const { s } = useDesignScale();
   const count = dates.length;
@@ -139,7 +117,6 @@ export function HistoryLinkedTimelineTrack({
 
   const scaledCardWidth = s(cardWidth);
   const scaledGap = s(cardGap);
-  const stride = scaledCardWidth + scaledGap;
   const scaledDotStride = s(cardWidth + cardGap + LINKED_DOT_STRIDE_EXTRA);
   const trackWidth =
     count * scaledCardWidth + Math.max(count - 1, 0) * scaledGap;
@@ -147,26 +124,27 @@ export function HistoryLinkedTimelineTrack({
   const trackInnerHeight = s(TRACK_HEIGHT_INNER);
   const trackTopInset = s(TRACK_TOP_INSET);
   const dotSize = s(DOT_SIZE_ON_16);
-  const dotInset = s(LINKED_DOT_INSET);
+  const cardLead = s(HISTORY_TIMELINE_LEAD_INSET);
+  const dotLead = cardLead + s(LINKED_DOT_INSET);
+  const barLead = s(PROGRESS_LEAD_BEFORE_DOT);
+  const barStart = dotLead - barLead;
+  const cardStride = scaledCardWidth + scaledGap;
 
   const dotLefts = Array.from(
     { length: count },
-    (_, index) => dotInset + index * scaledDotStride
+    (_, index) => dotLead + index * scaledDotStride
   );
-  const resolvedMaxScrollX =
-    maxScrollX ?? Math.max(0, (count - 1) * stride);
-  const progressWidth = getLinkedProgressWidth(
-    scrollX,
-    count,
-    resolvedMaxScrollX,
-    s,
-    cardWidth,
-    cardGap
+  const labelLefts = Array.from(
+    { length: count },
+    (_, index) => cardLead + index * cardStride
   );
+  const progressEnd = getFixedProgressWidth(dotLefts, dotSize, s);
+  const progressWidth = Math.max(0, progressEnd - barStart);
 
   const contentWidth = Math.max(
-    trackWidth,
-    ...dotLefts.map((left) => left + s(LABEL_WIDTH))
+    cardLead + trackWidth,
+    progressEnd,
+    ...labelLefts.map((left) => left + s(LABEL_WIDTH))
   );
 
   return (
@@ -186,16 +164,16 @@ export function HistoryLinkedTimelineTrack({
         <View
           style={{
             height: trackHeight,
-            width: trackWidth,
+            width: cardLead + trackWidth,
           }}
         >
           <View
             style={{
               position: "absolute",
-              left: 0,
+              left: barStart,
               top: trackTopInset,
               height: trackInnerHeight,
-              width: trackWidth,
+              width: cardLead + trackWidth - barStart,
               borderRadius: trackInnerHeight / 2,
               backgroundColor: TRACK_BG,
             }}
@@ -204,7 +182,7 @@ export function HistoryLinkedTimelineTrack({
             pointerEvents="none"
             style={{
               position: "absolute",
-              left: 0,
+              left: barStart,
               top: 0,
               width: progressWidth,
               height: trackHeight,
@@ -232,7 +210,7 @@ export function HistoryLinkedTimelineTrack({
             height: s(17),
           }}
         >
-          {dotLefts.map((left, index) => (
+          {labelLefts.map((left, index) => (
             <Text
               key={`label-${dates[index]}`}
               className="font-flow-regular text-[#999999]"

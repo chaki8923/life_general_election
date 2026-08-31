@@ -57,7 +57,11 @@ export function FlowButton({
       ? { backgroundColor: fillColor }
       : undefined;
 
-  const heightClass = /\bh-\d+\b/.test(className) ? "" : "h-12";
+  const heightClass = /\bh-\d+\b/.test(className)
+    ? ""
+    : size === "sm"
+      ? "h-[40px]"
+      : "h-12";
 
   return (
     <Pressable
@@ -67,10 +71,7 @@ export function FlowButton({
       accessibilityLabel={loading ? `${label}、読み込み中` : label}
       accessibilityState={{ disabled: interactionDisabled, busy: loading }}
       style={customFill}
-      // 高さはclassNameで上書きされると解決順が不定になるのでsizeで持つ
-      className={`${
-        size === "sm" ? "h-[40px]" : "h-12"
-      } items-center justify-center rounded-full px-6 ${container} ${className}`}
+      className={`${heightClass} items-center justify-center rounded-full px-6 ${container} ${className}`}
     >
       <View>
         {loading ? (

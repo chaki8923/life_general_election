@@ -144,7 +144,7 @@ function countLines(units: string[], maxEm: number) {
 const SAFETY_RATIO = 0.93;
 
 function fitsInSlot(label: string, slot: WorryBubbleSlot, fontSize: number) {
-  const text = slot.quoted ? `『${label}』` : label;
+  const text = "quoted" in slot && slot.quoted ? `『${label}』` : label;
   // flipXは反転でローブの安全領域が狭くなるぶんを幅側で見込む
   const usableWidth =
     slot.w * slot.textWidthRatio * (slot.flipX ? 0.94 : 1) * SAFETY_RATIO;

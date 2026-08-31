@@ -1,9 +1,12 @@
-import { HistoryTimelineBar } from "@/features/achievements/history-timeline-bar";
+import {
+  HistoryTimelineBar,
+  HISTORY_TIMELINE_LEAD_INSET,
+} from "@/features/achievements/history-timeline-bar";
 import { FONT, useDesignScale } from "@/features/election/layout";
 import { Text, View } from "@/tw";
 
-/** 見出しと進捗バーの間隔（Figma 2317:23425 付近） */
-const TITLE_TO_BAR_GAP = 18;
+/** 見出しとタイムライン（空バー含む）の間隔。履歴あり時の carousel 上端とも一致 */
+export const HISTORY_TITLE_TO_CONTENT_GAP = 20;
 
 /** Figma 2317:23491 — 「過去の履歴」見出し */
 export function HistorySectionTitle() {
@@ -17,7 +20,7 @@ export function HistorySectionTitle() {
         fontSize: s(18),
         lineHeight: s(24),
         letterSpacing: s(0.8),
-        paddingHorizontal: s(20),
+        paddingHorizontal: s(HISTORY_TIMELINE_LEAD_INSET),
       }}
     >
       過去の履歴
@@ -32,21 +35,8 @@ export function HistorySectionHeader() {
   const { s } = useDesignScale();
 
   return (
-    <View
-      className="w-full"
-      style={{ gap: s(TITLE_TO_BAR_GAP), paddingHorizontal: s(20) }}
-    >
-      <Text
-        className="text-flow-ink"
-        style={{
-          fontFamily: FONT.bold,
-          fontSize: s(18),
-          lineHeight: s(24),
-          letterSpacing: s(0.8),
-        }}
-      >
-        過去の履歴
-      </Text>
+    <View className="w-full" style={{ gap: s(HISTORY_TITLE_TO_CONTENT_GAP) }}>
+      <HistorySectionTitle />
       <HistoryTimelineBar />
     </View>
   );
