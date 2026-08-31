@@ -1,6 +1,6 @@
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
-import { FlowStepper } from "@/components/ui/flow-stepper";
+import { ElectionFlowStepper } from "@/features/election/election-flow-stepper";
 import { ProgressDots } from "@/components/ui/progress-dots";
 import {
   FlowTabBarOverlay,
@@ -167,13 +167,11 @@ export default function ElectionResultScreen() {
         contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
         showsVerticalScrollIndicator={false}
       >
-        {showProfileStep ? (
-          <View style={{ paddingHorizontal: s(20), paddingVertical: s(4) }}>
-            <FlowStepper current={2} showProfileStep />
-          </View>
-        ) : (
-          <View style={{ height: s(4) }} />
-        )}
+        <ElectionFlowStepper
+          current={2}
+          fallbackSpacer
+          style={{ paddingHorizontal: s(20), paddingVertical: s(4) }}
+        />
 
         {/* Figma 1691:2823 — テキストを画像寄り（右）へ */}
         <View

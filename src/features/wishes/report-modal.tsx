@@ -38,7 +38,10 @@ export function ReportModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View className="flex-1 items-center justify-center bg-black/50 px-6">
+      <View
+        className="flex-1 items-center justify-center px-6"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+      >
         <View className="w-full max-w-lg rounded-2xl bg-white p-5">
           <Text className="text-lg font-bold text-[#333333]">
             この公約を達成にしますか？
