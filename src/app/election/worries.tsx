@@ -18,7 +18,7 @@ import {
 } from "@/constants/election-images";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
-import { FlowStepper } from "@/components/ui/flow-stepper";
+import { ElectionFlowStepper } from "@/features/election/election-flow-stepper";
 import { BubbleField } from "@/features/election/bubble-field";
 import { generateWorrySuggestions } from "@/features/election/generate-worries";
 import { CONTENT_TOP, useDesignScale } from "@/features/election/layout";
@@ -64,7 +64,6 @@ export default function WorrySuggestScreen() {
     (state) => state.setWorryCandidates
   );
   const setWorry = useElectionStore((state) => state.setWorry);
-  const showProfileStep = useElectionStore((state) => state.showProfileStep);
   const profile = useProfileStore((state) => state.profile);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -206,11 +205,7 @@ export default function WorrySuggestScreen() {
         pointerEvents="none"
       />
       <FlowHeader title="お悩み選択" />
-      {showProfileStep ? (
-        <View className="mt-3">
-          <FlowStepper current={1} showProfileStep />
-        </View>
-      ) : null}
+      <ElectionFlowStepper current={1} className="mt-3" />
 
       {/* ここから下はFigmaの絶対座標レイアウト。キャラがはみ出すのでクリップする */}
       <View className="flex-1 overflow-hidden">
