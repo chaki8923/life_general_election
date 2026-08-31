@@ -3,15 +3,19 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import type { Election, Worry, WorrySuggestion } from "@/types";
 
-/** 開票結果を再表示するのに要る一式（result.tsx のガードが要求する3点） */
+/** 再開票に要る一式。election は新しい順に間引くときのキー（createdAt）にも使う */
 type ArchivedElection = {
   worry: Worry;
   motivation: string;
   election: Election;
 };
 
-/** 保持する開票結果の件数。1回分が候補6〜8件で約1KB */
-const HISTORY_LIMIT = 10;
+/**
+ * 保持する開票結果の件数。1回分が候補6〜8件で約1KB。
+ * 結果を記録するたびに再開票して1件積まれるので、
+ * 1本の悩みを追いかけ続けても枠を使い切らない程度に持つ。
+ */
+const HISTORY_LIMIT = 20;
 
 /** 開票の新しい順に HISTORY_LIMIT 件だけ残す */
 function trimHistory(history: Record<string, ArchivedElection>) {
@@ -34,15 +38,21 @@ type ElectionStore = {
   election: Election | null;
   /** 今回のフローがプロフィール登録直後に始まったか */
   showProfileStep: boolean;
-  /** 過去の開票結果。Wish.sourceElectionId から引いて開票結果画面へ戻すために持つ */
+  /**
+   * 過去の開票結果。Wish.sourceElectionId から引いて、
+   * 次の政策を決めるときに悩み・モチベーションを引き継ぐために持つ
+   */
   history: Record<string, ArchivedElection>;
   setInterest: (interest: string, showProfileStep?: boolean) => void;
   setWorryCandidates: (candidates: WorrySuggestion[] | null) => void;
   setWorry: (worry: Worry) => void;
   setMotivation: (motivation: string) => void;
   setElection: (election: Election | null) => void;
-  /** 保存済みの開票結果を「いまの選挙」として復元する。履歴に無ければ false */
-  restoreElection: (electionId: string) => boolean;
+  /**
+   * 保存済みの回の悩み・モチベーションだけ戻し、開票結果は空にして再生成させる。
+   * 履歴に無ければ false
+   */
+  restoreForRegenerate: (electionId: string) => boolean;
 };
 
 // リセット原則: 上流をセットしたら下流をすべてnullに戻す。
@@ -90,14 +100,15 @@ export const useElectionStore = create<ElectionStore>()(
             }),
           };
         }),
-      restoreElection: (electionId) => {
+      restoreForRegenerate: (electionId) => {
         const entry = get().history[electionId];
         if (!entry) return false;
         set({
           worry: entry.worry,
           motivation: entry.motivation,
-          election: entry.election,
-          // 保存済みの回を見に戻るだけなので、オンボーディング演出は畳む
+          // 開票結果だけ空にして、counting画面の生成effectを再発火させる
+          election: null,
+          // 前回の続きから選び直すだけなので、オンボーディング演出は畳む
           showProfileStep: false,
         });
         return true;

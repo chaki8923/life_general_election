@@ -3,7 +3,10 @@ import {
   buildMockCandidates,
   type RawCandidate,
 } from "@/services/ai/mock/election";
-import { buildElectionPrompt } from "@/services/ai/prompts/election";
+import {
+  buildElectionPrompt,
+  type PastPledgeResult,
+} from "@/services/ai/prompts/election";
 import type { Candidate, Election, UserProfile, Worry } from "@/types";
 
 type GeminiElectionResponse = {
@@ -14,6 +17,8 @@ export type GenerateElectionInput = {
   worry: Worry;
   profile: UserProfile;
   motivation: string;
+  /** 直近の公約の結果。渡すと次の候補がその達成／未達成を踏まえたものになる */
+  pastResults?: PastPledgeResult[];
 };
 
 function isValidCandidate(c: unknown): c is RawCandidate {
@@ -34,12 +39,14 @@ export async function generateElection({
   worry,
   profile,
   motivation,
+  pastResults,
 }: GenerateElectionInput): Promise<Election> {
   const res = await generateJson<GeminiElectionResponse>(
     buildElectionPrompt(worry.text, worry.category, {
       ageRange: profile.ageRange,
       gender: profile.gender,
       motivation,
+      pastResults,
     })
   );
 

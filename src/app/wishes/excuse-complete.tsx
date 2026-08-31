@@ -5,7 +5,7 @@ import {
   FlowTabBarOverlay,
   useTabBarBottomPadding,
 } from "@/components/ui/tab-bar";
-import { useElectionStore } from "@/stores/election";
+import { useNextPolicy } from "@/features/election/use-next-policy";
 import { useWishStore } from "@/stores/wishes";
 import { Image } from "@/tw/image";
 import { Text, View } from "@/tw";
@@ -30,18 +30,9 @@ export default function WishExcuseCompleteScreen() {
     state.wishes.find((item) => item.id === id)
   );
   const excuse = wish?.excuse;
-  const restoreElection = useElectionStore((state) => state.restoreElection);
+  // 画面に入った時点で次の開票を先読みしておき、演出を挟まずに結果へ飛べるようにする
+  const { loading, handleNext } = useNextPolicy(wish);
   const bottomPadding = useTabBarBottomPadding();
-
-  const handleNext = () => {
-    // 失敗した公約を出した回の開票結果を復元して、そこから政策を選び直させる。
-    // アーカイブが無い（開票結果を保存する前に作られた公約）ときは総選挙からやり直す。
-    if (wish?.sourceElectionId && restoreElection(wish.sourceElectionId)) {
-      router.replace("/election/result");
-      return;
-    }
-    router.replace("/election");
-  };
 
   return (
     <View className="flex-1 bg-flow-bg">
@@ -98,6 +89,7 @@ export default function WishExcuseCompleteScreen() {
           <FlowButton
             label="次の政策を決めよう！"
             className="h-[48px]"
+            loading={loading}
             onPress={handleNext}
           />
         </View>
