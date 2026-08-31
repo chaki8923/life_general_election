@@ -6,6 +6,7 @@ import { formatDate } from "@/utils/date";
 import type { Wish } from "@/types";
 import { Image } from "@/tw/image";
 import { Text, View } from "@/tw";
+import { useState } from "react";
 
 const iconDone = require("../../../assets/poster/icon-done.svg");
 const iconFailed = require("../../../assets/poster/icon-failed.svg");
@@ -28,6 +29,9 @@ const POLICY_SECTION_BORDER = "#e0e0e0";
 const POLICY_SECTION_PADDING_BOTTOM = 8;
 /** 政策タイトルと人生公約行の間隔 */
 const POLICY_TO_LIFE_PLEDGE_GAP = 12;
+/** ステータス下〜人生公約上までのタイトル領域（1行時はこの中で中央寄せ） */
+const TITLE_REGION_HEIGHT =
+  INNER_GAP + POLICY_TITLE_MIN_HEIGHT + POLICY_TO_LIFE_PLEDGE_GAP;
 /** 人生公約行と日付ブロックの間隔 */
 const LIFE_PLEDGE_TO_DATE_GAP = 12;
 /** 策定日・達成日ブロック（2行 + gap 4） */
@@ -51,6 +55,8 @@ export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
   const achievementDate = done ? wish.doneAt : wish.excusedAt;
   const policyTitle = wish.policy?.trim() || wish.text;
   const lifePledgeText = wish.text.trim();
+  /** 初回は2行想定（レイアウト確定後に1行ならステータスと人生公約の中間へ） */
+  const [policyTitleLines, setPolicyTitleLines] = useState(2);
 
   return (
     <View
@@ -63,7 +69,7 @@ export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
         borderRadius: s(20),
       }}
     >
-      <View style={{ gap: s(INNER_GAP), flex: 1, width: "100%" }}>
+      <View style={{ flex: 1, width: "100%" }}>
         <View className="flex-row items-center" style={{ gap: s(4) }}>
           <Image
             source={done ? iconDone : iconFailed}
@@ -85,24 +91,35 @@ export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
         <View style={{ gap: s(LIFE_PLEDGE_TO_DATE_GAP), flex: 1 }}>
           <View
             style={{
-              gap: s(POLICY_TO_LIFE_PLEDGE_GAP),
               paddingBottom: s(POLICY_SECTION_PADDING_BOTTOM),
               borderBottomWidth: s(1),
               borderBottomColor: POLICY_SECTION_BORDER,
             }}
           >
-            <Text
-              className="font-flow text-flow-ink"
-              numberOfLines={2}
+            <View
               style={{
-                fontSize: s(20),
-                lineHeight: s(32),
-                letterSpacing: s(1),
-                minHeight: s(POLICY_TITLE_MIN_HEIGHT),
+                height: s(TITLE_REGION_HEIGHT),
+                justifyContent:
+                  policyTitleLines === 1 ? "center" : "flex-start",
+                paddingTop:
+                  policyTitleLines === 2 ? s(INNER_GAP) : 0,
               }}
             >
-              {policyTitle}
-            </Text>
+              <Text
+                className="font-flow text-flow-ink"
+                numberOfLines={2}
+                onTextLayout={(event) => {
+                  setPolicyTitleLines(event.nativeEvent.lines.length);
+                }}
+                style={{
+                  fontSize: s(20),
+                  lineHeight: s(32),
+                  letterSpacing: s(1),
+                }}
+              >
+                {policyTitle}
+              </Text>
+            </View>
             <Text
               className="font-flow-regular text-[#32383f]"
               numberOfLines={1}

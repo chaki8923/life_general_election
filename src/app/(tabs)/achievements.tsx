@@ -2,7 +2,7 @@ import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
 import { CharacterWalk } from "@/features/achievements/character-walk";
 import { HistoryEmptyState } from "@/features/achievements/history-empty-state";
 import { HistoryRecordCarousel } from "@/features/achievements/history-record-carousel";
-import { HistorySectionHeader, HistorySectionTitle } from "@/features/achievements/history-section-header";
+import { HistorySectionHeader, HistorySectionTitle, HISTORY_TITLE_TO_CONTENT_GAP } from "@/features/achievements/history-section-header";
 import { getResolvedWishes } from "@/features/achievements/wish-history";
 import { useDesignScale } from "@/features/election/layout";
 import { useWishStore } from "@/stores/wishes";
@@ -14,8 +14,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 const HISTORY_SECTION_TOP_PADDING = 24;
 /** 進捗バー下からコンテンツまでの間隔（デザインpx） */
 const CONTENT_SECTION_GAP = 20;
-/** 空状態用の進捗バー下余白（デザインpx） */
-const EMPTY_STATE_SECTION_GAP = 80;
+/** 空状態 — バー下端から文言上端まで（Figma 2317:23483 y=510 − バー下端 417） */
+const EMPTY_STATE_TOP_GAP = 93;
 
 /**
  * 過去の履歴タブ。
@@ -33,7 +33,7 @@ export default function AchievementsScreen() {
 
   const showEmpty = hasHydrated && !hasResolvedHistory;
   const contentGap = showEmpty
-    ? s(EMPTY_STATE_SECTION_GAP)
+    ? s(EMPTY_STATE_TOP_GAP)
     : s(CONTENT_SECTION_GAP);
 
   return (
@@ -54,12 +54,10 @@ export default function AchievementsScreen() {
           {showEmpty ? (
             <>
               <HistorySectionHeader />
-              <View className="min-h-[220px] flex-1 items-center justify-center py-6">
-                <HistoryEmptyState />
-              </View>
+              <HistoryEmptyState />
             </>
           ) : hasResolvedHistory ? (
-            <View style={{ gap: s(CONTENT_SECTION_GAP) }}>
+            <View style={{ gap: s(HISTORY_TITLE_TO_CONTENT_GAP) }}>
               <HistorySectionTitle />
               <HistoryRecordCarousel wishes={resolvedWishes} />
             </View>
