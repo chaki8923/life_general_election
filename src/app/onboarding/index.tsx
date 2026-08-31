@@ -1,10 +1,17 @@
-import { Redirect } from "expo-router";
-import { TutorialPager } from "@/features/onboarding/tutorial-pager";
-import { useProfileStore } from "@/stores/profile";
+import { useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ElectionStartScreen } from "@/features/election/election-start-screen";
 
-export default function TutorialScreen() {
-  // チュートリアル済み・プロフィール未登録のまま再起動した場合は登録から再開
-  const tutorialSeen = useProfileStore((s) => s.tutorialSeen);
-  if (tutorialSeen) return <Redirect href="/onboarding/profile" />;
-  return <TutorialPager />;
+const BOTTOM_GAP = 24;
+
+export default function OnboardingStartScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+
+  return (
+    <ElectionStartScreen
+      bottomPadding={insets.bottom + BOTTOM_GAP}
+      onStart={() => router.replace("/onboarding/profile")}
+    />
+  );
 }

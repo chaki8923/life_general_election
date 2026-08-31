@@ -80,7 +80,12 @@ Pressable.displayName = "CSS(Pressable)";
 
 // TextInput
 export const TextInput = (
-  props: React.ComponentProps<typeof RNTextInput> & { className?: string }
+  props: React.ComponentProps<typeof RNTextInput> & {
+    className?: string;
+    // useCssElement は props をそのまま createElement へ渡すので ref は素通しできる。
+    // ComponentProps が ref を含まないぶんだけここで足す
+    ref?: React.Ref<RNTextInput>;
+  }
 ) => {
   return useCssElement(RNTextInput, props, { className: "style" });
 };

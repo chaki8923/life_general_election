@@ -4,7 +4,6 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlowButton } from "@/components/ui/flow-button";
 import { ProgressDots } from "@/components/ui/progress-dots";
-import { DevResetButton } from "@/features/dev/dev-reset-button";
 import { usePreloadImages } from "@/hooks/use-preload-images";
 import { Image } from "@/tw/image";
 import { Text, View } from "@/tw";
@@ -45,8 +44,6 @@ export function TutorialPager() {
 
   return (
     <View className="flex-1 bg-flow-bg" style={{ paddingTop: insets.top }}>
-      <DevResetButton className="items-center py-2" />
-
       <ScrollView
         ref={scrollRef}
         horizontal
