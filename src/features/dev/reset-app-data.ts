@@ -5,7 +5,7 @@ import { useWishStore } from "@/stores/wishes";
 
 /**
  * 開発用: ローカル永続データと全ストアを初期状態に戻す。
- * オンボーディング（チュートリアル→プロフィール登録）を最初からやり直せる。
+ * 未登録の開始画面からプロフィール登録をやり直せる。
  */
 export async function resetAppData() {
   await AsyncStorage.multiRemove([
@@ -24,7 +24,7 @@ export async function resetAppData() {
     showProfileStep: false,
     history: {},
   });
-  // 最後にprofileを消すとStack.Protectedガードが反転し、即オンボーディングへ切り替わる
+  // 最後にprofileを消すとStack.Protectedのガードが反転し、オンボーディングへ切り替わる
   useProfileStore.setState({
     profile: null,
     tutorialSeen: false,

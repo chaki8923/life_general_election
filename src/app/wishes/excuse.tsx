@@ -7,10 +7,7 @@ import {
   FlowTabBarOverlay,
   useTabBarBottomPadding,
 } from "@/components/ui/tab-bar";
-import {
-  generateExcuse,
-  generateExcuseReasons,
-} from "@/features/excuse/generate";
+import { generateExcuseReasons } from "@/features/excuse/generate";
 import { mirrorWish } from "@/services/firebase/mirror";
 import { useWishStore } from "@/stores/wishes";
 import { Pressable, ScrollView, Text, View } from "@/tw";
@@ -64,7 +61,7 @@ function ReasonOption({ index, label, selected, onPress }: OptionProps) {
 
 /**
  * できなかった理由を選ぶ画面（Figma 2665:17339「言い訳を考えよう」）。
- * 選んだ理由をもとに言い訳を生成し、excused として記録してから完了画面へ送る。
+ * 選んだ言い訳をそのままexcusedとして記録し、完了画面と履歴へ送る。
  */
 export default function WishExcuseScreen() {
   const router = useRouter();
@@ -76,7 +73,6 @@ export default function WishExcuseScreen() {
   const bottomPadding = useTabBarBottomPadding();
   const [reasons, setReasons] = useState<string[] | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!wish) return;
@@ -113,10 +109,10 @@ export default function WishExcuseScreen() {
     );
   }
 
-  const handleNext = async () => {
-    if (selected === null || !reasons || submitting) return;
-    setSubmitting(true);
-    const excuse = await generateExcuse({ wish, reason: reasons[selected] });
+  const handleNext = () => {
+    if (selected === null || !reasons) return;
+    const excuse = reasons[selected];
+    if (!excuse) return;
     const updated = markExcused(wish.id, excuse);
     if (updated) mirrorWish(updated);
     router.replace({
@@ -175,7 +171,6 @@ export default function WishExcuseScreen() {
             className="h-[48px]"
             disabled={selected === null}
             disabledFillColor={BUTTON_DISABLED}
-            loading={submitting}
             onPress={handleNext}
           />
         </View>

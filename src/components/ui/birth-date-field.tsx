@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Keyboard,
   Modal,
   ScrollView as RNScrollView,
   type NativeScrollEvent,
@@ -228,10 +229,20 @@ export function BirthDateField({ value, onChange }: BirthDateFieldProps) {
   const [open, setOpen] = useState(false);
   const filled = Boolean(value);
 
+  const closePicker = () => {
+    // モーダルを閉じた後、直前のTextInputへキーボードが復帰するのを防ぐ
+    Keyboard.dismiss();
+    setOpen(false);
+  };
+
   return (
     <>
       <Pressable
-        onPress={() => setOpen(true)}
+        onPress={() => {
+          // keyboardShouldPersistTaps="handled"でも、日付選択へ移る際は入力を終了する
+          Keyboard.dismiss();
+          setOpen(true);
+        }}
         accessibilityRole="button"
         accessibilityLabel={
           value ? `生年月日 ${formatBirthDate(value)}` : "生年月日を選択"
@@ -256,10 +267,10 @@ export function BirthDateField({ value, onChange }: BirthDateFieldProps) {
       <BirthDateWheelModal
         visible={open}
         value={value}
-        onCancel={() => setOpen(false)}
+        onCancel={closePicker}
         onConfirm={(birthDate) => {
           onChange(birthDate);
-          setOpen(false);
+          closePicker();
         }}
       />
     </>
