@@ -12,12 +12,10 @@ const TRACK_TOP_INSET = 2;
 const LINKED_DOT_INSET = 20;
 /** Figma 2317:23377 / 2317:23491 — 見出し・カード左端・日付ラベルの開始位置 */
 export const HISTORY_TIMELINE_LEAD_INSET = 20;
-/** 1枚目白丸の左側に見せるバー延長（デザインpx） */
+/** 1枚目白丸の左側／最後の白丸の右側に見せるバー延長（デザインpx） */
 const PROGRESS_LEAD_BEFORE_DOT = 23;
 /** Figma 2317:23382 — 白丸間隔はカード1枚分+2px（322px） */
 const LINKED_DOT_STRIDE_EXTRA = 2;
-/** 白丸右端から濃色バー右端までの余白（1枚目 52px = 20+12+20） */
-const PROGRESS_TAIL_AFTER_DOT = LINKED_DOT_INSET;
 /** Figma 2317:23379 — 日付ラベルありトラック高さ */
 const TRACK_HEIGHT_LABELED = GRAPH_HEIGHT;
 /** Figma Ellipse r=6 on 16px track → 直径12 */
@@ -103,7 +101,7 @@ function getFixedProgressWidth(
   scale: (value: number) => number
 ): number {
   const lastDotLeft = dotLefts[dotLefts.length - 1] ?? 0;
-  return lastDotLeft + dotSize + scale(PROGRESS_TAIL_AFTER_DOT);
+  return lastDotLeft + dotSize + scale(PROGRESS_LEAD_BEFORE_DOT);
 }
 
 /** カード列と同期する繋がった日付バー（Figma 2317:23180 ほか） */
