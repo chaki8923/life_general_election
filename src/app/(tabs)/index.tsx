@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Alert,
   FlatList,
   View as RNView,
   type NativeScrollEvent,
@@ -12,7 +11,6 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { ProgressDots } from "@/components/ui/progress-dots";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
-import { DevGuideButton } from "@/features/dev/dev-guide-button";
 import { MypageGuideModal } from "@/features/onboarding/mypage-guide-modal";
 import { deleteManagedPosterPhoto } from "@/features/poster/photo-storage";
 import { PosterCard } from "@/features/poster/poster-card";
@@ -58,12 +56,14 @@ export default function MyPageScreen() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [photoReady, setPhotoReady] = useState(true);
-  // 「できた」確定→完了画面へ遷移する間だけtrue。この間は最後の1件が
-  // activeWishesから消えても「まだ人生公約がありません」を一瞬表示しないようにする
-  const [isCompleting, setIsCompleting] = useState(false);
+  // 「できた」を記録した公約のid。完了画面へ移り終わるまで一覧に残しておく。
+  // markDoneで即座に消すと、遷移の裏で空のマイページが一瞬見えてしまう
+  const [completingId, setCompletingId] = useState<string | null>(null);
   const bottomPadding = useTabBarBottomPadding();
 
-  const activeWishes = wishes.filter((wish) => wish.status === "active");
+  const activeWishes = wishes.filter(
+    (wish) => wish.status === "active" || wish.id === completingId
+  );
   const carouselWidth = Math.max(1, width - PAGE_HORIZONTAL_PADDING * 2);
   const safeCurrentIndex = Math.min(
     currentIndex,
@@ -89,10 +89,10 @@ export default function MyPageScreen() {
     }, [hasHydrated, profileHydrated, mypageGuideSeen])
   );
 
-  // 完了画面から戻ってきたら空状態判定を再開する
+  // 完了画面から戻ってきたら通常の一覧判定に戻す
   useFocusEffect(
     useCallback(() => {
-      setIsCompleting(false);
+      setCompletingId(null);
     }, [])
   );
 
@@ -150,7 +150,11 @@ export default function MyPageScreen() {
       <View style={{ width: carouselWidth }} className="gap-[8px]">
         <RunningPledgeCard
           wish={item}
-          onDone={() => setDoneOpen(true)}
+          onDone={() => {
+            // markDoneで一覧から消える前に、残す対象として控えておく
+            setCompletingId(item.id);
+            setDoneOpen(true);
+          }}
           onFailed={() =>
             router.push({
               pathname: "/wishes/excuse",
@@ -181,12 +185,7 @@ export default function MyPageScreen() {
         hideBack
         right={
           <Pressable
-            onPress={() =>
-              Alert.alert(
-                "設定済みの公約・政策",
-                "選んだ公約のポスターです。期日までに実行できたら「できた！」を押してください。ポスターは右上のアイコンで保存、下のリンクで編集できます。"
-              )
-            }
+            onPress={() => setGuideOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="この画面のヘルプ"
             hitSlop={12}
@@ -211,26 +210,22 @@ export default function MyPageScreen() {
             </Text>
           </View>
         ) : activeWishes.length === 0 ? (
-          // isCompleting中（「できた」確定→完了画面への遷移中）は
-          // 空状態メッセージを一瞬表示しないよう何も出さない
-          isCompleting ? null : (
-            <View
-              className="mt-10 items-center rounded-2xl bg-white px-6 py-10"
-              style={{ marginHorizontal: PAGE_HORIZONTAL_PADDING }}
-            >
-              <Text className="font-flow text-lg text-flow-ink">
-                まだ人生公約がありません
-              </Text>
-              <Text className="mt-3 text-center font-flow-medium text-sm leading-6 text-flow-ink-low">
-                総選挙を開いて、最初の小さな一歩を決めましょう
-              </Text>
-              <FlowButton
-                label="総選挙をはじめる"
-                onPress={() => router.push("/election")}
-                className="mt-6"
-              />
-            </View>
-          )
+          <View
+            className="mt-10 items-center rounded-2xl bg-white px-6 py-10"
+            style={{ marginHorizontal: PAGE_HORIZONTAL_PADDING }}
+          >
+            <Text className="font-flow text-lg text-flow-ink">
+              まだ人生公約がありません
+            </Text>
+            <Text className="mt-3 text-center font-flow-medium text-sm leading-6 text-flow-ink-low">
+              総選挙を開いて、最初の小さな一歩を決めましょう
+            </Text>
+            <FlowButton
+              label="総選挙をはじめる"
+              onPress={() => router.push("/election")}
+              className="mt-6"
+            />
+          </View>
         ) : (
           <>
             {/* ページャ（Figma 2703:24269 progress-bar-step4） */}
@@ -276,10 +271,6 @@ export default function MyPageScreen() {
           </>
         )}
 
-        <DevGuideButton
-          onPress={() => setGuideOpen(true)}
-          className="items-center py-2"
-        />
       </ScrollView>
 
       {currentWish ? (
@@ -305,9 +296,12 @@ export default function MyPageScreen() {
         <ReportModal
           visible
           wish={currentWish}
-          onClose={() => setDoneOpen(false)}
+          onClose={() => {
+            setDoneOpen(false);
+            setCompletingId(null);
+          }}
           onCompleted={() => {
-            setIsCompleting(true);
+            setDoneOpen(false);
             router.push({
               pathname: "/wishes/complete",
               params: { id: currentWish.id },
