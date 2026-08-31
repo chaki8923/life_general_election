@@ -28,7 +28,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 
 /** Figma 1905:13894 高解像度版（1264×842） */
-const hero190513894 = require("../../../assets/election/result/hero-1905-13894-hq.png");
+const hero190513894 = require("../../../assets/election/result/hero-1905-13894-hq.webp");
 
 /** プレビュー用（未開票でも 1〜3位カードを表示） */
 const FIGMA_FALLBACK_CANDIDATES: Candidate[] = [

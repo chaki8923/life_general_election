@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
-import { Alert, Modal } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Modal, Platform } from "react-native";
+import { SlideInDown } from "react-native-reanimated";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickRandomPresetAvatarId } from "@/features/avatar/preset-avatars";
 import { mirrorWish } from "@/services/firebase/mirror";
 import { useWishStore } from "@/stores/wishes";
+import { Animated } from "@/tw/animated";
 import { Pressable, Text, View } from "@/tw";
 import type { PosterSettings, Wish } from "@/types";
 import {
@@ -27,14 +30,17 @@ type Props = {
 /** 同時に開くのは常に1つ。RNのModalは入れ子にすると Android で崩れるため */
 type Mode = "sheet" | "name";
 
+/** シート左右の余白。進捗報告ガイド（mypage-guide-modal）と揃える */
+const SHEET_PADDING = 24;
+
 /**
  * ポスターの編集（Figma 2040:6371 → 2040:6437）。
- * 中央にフロートする白カードに、テキストリンクを4行並べただけのアクションシート。
+ * 画面下から出る白いシートに、テキストリンクを4行並べただけのアクションシート。
  * 閉じるボタンは無く、暗幕タップで閉じる。
  *
  * シートと名前入力は「兄弟」として並べ、Modal の入れ子を作らない
  * （入れ子は Android で表示が崩れる）。写真ピッカーも iOS で presentation が
- * 競合するため、シートを閉じてから起動する。
+ * 競合するため、シートが閉じ切ってから起動する（runWithSheetClosed）。
  */
 export function PosterEditModal({
   visible,
@@ -44,6 +50,7 @@ export function PosterEditModal({
   onClose,
   onImageChanged,
 }: Props) {
+  const insets = useSafeAreaInsets();
   const setPosterSettings = useWishStore((state) => state.setPosterSettings);
   const [photoSaving, setPhotoSaving] = useState(false);
   const [mode, setMode] = useState<Mode>("sheet");
@@ -95,15 +102,29 @@ export function PosterEditModal({
     onClose();
   };
 
+  // onClose はただの setState で、その時点ではまだ Modal は閉じ切っていない。
+  // 同じ tick でネイティブのピッカーを開くと、iOS は dismiss 中の
+  // RCTModalHostViewController から present するため黙って無視され、
+  // Android は isPickerOpen ガードで canceled が返る（＝どちらも無反応に見える）。
+  // 起動処理をここに預けて、閉じ切ってから流す。
+  const pendingAction = useRef<(() => void) | null>(null);
+
+  const flushPendingAction = () => {
+    const action = pendingAction.current;
+    pendingAction.current = null;
+    action?.();
+  };
+
   /** シートを畳んでからネイティブのピッカーを開く */
   const runWithSheetClosed = (start: () => void) => {
     if (photoSaving) return;
+    pendingAction.current = start;
     onClose();
-    start();
+    // onDismiss は iOS 専用。Android/Web はモーダルが外れた次フレームで流す
+    if (Platform.OS !== "ios") requestAnimationFrame(flushPendingAction);
   };
 
   const options: { label: string; onPress: () => void }[] = [
-    { label: "ニックネームを変更する", onPress: () => setMode("name") },
     { label: "アバターを生成する", onPress: handleShufflePresetAvatar },
     {
       label: "写真をアップロードする",
@@ -113,6 +134,7 @@ export function PosterEditModal({
       label: "写真を撮る",
       onPress: () => runWithSheetClosed(takePhoto),
     },
+    { label: "ニックネームを変更する", onPress: () => setMode("name") },
   ];
 
   return (
@@ -122,29 +144,45 @@ export function PosterEditModal({
         transparent
         animationType="fade"
         onRequestClose={onClose}
+        onDismiss={flushPendingAction}
       >
         <Pressable
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="閉じる"
-          className="flex-1 items-center justify-center bg-black/50 px-[20px]"
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
         >
-          {/* カード内のタップで閉じないよう、ここでタッチを止める */}
-          <View
+          {/* シート内のタップで閉じないよう、ここでタッチを止める */}
+          <Animated.View
+            entering={SlideInDown.duration(280)}
             onStartShouldSetResponder={() => true}
-            className="w-full max-w-[350px] items-center gap-[16px] rounded-[20px] bg-white px-[20px] py-[24px]"
+            className="items-center gap-[16px] rounded-t-[24px] bg-white"
+            style={{
+              paddingTop: SHEET_PADDING,
+              paddingHorizontal: SHEET_PADDING,
+              paddingBottom: SHEET_PADDING + insets.bottom,
+            }}
           >
             <Text className="w-full text-center font-flow text-[18px] leading-[26px] text-flow-ink">
-              ポスターをAI編集する
+              ポスターを編集する
             </Text>
 
-            <View className="w-full gap-[10px]">
-              {options.map((option) => (
+            {/* 4行を1枚のグループ枠に収め、行間はヘアラインで区切る */}
+            <View
+              className="w-full rounded-[16px] bg-white"
+              style={{ boxShadow: "0px 4px 6px rgba(0,0,0,0.05)" }}
+            >
+              {options.map((option, index) => (
                 <Pressable
                   key={option.label}
                   onPress={option.onPress}
                   accessibilityRole="button"
-                  className="h-[30px] w-full items-center justify-center px-[16px] active:opacity-60"
+                  className={`h-[48px] w-full items-center justify-center px-[16px] active:opacity-60 ${
+                    index < options.length - 1
+                      ? "border-b border-[#eaeef2]"
+                      : ""
+                  }`}
                 >
                   <Text className="font-flow-regular text-[14px] text-flow-ink">
                     {option.label}
@@ -152,7 +190,7 @@ export function PosterEditModal({
                 </Pressable>
               ))}
             </View>
-          </View>
+          </Animated.View>
         </Pressable>
       </Modal>
 

@@ -12,6 +12,7 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { ProgressDots } from "@/components/ui/progress-dots";
 import { useTabBarBottomPadding } from "@/components/ui/tab-bar";
+import { DevGuideButton } from "@/features/dev/dev-guide-button";
 import { MypageGuideModal } from "@/features/onboarding/mypage-guide-modal";
 import { deleteManagedPosterPhoto } from "@/features/poster/photo-storage";
 import { PosterCard } from "@/features/poster/poster-card";
@@ -20,10 +21,10 @@ import { PosterEditModal } from "@/features/poster/poster-edit-modal";
 import {
   createDefaultPosterSettings,
   getPosterImageUri,
+  resolvePosterPalette,
   resolvePosterSettings,
 } from "@/features/poster/poster-settings";
 import { RunningPledgeCard } from "@/features/poster/running-pledge-card";
-import { getPosterPalette } from "@/features/poster/templates";
 import { usePosterExport } from "@/features/poster/use-poster-export";
 import { ReportModal } from "@/features/wishes/report-modal";
 import { useProfileStore } from "@/stores/profile";
@@ -46,6 +47,11 @@ export default function MyPageScreen() {
   const hasHydrated = useWishStore((state) => state.hasHydrated);
   const removeWish = useWishStore((state) => state.removeWish);
   const nickname = useProfileStore((state) => state.profile?.nickname ?? "");
+  const profileHydrated = useProfileStore((state) => state.hasHydrated);
+  const mypageGuideSeen = useProfileStore((state) => state.mypageGuideSeen);
+  const markMypageGuideSeen = useProfileStore(
+    (state) => state.markMypageGuideSeen
+  );
   const [currentIndex, setCurrentIndex] = useState(0);
   const [doneOpen, setDoneOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -70,12 +76,14 @@ export default function MyPageScreen() {
     !busy &&
     (storedSettings.image.kind === "character" || photoReady);
 
-  // Figma 2665:19111「初回ガイド」。マイページに来るたび毎回出す
+  // Figma 2665:19111「初回ガイド」。初回訪問の1回だけ出す。
+  // profileHydratedを見ないと、復元前の既定値(false)で既読ユーザーにも一瞬出てしまう
   useFocusEffect(
     useCallback(() => {
-      if (!hasHydrated) return;
+      if (!hasHydrated || !profileHydrated) return;
+      if (mypageGuideSeen) return;
       setGuideOpen(true);
-    }, [hasHydrated])
+    }, [hasHydrated, profileHydrated, mypageGuideSeen])
   );
 
   useEffect(() => {
@@ -143,7 +151,7 @@ export default function MyPageScreen() {
         <PosterCard
           settings={settings}
           slogan={item.text}
-          palette={getPosterPalette(settings.paletteId)}
+          palette={resolvePosterPalette(settings)}
           // キャプチャは表示中の1枚だけを対象にする
           posterRef={isCurrent ? posterRef : undefined}
           onPhotoLoaded={isCurrent ? () => setPhotoReady(true) : undefined}
@@ -253,6 +261,11 @@ export default function MyPageScreen() {
             </Pressable>
           </>
         )}
+
+        <DevGuideButton
+          onPress={() => setGuideOpen(true)}
+          className="items-center py-2"
+        />
       </ScrollView>
 
       {currentWish ? (
@@ -279,13 +292,21 @@ export default function MyPageScreen() {
           visible
           wish={currentWish}
           onClose={() => setDoneOpen(false)}
-          onCompleted={() => router.push("/wishes/complete")}
+          onCompleted={() =>
+            router.push({
+              pathname: "/wishes/complete",
+              params: { id: currentWish.id },
+            })
+          }
         />
       ) : null}
 
       <MypageGuideModal
         visible={guideOpen}
-        onClose={() => setGuideOpen(false)}
+        onClose={() => {
+          setGuideOpen(false);
+          markMypageGuideSeen();
+        }}
       />
     </View>
   );

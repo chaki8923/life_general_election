@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "life_general_election",
+    "name": "とぴょっこ人生総選挙",
     "slug": "life_general_election",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "lifegeneralelection",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"
     },
@@ -29,13 +29,8 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#000628",
-          "image": "./assets/images/splash-bg.png",
-          "resizeMode": "cover",
-          "enableFullScreenImage_legacy": true,
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76,
-            "resizeMode": "contain"
+          "dark": {
+            "backgroundColor": "#000628"
           }
         }
       ],

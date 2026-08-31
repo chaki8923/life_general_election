@@ -1,10 +1,10 @@
 import type { PledgeThemeId, Wish } from "@/types";
 
-const avatarPink = require("../../../assets/election/result/avatar-pink.png");
-const avatarOrange = require("../../../assets/election/result/avatar-orange.png");
-const avatarPurple = require("../../../assets/election/result/avatar-purple.png");
-const avatarGreen = require("../../../assets/election/result/avatar-green.png");
-const avatarBlue = require("../../../assets/election/result/avatar-blue.png");
+const avatarPink = require("../../../assets/election/result/avatar-pink.webp");
+const avatarOrange = require("../../../assets/election/result/avatar-orange.webp");
+const avatarPurple = require("../../../assets/election/result/avatar-purple.webp");
+const avatarGreen = require("../../../assets/election/result/avatar-green.webp");
+const avatarBlue = require("../../../assets/election/result/avatar-blue.webp");
 
 export type PledgeRank = 1 | 2 | 3;
 

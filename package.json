@@ -8,6 +8,7 @@
     "@expo/ui": "~0.2.0-beta.9",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@tailwindcss/postcss": "^4.3.2",
+    "budoux": "^0.9.1",
     "clsx": "^2.1.1",
     "expo": "54.0.35",
     "expo-constants": "~18.0.13",
@@ -56,6 +57,7 @@
   "scripts": {
     "start": "expo start",
     "start:tunnel": "node ./scripts/start-tunnel-notify.js",
+    "start:demo": "expo start --lan --no-dev --minify",
     "sync": "node ./scripts/auto-sync.js --once",
     "sync:watch": "node ./scripts/auto-sync.js",
     "reset-project": "node ./scripts/reset-project.js",

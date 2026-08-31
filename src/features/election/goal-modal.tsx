@@ -6,6 +6,8 @@ import { Image } from "@/tw/image";
 import type { Candidate } from "@/types";
 import { useEffect, useState } from "react";
 import { Modal } from "react-native";
+import { SlideInDown } from "react-native-reanimated";
+import { Animated } from "@/tw/animated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const iconFlag = require("../../../assets/election/result/icon-flag.svg");
@@ -99,18 +101,22 @@ export function GoalModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end">
+        {/* Tailwind の bg-black/50 は react-native-css の color-mix 実装で
+            alpha 0.25 に落ちるため、rgba を直接指定する */}
         <Pressable
-          className="absolute inset-0 bg-black/50"
+          className="absolute inset-0"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="閉じる"
         />
 
-        <View
+        <Animated.View
+          entering={SlideInDown.duration(280)}
           className="overflow-hidden rounded-t-[20px] border border-[#f6f6f6] bg-white"
           style={{
             height: sheetHeight,
@@ -242,7 +248,7 @@ export function GoalModal({
               />
             </ScrollView>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

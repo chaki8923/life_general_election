@@ -3,10 +3,10 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { Text, View } from "@/tw";
 import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
+import { WORRIES_BACKGROUND } from "@/constants/election-images";
 import { useDesignScale } from "./layout";
 import { WorryBubbleCloud } from "./worry-bubble-cloud";
 import {
-  BUBBLE_FONT_SIZE,
   getConfirmCloudRect,
   getWorryBubbleSlot,
 } from "./worry-bubble-slots";
@@ -20,6 +20,8 @@ type WorryConfirmModalProps = {
   visible: boolean;
   candidate: WorrySuggestion | null;
   bubbleIndex: number;
+  /** 一覧と同じ改行位置にするため、BubbleFieldに渡したものと同じ値を渡す */
+  fontSize: number;
   onConfirm: () => void;
   onReselect: () => void;
 };
@@ -29,6 +31,7 @@ export function WorryConfirmModal({
   visible,
   candidate,
   bubbleIndex,
+  fontSize,
   onConfirm,
   onReselect,
 }: WorryConfirmModalProps) {
@@ -45,7 +48,7 @@ export function WorryConfirmModal({
       exiting={FadeOut.duration(180)}
     >
       <Image
-        source={require("../../../assets/election/worries-bg.png")}
+        source={WORRIES_BACKGROUND}
         className="absolute inset-0"
         contentFit="fill"
         pointerEvents="none"
@@ -81,7 +84,7 @@ export function WorryConfirmModal({
           width={s(rect.width)}
           height={s(rect.height)}
           // 幅と同じ倍率で拡大するので、改行位置が選択前の吹き出しと一致する
-          fontSize={s(BUBBLE_FONT_SIZE * rect.scale)}
+          fontSize={s(fontSize * rect.scale)}
         />
       </View>
 

@@ -19,7 +19,7 @@ import { useProfileStore } from "@/stores/profile";
 
 // アリーナ背景。Androidのネイティブスプラッシュは全画面画像を出せない(OSが単色+中央アイコンに固定する)ので、
 // ネイティブスプラッシュを外したあとJS側で同じ絵を敷き、両OSで同じ見た目にする。
-const splashBackground = require("../../assets/images/splash-bg.png");
+const splashBackground = require("../../assets/images/splash-bg.webp");
 
 // フォントはバンドル同梱、プロフィールもAsyncStorageなので復元は数十msで終わる。
 // そのままだとスプラッシュが1フレームで消えてしまうので、最低表示時間を設ける。
@@ -108,7 +108,7 @@ export default function RootLayout() {
         <Image
           source={splashBackground}
           style={{ flex: 1, backgroundColor: "#000628" }}
-          contentFit="cover"
+          contentFit="contain"
           transition={0}
           onLoadEnd={() => setSplashImageLoaded(true)}
         />
