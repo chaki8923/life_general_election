@@ -1,20 +1,21 @@
-import { FlowButton } from "@/components/ui/flow-button";
 import { GoalDeadlinePicker } from "@/components/ui/deadline-picker";
+import { FlowButton } from "@/components/ui/flow-button";
 import { DESIGN_HEIGHT, useDesignScale } from "@/features/election/layout";
 import { Pressable, ScrollView, Text, View } from "@/tw";
+import { Animated } from "@/tw/animated";
 import { Image } from "@/tw/image";
 import type { Candidate } from "@/types";
-import { useEffect, useState } from "react";
-import { Modal } from "react-native";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Modal, StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import {
+  cancelAnimation,
+  Easing,
   runOnJS,
-  SlideInDown,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { Animated } from "@/tw/animated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const iconFlag = require("../../../assets/election/result/icon-flag.svg");
@@ -28,6 +29,10 @@ const SHEET_DESIGN_HEIGHT = Math.round(DESIGN_HEIGHT * SHEET_HEIGHT_RATIO);
 const DRAG_DISMISS_DISTANCE = 72;
 /** 下スワイプで閉じる速度 */
 const DRAG_DISMISS_VELOCITY = 900;
+
+const SHEET_OPEN_MS = 280;
+const SHEET_DISMISS_MS = 220;
+const BACKDROP_OPACITY = 0.5;
 
 type GoalModalProps = {
   visible: boolean;
@@ -101,36 +106,100 @@ export function GoalModal({
   const maxSheet = Math.max(0, windowHeight - insets.top - s(24));
   const sheetHeight = Math.min(s(SHEET_DESIGN_HEIGHT), maxSheet);
   const [deadline, setDeadline] = useState<number | null>(null);
-  const translateY = useSharedValue(0);
+  const isClosingRef = useRef(false);
+  const translateY = useSharedValue(sheetHeight);
+  const backdropOpacity = useSharedValue(0);
   const dismissThreshold = useSharedValue(s(DRAG_DISMISS_DISTANCE));
   const sheetHeightShared = useSharedValue(sheetHeight);
+  const dragStartY = useSharedValue(0);
 
-  useEffect(() => {
-    if (visible) setDeadline(null);
-  }, [visible]);
+  const finishDismiss = useCallback(() => {
+    isClosingRef.current = false;
+    onClose();
+  }, [onClose]);
 
+  const animateClose = useCallback(
+    (onComplete: () => void) => {
+      if (isClosingRef.current) return;
+      isClosingRef.current = true;
+      cancelAnimation(translateY);
+      cancelAnimation(backdropOpacity);
+
+      backdropOpacity.value = withTiming(0, {
+        duration: SHEET_DISMISS_MS,
+        easing: Easing.in(Easing.cubic),
+      });
+      translateY.value = withTiming(
+        sheetHeightShared.value,
+        { duration: SHEET_DISMISS_MS, easing: Easing.in(Easing.cubic) },
+        () => {
+          runOnJS(onComplete)();
+        }
+      );
+    },
+    [backdropOpacity, sheetHeightShared, translateY]
+  );
+
+  const dismissSheet = useCallback(() => {
+    animateClose(finishDismiss);
+  }, [animateClose, finishDismiss]);
+
+  const submitGoal = useCallback(() => {
+    if (deadline === null) return;
+    const selectedDeadline = deadline;
+    animateClose(() => {
+      isClosingRef.current = false;
+      onRegister(selectedDeadline);
+    });
+  }, [animateClose, deadline, onRegister]);
+
+  // 開く: translateY のみで制御（SlideInDown と二重アニメにしない）
+  // 閉じる: translateY を 0 に戻さない（フェードアウト中の跳ね返り防止）
   useEffect(() => {
+    if (!visible) return;
+
+    isClosingRef.current = false;
+    setDeadline(null);
     sheetHeightShared.value = sheetHeight;
-    if (!visible) {
-      translateY.value = 0;
-      return;
-    }
     dismissThreshold.value = Math.min(
       s(DRAG_DISMISS_DISTANCE),
       sheetHeight * 0.22
     );
-    translateY.value = 0;
-  }, [visible, sheetHeight, s, dismissThreshold, sheetHeightShared, translateY]);
 
-  const closeSheet = () => {
-    onClose();
-  };
+    cancelAnimation(translateY);
+    cancelAnimation(backdropOpacity);
+    translateY.value = sheetHeight;
+    backdropOpacity.value = 0;
+
+    backdropOpacity.value = withTiming(BACKDROP_OPACITY, {
+      duration: SHEET_OPEN_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+    translateY.value = withTiming(0, {
+      duration: SHEET_OPEN_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [
+    visible,
+    sheetHeight,
+    s,
+    backdropOpacity,
+    dismissThreshold,
+    sheetHeightShared,
+    translateY,
+  ]);
 
   const sheetPan = Gesture.Pan()
-    .activeOffsetY(6)
-    .failOffsetX([-24, 24])
+    .activeOffsetY(8)
+    .failOffsetX([-20, 20])
+    .onBegin(() => {
+      cancelAnimation(translateY);
+      dragStartY.value = translateY.value;
+    })
     .onUpdate((event) => {
-      translateY.value = Math.max(0, event.translationY);
+      translateY.value = Math.max(0, dragStartY.value + event.translationY);
+      const progress = Math.min(1, translateY.value / sheetHeightShared.value);
+      backdropOpacity.value = BACKDROP_OPACITY * (1 - progress * 0.85);
     })
     .onEnd((event) => {
       const shouldDismiss =
@@ -138,14 +207,20 @@ export function GoalModal({
         event.velocityY > DRAG_DISMISS_VELOCITY;
 
       if (shouldDismiss) {
-        translateY.value = withTiming(sheetHeightShared.value, { duration: 200 }, () => {
-          runOnJS(closeSheet)();
-        });
+        runOnJS(dismissSheet)();
         return;
       }
 
-      translateY.value = withTiming(0, { duration: 180 });
+      backdropOpacity.value = withTiming(BACKDROP_OPACITY, { duration: 180 });
+      translateY.value = withTiming(0, {
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+      });
     });
+
+  const backdropStyle = useAnimatedStyle(() => ({
+    opacity: backdropOpacity.value,
+  }));
 
   const sheetDragStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
@@ -157,22 +232,24 @@ export function GoalModal({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
-      onRequestClose={onClose}
+      animationType="none"
+      statusBarTranslucent
+      onRequestClose={dismissSheet}
     >
       <View className="flex-1 justify-end">
-        {/* Tailwind の bg-black/50 は react-native-css の color-mix 実装で
-            alpha 0.25 に落ちるため、rgba を直接指定する */}
-        <Pressable
-          className="absolute inset-0"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="閉じる"
-        />
+        <Animated.View
+          pointerEvents="box-none"
+          style={[StyleSheet.absoluteFillObject, backdropStyle]}
+        >
+          <Pressable
+            style={[StyleSheet.absoluteFillObject, { backgroundColor: "#000" }]}
+            onPress={dismissSheet}
+            accessibilityRole="button"
+            accessibilityLabel="閉じる"
+          />
+        </Animated.View>
 
         <Animated.View
-          entering={SlideInDown.duration(280)}
           className="overflow-hidden rounded-t-[20px] border border-[#f6f6f6] bg-white"
           style={[
             {
@@ -194,24 +271,33 @@ export function GoalModal({
               flex: 1,
             }}
           >
-            {/* 2609:22089 — グラブハンドル（タップ領域を広げて下スワイプで閉じる） */}
+            {/* ハンドル＋見出しまでスワイプで閉じられる */}
             <GestureDetector gesture={sheetPan}>
-              <View
-                className="items-center justify-center"
-                style={{
-                  marginBottom: s(8),
-                  minHeight: s(32),
-                }}
-                accessibilityRole="adjustable"
-                accessibilityLabel="下にスワイプして閉じる"
-              >
+              <View style={{ marginBottom: s(8) }}>
                 <View
-                  className="rounded-2xl bg-[#d9d9d9]"
+                  className="items-center justify-center"
+                  style={{ minHeight: s(32) }}
+                  accessibilityRole="adjustable"
+                  accessibilityLabel="下にスワイプして閉じる"
+                >
+                  <View
+                    className="rounded-2xl bg-[#d9d9d9]"
+                    style={{
+                      height: s(4),
+                      width: s(101),
+                    }}
+                  />
+                </View>
+                <Text
+                  className="text-center font-flow text-flow-ink"
                   style={{
-                    height: s(4),
-                    width: s(101),
+                    fontSize: s(14),
+                    lineHeight: s(20),
+                    marginTop: s(4),
                   }}
-                />
+                >
+                  この公約・政策を目標に設定しますか？
+                </Text>
               </View>
             </GestureDetector>
 
@@ -219,6 +305,7 @@ export function GoalModal({
               className="flex-1"
               showsVerticalScrollIndicator={false}
               bounces={false}
+              keyboardShouldPersistTaps="handled"
               contentContainerStyle={{
                 flexGrow: 1,
                 justifyContent: "space-between",
@@ -227,13 +314,6 @@ export function GoalModal({
               }}
             >
               <View style={{ gap: s(12) }}>
-                <Text
-                  className="text-center font-flow text-flow-ink"
-                  style={{ fontSize: s(14), lineHeight: s(20) }}
-                >
-                  この公約・政策を目標に設定しますか？
-                </Text>
-
                 <View style={{ gap: s(12) }}>
                   <View
                     className="border-b border-[#eaeef2]"
@@ -313,7 +393,7 @@ export function GoalModal({
                 disabled={!canSubmit}
                 fillColor={color}
                 disabledFillColor="#D0D7DE"
-                onPress={() => deadline !== null && onRegister(deadline)}
+                onPress={submitGoal}
                 className="h-14 w-full"
               />
             </ScrollView>
