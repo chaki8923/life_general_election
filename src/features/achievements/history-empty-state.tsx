@@ -19,7 +19,7 @@ export function HistoryEmptyState() {
 
   return (
     <View
-      className="w-full items-center px-5"
+      className="w-full items-center"
       accessibilityRole="text"
       accessibilityLabel="まだ達成したものはないみたい… 政策を頑張ろう！"
     >

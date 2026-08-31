@@ -4,6 +4,8 @@ import { Text, View } from "@/tw";
 
 /** 見出しと進捗バーの間隔（Figma 2317:23425 付近） */
 const TITLE_TO_BAR_GAP = 18;
+/** 見出しのみ左右 inset（バーは画面端まで） */
+const TITLE_INSET = 20;
 
 /** Figma 2317:23491 — 「過去の履歴」見出し */
 export function HistorySectionTitle() {
@@ -17,7 +19,7 @@ export function HistorySectionTitle() {
         fontSize: s(18),
         lineHeight: s(24),
         letterSpacing: s(0.8),
-        paddingHorizontal: s(20),
+        paddingHorizontal: s(TITLE_INSET),
       }}
     >
       過去の履歴
@@ -32,10 +34,7 @@ export function HistorySectionHeader() {
   const { s } = useDesignScale();
 
   return (
-    <View
-      className="w-full"
-      style={{ gap: s(TITLE_TO_BAR_GAP), paddingHorizontal: s(20) }}
-    >
+    <View className="w-full" style={{ gap: s(TITLE_TO_BAR_GAP) }}>
       <Text
         className="text-flow-ink"
         style={{
@@ -43,6 +42,7 @@ export function HistorySectionHeader() {
           fontSize: s(18),
           lineHeight: s(24),
           letterSpacing: s(0.8),
+          paddingHorizontal: s(TITLE_INSET),
         }}
       >
         過去の履歴

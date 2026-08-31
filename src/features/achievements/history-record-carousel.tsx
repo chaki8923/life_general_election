@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import type { NativeScrollEvent, NativeSyntheticEvent } from "react-native";
 import { ScrollView as RNScrollView } from "react-native";
 import { useDesignScale } from "@/features/election/layout";
-import { HistoryLinkedTimelineTrack } from "@/features/achievements/history-timeline-bar";
+import { HistoryLinkedTimelineTrack, HISTORY_TIMELINE_LEAD_INSET } from "@/features/achievements/history-timeline-bar";
 import { getWishAchievementDate } from "@/features/achievements/wish-history";
 import type { Wish } from "@/types";
 import { View } from "@/tw";
@@ -16,6 +16,8 @@ import { historyCardThemeForWish } from "@/features/election/pledge-themes";
 const SECTION_GAP = 17;
 /** Figma 2317:23407 — カード間隔 */
 const SET_GAP = 20;
+/** 1枚目カード左端 inset（タイムライン lead と一致） */
+const CONTENT_INSET = HISTORY_TIMELINE_LEAD_INSET;
 
 type HistoryRecordCarouselProps = {
   wishes: Wish[];
@@ -44,11 +46,14 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
 
   const setWidth = s(HISTORY_CARD_WIDTH);
   const setGap = s(SET_GAP);
+  const contentInset = s(CONTENT_INSET);
   const cardsRowWidth =
     slides.length * setWidth + Math.max(slides.length - 1, 0) * setGap;
-  /** 末尾カードを左端に揃えるための右余白（1枚目と同じ見え方） */
+  /** 末尾カードを1枚目と同じ左位置に揃える右余白 */
   const endInset =
-    viewportWidth > setWidth ? viewportWidth - setWidth : 0;
+    viewportWidth > setWidth + contentInset
+      ? viewportWidth - setWidth - contentInset
+      : 0;
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     setScrollX(event.nativeEvent.contentOffset.x);
@@ -57,7 +62,7 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
   if (slides.length === 0) return null;
 
   return (
-    <View className="w-full" style={{ paddingHorizontal: s(20) }}>
+    <View className="w-full">
       <View style={{ gap: s(SECTION_GAP) }}>
         <HistoryLinkedTimelineTrack
           dates={slides.map((slide) => slide.date)}
@@ -70,7 +75,10 @@ export function HistoryRecordCarousel({ wishes }: HistoryRecordCarouselProps) {
           nestedScrollEnabled
           showsHorizontalScrollIndicator={false}
           scrollEventThrottle={16}
-          contentContainerStyle={{ paddingRight: endInset }}
+          contentContainerStyle={{
+            paddingLeft: contentInset,
+            paddingRight: endInset,
+          }}
           onLayout={(event) => {
             setViewportWidth(event.nativeEvent.layout.width);
           }}

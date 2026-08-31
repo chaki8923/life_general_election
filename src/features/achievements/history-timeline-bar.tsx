@@ -10,6 +10,10 @@ const TRACK_HEIGHT_INNER = 12;
 const TRACK_TOP_INSET = 2;
 /** Figma 2317:23381 — カード左端から白丸左端までのオフセット */
 const LINKED_DOT_INSET = 20;
+/** 1枚目カード左端・タイムライン開始位置（デザインpx） */
+export const HISTORY_TIMELINE_LEAD_INSET = 28;
+/** 1枚目白丸の左側に見せるバー延長（デザインpx） */
+const PROGRESS_LEAD_BEFORE_DOT = 12;
 /** Figma 2317:23382 — 白丸間隔はカード1枚分+2px（322px） */
 const LINKED_DOT_STRIDE_EXTRA = 2;
 /** 白丸右端から濃色バー右端までの余白（1枚目 52px = 20+12+20） */
@@ -109,16 +113,20 @@ export function HistoryLinkedTimelineTrack({
   const trackInnerHeight = s(TRACK_HEIGHT_INNER);
   const trackTopInset = s(TRACK_TOP_INSET);
   const dotSize = s(DOT_SIZE_ON_16);
-  const dotInset = s(LINKED_DOT_INSET);
+  const leadInset = s(HISTORY_TIMELINE_LEAD_INSET);
+  const barLead = s(PROGRESS_LEAD_BEFORE_DOT);
+  const barStart = leadInset - barLead;
 
   const dotLefts = Array.from(
     { length: count },
-    (_, index) => dotInset + index * scaledDotStride
+    (_, index) => leadInset + index * scaledDotStride
   );
-  const progressWidth = getFixedProgressWidth(dotLefts, dotSize, s);
+  const progressEnd = getFixedProgressWidth(dotLefts, dotSize, s);
+  const progressWidth = Math.max(0, progressEnd - leadInset);
 
   const contentWidth = Math.max(
-    trackWidth,
+    leadInset + trackWidth,
+    progressEnd,
     ...dotLefts.map((left) => left + s(LABEL_WIDTH))
   );
 
@@ -139,16 +147,16 @@ export function HistoryLinkedTimelineTrack({
         <View
           style={{
             height: trackHeight,
-            width: trackWidth,
+            width: leadInset + trackWidth,
           }}
         >
           <View
             style={{
               position: "absolute",
-              left: 0,
+              left: barStart,
               top: trackTopInset,
               height: trackInnerHeight,
-              width: trackWidth,
+              width: trackWidth + barLead,
               borderRadius: trackInnerHeight / 2,
               backgroundColor: TRACK_BG,
             }}
@@ -157,9 +165,9 @@ export function HistoryLinkedTimelineTrack({
             pointerEvents="none"
             style={{
               position: "absolute",
-              left: 0,
+              left: barStart,
               top: 0,
-              width: progressWidth,
+              width: progressWidth + barLead,
               height: trackHeight,
               borderRadius: trackHeight / 2,
               backgroundColor: PROGRESS_BG,
