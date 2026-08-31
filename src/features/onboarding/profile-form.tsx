@@ -4,7 +4,6 @@ import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
 import { FlowStepper } from "@/components/ui/flow-stepper";
 import { GENDERS } from "@/constants/options";
-import { DevResetButton } from "@/features/dev/dev-reset-button";
 import { toAgeRange } from "@/features/onboarding/age-range";
 import { markElectionHandoff } from "@/features/onboarding/handoff";
 import { SummoningOverlay } from "@/features/onboarding/summoning-overlay";
@@ -152,7 +151,6 @@ export function ProfileForm() {
           />
         </View>
 
-        <DevResetButton className="mt-10 items-center" />
       </ScrollView>
     </View>
   );
