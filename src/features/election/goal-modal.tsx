@@ -6,6 +6,15 @@ import { Image } from "@/tw/image";
 import type { Candidate } from "@/types";
 import { useEffect, useState } from "react";
 import { Modal } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import {
+  runOnJS,
+  SlideInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { Animated } from "@/tw/animated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const iconFlag = require("../../../assets/election/result/icon-flag.svg");
@@ -15,6 +24,10 @@ const iconCalendar = require("../../../assets/election/result/icon-calendar.svg"
 /** Figma アートボード高さに対するシート比率 */
 const SHEET_HEIGHT_RATIO = 0.6;
 const SHEET_DESIGN_HEIGHT = Math.round(DESIGN_HEIGHT * SHEET_HEIGHT_RATIO);
+/** 下スワイプで閉じる距離（デザインpx） */
+const DRAG_DISMISS_DISTANCE = 72;
+/** 下スワイプで閉じる速度 */
+const DRAG_DISMISS_VELOCITY = 900;
 
 type GoalModalProps = {
   visible: boolean;
@@ -88,10 +101,55 @@ export function GoalModal({
   const maxSheet = Math.max(0, windowHeight - insets.top - s(24));
   const sheetHeight = Math.min(s(SHEET_DESIGN_HEIGHT), maxSheet);
   const [deadline, setDeadline] = useState<number | null>(null);
+  const translateY = useSharedValue(0);
+  const dismissThreshold = useSharedValue(s(DRAG_DISMISS_DISTANCE));
+  const sheetHeightShared = useSharedValue(sheetHeight);
 
   useEffect(() => {
     if (visible) setDeadline(null);
   }, [visible]);
+
+  useEffect(() => {
+    sheetHeightShared.value = sheetHeight;
+    if (!visible) {
+      translateY.value = 0;
+      return;
+    }
+    dismissThreshold.value = Math.min(
+      s(DRAG_DISMISS_DISTANCE),
+      sheetHeight * 0.22
+    );
+    translateY.value = 0;
+  }, [visible, sheetHeight, s, dismissThreshold, sheetHeightShared, translateY]);
+
+  const closeSheet = () => {
+    onClose();
+  };
+
+  const sheetPan = Gesture.Pan()
+    .activeOffsetY(6)
+    .failOffsetX([-24, 24])
+    .onUpdate((event) => {
+      translateY.value = Math.max(0, event.translationY);
+    })
+    .onEnd((event) => {
+      const shouldDismiss =
+        translateY.value > dismissThreshold.value ||
+        event.velocityY > DRAG_DISMISS_VELOCITY;
+
+      if (shouldDismiss) {
+        translateY.value = withTiming(sheetHeightShared.value, { duration: 200 }, () => {
+          runOnJS(closeSheet)();
+        });
+        return;
+      }
+
+      translateY.value = withTiming(0, { duration: 180 });
+    });
+
+  const sheetDragStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   const canSubmit = Boolean(candidate && deadline !== null);
 
@@ -99,45 +157,63 @@ export function GoalModal({
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={onClose}
     >
       <View className="flex-1 justify-end">
+        {/* Tailwind の bg-black/50 は react-native-css の color-mix 実装で
+            alpha 0.25 に落ちるため、rgba を直接指定する */}
         <Pressable
-          className="absolute inset-0 bg-black/50"
+          className="absolute inset-0"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel="閉じる"
         />
 
-        <View
+        <Animated.View
+          entering={SlideInDown.duration(280)}
           className="overflow-hidden rounded-t-[20px] border border-[#f6f6f6] bg-white"
-          style={{
-            height: sheetHeight,
-            paddingBottom: bottomPad,
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.08,
-            shadowRadius: 6,
-            elevation: 8,
-          }}
+          style={[
+            {
+              height: sheetHeight,
+              paddingBottom: bottomPad,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
+              elevation: 8,
+            },
+            sheetDragStyle,
+          ]}
         >
           <View
             style={{
               paddingHorizontal: s(32),
-              paddingTop: s(20),
+              paddingTop: s(8),
               flex: 1,
             }}
           >
-            {/* 2609:22089 — グラブハンドル */}
-            <View
-              className="self-center rounded-2xl bg-[#d9d9d9]"
-              style={{
-                marginBottom: s(16),
-                height: s(4),
-                width: s(101),
-              }}
-            />
+            {/* 2609:22089 — グラブハンドル（タップ領域を広げて下スワイプで閉じる） */}
+            <GestureDetector gesture={sheetPan}>
+              <View
+                className="items-center justify-center"
+                style={{
+                  marginBottom: s(8),
+                  minHeight: s(32),
+                }}
+                accessibilityRole="adjustable"
+                accessibilityLabel="下にスワイプして閉じる"
+              >
+                <View
+                  className="rounded-2xl bg-[#d9d9d9]"
+                  style={{
+                    height: s(4),
+                    width: s(101),
+                  }}
+                />
+              </View>
+            </GestureDetector>
 
             <ScrollView
               className="flex-1"
@@ -242,7 +318,7 @@ export function GoalModal({
               />
             </ScrollView>
           </View>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

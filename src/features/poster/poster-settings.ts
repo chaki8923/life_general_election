@@ -1,3 +1,5 @@
+import { getPresetAvatarPaletteId } from "@/features/avatar/preset-avatars";
+import { getPosterPalette } from "@/features/poster/templates";
 import type {
   PosterImageSource,
   PosterPaletteId,
@@ -23,6 +25,18 @@ export function getPosterImageUri(
   image: PosterImageSource
 ): string | undefined {
   return image.kind === "photo" ? image.uri : undefined;
+}
+
+/**
+ * ポスターの配色。presetアバターは絵柄ごとに色が違うので、
+ * 保存済みのpaletteIdより絵柄を優先する（写真・既定キャラは従来どおり）。
+ */
+export function resolvePosterPalette(settings: PosterSettings) {
+  if (settings.image.kind === "preset") {
+    const paletteId = getPresetAvatarPaletteId(settings.image.id);
+    if (paletteId) return getPosterPalette(paletteId);
+  }
+  return getPosterPalette(settings.paletteId);
 }
 
 export function resolvePosterSettings(

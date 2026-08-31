@@ -48,7 +48,14 @@ export type WishStatus = "active" | "done" | "excused";
 /** 投票結果画面の公約カード色（ランキング1〜3位 + マイノリティ green/blue） */
 export type PledgeThemeId = "pink" | "orange" | "purple" | "green" | "blue";
 
-export type PosterPaletteId = "red" | "navy" | "pink";
+export type PosterPaletteId =
+  | "red"
+  | "navy"
+  | "pink"
+  | "orange"
+  | "purple"
+  | "green"
+  | "blue";
 
 export type PosterImageSource =
   | { kind: "character" }
