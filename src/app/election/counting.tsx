@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "expo-router";
 import { FadeIn, FadeOut, useReducedMotion } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,9 +9,11 @@ import { Odometer, odometerTimeAtValue } from "@/components/ui/odometer";
 import { CountingBackground } from "@/features/election/counting-background";
 import { generateElection } from "@/features/election/generate";
 import { FONT, useDesignScale } from "@/features/election/layout";
+import { selectPastPledgeResults } from "@/features/election/past-pledge-results";
 import { mirrorElection } from "@/services/firebase/mirror";
 import { useElectionStore } from "@/stores/election";
 import { useProfileStore } from "@/stores/profile";
+import { useWishStore } from "@/stores/wishes";
 
 const TOTAL_VOTES = 1000;
 const COUNT_TARGET = TOTAL_VOTES;
@@ -44,18 +46,23 @@ export default function ElectionCountingScreen() {
   const election = useElectionStore((state) => state.election);
   const setElection = useElectionStore((state) => state.setElection);
   const profile = useProfileStore((state) => state.profile);
+  const wishes = useWishStore((state) => state.wishes);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [phase, setPhase] = useState<PresentationPhase>("counting");
   const [animationFinished, setAnimationFinished] = useState(false);
   const [stage, setStage] = useState(0);
 
+  // 直近の「できた／できなかった」を渡し、その結果を踏まえた候補を出してもらう。
+  // 配列を作り直すとdepsが毎レンダー変わって生成が止まらなくなるので、必ずメモ化する
+  const pastResults = useMemo(() => selectPastPledgeResults(wishes), [wishes]);
+
   // result.tsxから移設。開票生成はこの画面が担い、結果画面は表示に専念する。
   useEffect(() => {
     if (!worry || !motivation || !profile || election) return;
     let cancelled = false;
     setFailed(false);
-    generateElection({ worry, profile, motivation })
+    generateElection({ worry, profile, motivation, pastResults })
       .then((generated) => {
         if (cancelled) return;
         setElection(generated);
@@ -68,7 +75,7 @@ export default function ElectionCountingScreen() {
     return () => {
       cancelled = true;
     };
-  }, [worry, motivation, profile, election, setElection, attempt]);
+  }, [worry, motivation, profile, election, pastResults, setElection, attempt]);
 
   // 開票を始め、Figmaの票数に合わせて見出しを切り替える。
   useEffect(() => {

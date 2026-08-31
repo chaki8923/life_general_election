@@ -27,8 +27,13 @@ export function ReportModal({
   const confirmDone = () => {
     const updated = markDone(wish.id);
     if (updated) mirrorWish(updated);
+    // 記録できたときはここで閉じない。閉じるとマイページ側の「一覧に残す印」が
+    // クリアされ、公約が消えた直後のマイページが遷移前に見えてしまう
+    if (updated) {
+      onCompleted?.();
+      return;
+    }
     onClose();
-    if (updated) onCompleted?.();
   };
 
   return (
