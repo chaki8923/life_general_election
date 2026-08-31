@@ -58,6 +58,9 @@ export default function MyPageScreen() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
   const [photoReady, setPhotoReady] = useState(true);
+  // 「できた」確定→完了画面へ遷移する間だけtrue。この間は最後の1件が
+  // activeWishesから消えても「まだ人生公約がありません」を一瞬表示しないようにする
+  const [isCompleting, setIsCompleting] = useState(false);
   const bottomPadding = useTabBarBottomPadding();
 
   const activeWishes = wishes.filter((wish) => wish.status === "active");
@@ -84,6 +87,13 @@ export default function MyPageScreen() {
       if (mypageGuideSeen) return;
       setGuideOpen(true);
     }, [hasHydrated, profileHydrated, mypageGuideSeen])
+  );
+
+  // 完了画面から戻ってきたら空状態判定を再開する
+  useFocusEffect(
+    useCallback(() => {
+      setIsCompleting(false);
+    }, [])
   );
 
   useEffect(() => {
@@ -201,22 +211,26 @@ export default function MyPageScreen() {
             </Text>
           </View>
         ) : activeWishes.length === 0 ? (
-          <View
-            className="mt-10 items-center rounded-2xl bg-white px-6 py-10"
-            style={{ marginHorizontal: PAGE_HORIZONTAL_PADDING }}
-          >
-            <Text className="font-flow text-lg text-flow-ink">
-              まだ人生公約がありません
-            </Text>
-            <Text className="mt-3 text-center font-flow-medium text-sm leading-6 text-flow-ink-low">
-              総選挙を開いて、最初の小さな一歩を決めましょう
-            </Text>
-            <FlowButton
-              label="総選挙をはじめる"
-              onPress={() => router.push("/election")}
-              className="mt-6"
-            />
-          </View>
+          // isCompleting中（「できた」確定→完了画面への遷移中）は
+          // 空状態メッセージを一瞬表示しないよう何も出さない
+          isCompleting ? null : (
+            <View
+              className="mt-10 items-center rounded-2xl bg-white px-6 py-10"
+              style={{ marginHorizontal: PAGE_HORIZONTAL_PADDING }}
+            >
+              <Text className="font-flow text-lg text-flow-ink">
+                まだ人生公約がありません
+              </Text>
+              <Text className="mt-3 text-center font-flow-medium text-sm leading-6 text-flow-ink-low">
+                総選挙を開いて、最初の小さな一歩を決めましょう
+              </Text>
+              <FlowButton
+                label="総選挙をはじめる"
+                onPress={() => router.push("/election")}
+                className="mt-6"
+              />
+            </View>
+          )
         ) : (
           <>
             {/* ページャ（Figma 2703:24269 progress-bar-step4） */}
@@ -292,12 +306,13 @@ export default function MyPageScreen() {
           visible
           wish={currentWish}
           onClose={() => setDoneOpen(false)}
-          onCompleted={() =>
+          onCompleted={() => {
+            setIsCompleting(true);
             router.push({
               pathname: "/wishes/complete",
               params: { id: currentWish.id },
-            })
-          }
+            });
+          }}
         />
       ) : null}
 
