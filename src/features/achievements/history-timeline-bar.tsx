@@ -13,7 +13,7 @@ const LINKED_DOT_INSET = 20;
 /** 1枚目カード左端・タイムライン開始位置（デザインpx） */
 export const HISTORY_TIMELINE_LEAD_INSET = 28;
 /** 1枚目白丸の左側に見せるバー延長（デザインpx） */
-const PROGRESS_LEAD_BEFORE_DOT = 12;
+const PROGRESS_LEAD_BEFORE_DOT = 16;
 /** Figma 2317:23382 — 白丸間隔はカード1枚分+2px（322px） */
 const LINKED_DOT_STRIDE_EXTRA = 2;
 /** 白丸右端から濃色バー右端までの余白（1枚目 52px = 20+12+20） */

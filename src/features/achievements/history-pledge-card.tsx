@@ -12,18 +12,24 @@ const iconFailed = require("../../../assets/poster/icon-failed.svg");
 
 /** Figma 2317:23421 — カード幅 */
 export const HISTORY_CARD_WIDTH = 300;
-/** Figma 2317:23421 — 固定高さ（2行タイトル + フッター96） */
-export const HISTORY_CARD_HEIGHT = 290;
+/** Figma 2317:23408 / 2317:23421 — 固定高さ（政策 + 人生公約 + フッター96） */
+export const HISTORY_CARD_HEIGHT = 323;
 const CARD_PADDING = 20;
 const CARD_GAP = 16;
 const INNER_GAP = 4;
-const TITLE_GAP = 8;
 const FOOTER_GAP = 16;
 const BUBBLE_PADDING = 10;
 /** 吹き出しのしっぽ（右向き） */
 const BUBBLE_TAIL = 8;
-/** タイトル最大2行（lineHeight 32） */
-const TITLE_MIN_HEIGHT = 64;
+/** 掲げる政策（2行・lineHeight 32） */
+const POLICY_TITLE_MIN_HEIGHT = 64;
+/** 政策ブロック下の区切り線 */
+const POLICY_SECTION_BORDER = "#e0e0e0";
+const POLICY_SECTION_PADDING_BOTTOM = 8;
+/** 政策タイトルと人生公約行の間隔 */
+const POLICY_TO_LIFE_PLEDGE_GAP = 12;
+/** 人生公約行と日付ブロックの間隔 */
+const LIFE_PLEDGE_TO_DATE_GAP = 12;
 /** 策定日・達成日ブロック（2行 + gap 4） */
 const DATE_BLOCK_MIN_HEIGHT = 38;
 /** フッター（キャラ高さ 96） */
@@ -37,13 +43,14 @@ type HistoryPledgeCardProps = {
 };
 
 /**
- * Figma 2317:23421 — 過去の履歴カード（できた / できなかった）。
+ * Figma 2317:23408 / 2317:23421 — 過去の履歴カード（できた / できなかった）。
  */
 export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
   const { s } = useDesignScale();
   const done = wish.status === "done";
   const achievementDate = done ? wish.doneAt : wish.excusedAt;
-  const policyText = wish.policy?.trim() || wish.text;
+  const policyTitle = wish.policy?.trim() || wish.text;
+  const lifePledgeText = wish.text.trim();
 
   return (
     <View
@@ -75,19 +82,37 @@ export function HistoryPledgeCard({ wish, theme }: HistoryPledgeCardProps) {
           </Text>
         </View>
 
-        <View style={{ gap: s(TITLE_GAP), flex: 1 }}>
-          <Text
-            className="font-flow text-flow-ink"
-            numberOfLines={2}
+        <View style={{ gap: s(LIFE_PLEDGE_TO_DATE_GAP), flex: 1 }}>
+          <View
             style={{
-              fontSize: s(20),
-              lineHeight: s(32),
-              letterSpacing: s(1),
-              minHeight: s(TITLE_MIN_HEIGHT),
+              gap: s(POLICY_TO_LIFE_PLEDGE_GAP),
+              paddingBottom: s(POLICY_SECTION_PADDING_BOTTOM),
+              borderBottomWidth: s(1),
+              borderBottomColor: POLICY_SECTION_BORDER,
             }}
           >
-            {policyText}
-          </Text>
+            <Text
+              className="font-flow text-flow-ink"
+              numberOfLines={2}
+              style={{
+                fontSize: s(20),
+                lineHeight: s(32),
+                letterSpacing: s(1),
+                minHeight: s(POLICY_TITLE_MIN_HEIGHT),
+              }}
+            >
+              {policyTitle}
+            </Text>
+            <Text
+              className="font-flow-regular text-[#32383f]"
+              numberOfLines={1}
+              style={{
+                fontSize: s(12),
+              }}
+            >
+              人生公約：{lifePledgeText}
+            </Text>
+          </View>
           <View
             style={{
               gap: s(4),
