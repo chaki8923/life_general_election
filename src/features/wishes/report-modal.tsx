@@ -27,8 +27,13 @@ export function ReportModal({
   const confirmDone = () => {
     const updated = markDone(wish.id);
     if (updated) mirrorWish(updated);
+    // 記録できたときはここで閉じない。閉じるとマイページ側の「一覧に残す印」が
+    // クリアされ、公約が消えた直後のマイページが遷移前に見えてしまう
+    if (updated) {
+      onCompleted?.();
+      return;
+    }
     onClose();
-    if (updated) onCompleted?.();
   };
 
   return (
@@ -38,7 +43,10 @@ export function ReportModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View className="flex-1 items-center justify-center bg-black/50 px-6">
+      <View
+        className="flex-1 items-center justify-center px-6"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+      >
         <View className="w-full max-w-lg rounded-2xl bg-white p-5">
           <Text className="text-lg font-bold text-[#333333]">
             この公約を達成にしますか？

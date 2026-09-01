@@ -1,20 +1,20 @@
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
-import { FlowStepper } from "@/components/ui/flow-stepper";
 import { ProgressDots } from "@/components/ui/progress-dots";
 import {
-  FlowTabBarOverlay,
-  useTabBarBottomPadding,
+    FlowTabBarOverlay,
+    useTabBarBottomPadding,
 } from "@/components/ui/tab-bar";
+import { ElectionFlowStepper } from "@/features/election/election-flow-stepper";
 import { GoalModal } from "@/features/election/goal-modal";
 import { useDesignScale } from "@/features/election/layout";
 import { PLEDGE_RANK_THEME_IDS, PLEDGE_THEMES } from "@/features/election/pledge-themes";
 import { ResultPagedRow } from "@/features/election/result-paged-row";
 import {
-  MINORITY_PLEDGE_THEMES,
-  ResultMinorityPledgeCard,
-  ResultPledgeCard,
-  type PledgeRank,
+    MINORITY_PLEDGE_THEMES,
+    ResultMinorityPledgeCard,
+    ResultPledgeCard,
+    type PledgeRank,
 } from "@/features/election/result-pledge-card";
 import { ResultTipCard } from "@/features/election/result-tip-card";
 import { ResultUniqueVoicesSection } from "@/features/election/result-unique-voices-section";
@@ -25,7 +25,7 @@ import { ScrollView, Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 import type { Candidate, PledgeThemeId } from "@/types";
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 /** Figma 1905:13894 高解像度版（1264×842） */
 const hero190513894 = require("../../../assets/election/result/hero-1905-13894-hq.webp");
@@ -106,6 +106,8 @@ export default function ElectionResultScreen() {
     if (hasSource && !election) router.replace("/election/counting");
   }, [hasSource, election, router]);
 
+  const closeGoalModal = useCallback(() => setModalSelection(null), []);
+
   if (!hasSource) {
     return (
       <View className="flex-1 items-center justify-center bg-flow-bg px-8">
@@ -167,13 +169,11 @@ export default function ElectionResultScreen() {
         contentContainerStyle={{ paddingBottom: scrollBottomPadding }}
         showsVerticalScrollIndicator={false}
       >
-        {showProfileStep ? (
-          <View style={{ paddingHorizontal: s(20), paddingVertical: s(4) }}>
-            <FlowStepper current={2} showProfileStep />
-          </View>
-        ) : (
-          <View style={{ height: s(4) }} />
-        )}
+        <ElectionFlowStepper
+          current={2}
+          fallbackSpacer
+          style={{ paddingHorizontal: s(20), paddingVertical: s(4) }}
+        />
 
         {/* Figma 1691:2823 — テキストを画像寄り（右）へ */}
         <View
@@ -309,7 +309,7 @@ export default function ElectionResultScreen() {
             : "#fff6f5"
         }
         onRegister={registerGoal}
-        onClose={() => setModalSelection(null)}
+        onClose={closeGoalModal}
       />
     </View>
   );

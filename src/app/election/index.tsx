@@ -3,7 +3,7 @@ import { useWindowDimensions } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
-import { FlowStepper } from "@/components/ui/flow-stepper";
+import { ElectionFlowStepper } from "@/features/election/election-flow-stepper";
 import {
   CARD_HEIGHT,
   CARD_WIDTH,
@@ -152,7 +152,10 @@ export default function InterestSelectScreen() {
 
       <ScrollView contentContainerClassName="pb-12">
         <View className="bg-white pb-3">
-          <FlowStepper current={1} showProfileStep={showProfileStep} />
+          <ElectionFlowStepper
+            current={1}
+            showProfileStep={showProfileStep}
+          />
           <Text className="mt-3 text-center font-flow text-[18px] leading-[27px] text-flow-ink">
             {"興味・関心のあることを\n１つ教えてください！"}
           </Text>

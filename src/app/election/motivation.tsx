@@ -4,7 +4,7 @@ import { Text, View } from "@/tw";
 import { Image } from "@/tw/image";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
-import { FlowStepper } from "@/components/ui/flow-stepper";
+import { ElectionFlowStepper } from "@/features/election/election-flow-stepper";
 import { ELECTION_MOTIVATIONS } from "@/constants/election-motivations";
 import { useDesignScale } from "@/features/election/layout";
 import { MotivationSlider } from "@/features/election/motivation-slider";
@@ -34,7 +34,6 @@ export default function MotivationSelectScreen() {
   const interest = useElectionStore((state) => state.interest);
   const worry = useElectionStore((state) => state.worry);
   const setMotivation = useElectionStore((state) => state.setMotivation);
-  const showProfileStep = useElectionStore((state) => state.showProfileStep);
   const [phase, setPhase] = useState<Phase>("input");
   // スライダーは左が弱いので、high→medium→smallの定数配列とは逆順に引く
   const [level, setLevel] = useState(1);
@@ -77,11 +76,7 @@ export default function MotivationSelectScreen() {
             contentFit="cover"
             pointerEvents="none"
           />
-          {showProfileStep ? (
-            <View className="mt-3">
-              <FlowStepper current={1} showProfileStep />
-            </View>
-          ) : null}
+          <ElectionFlowStepper current={1} className="mt-3" />
 
           <View className="flex-1">
           <View
@@ -180,11 +175,7 @@ export default function MotivationSelectScreen() {
   return (
     <View className="flex-1 bg-flow-bg">
       <FlowHeader title="モチベーション" />
-      {showProfileStep ? (
-        <View className="mt-3">
-          <FlowStepper current={1} showProfileStep />
-        </View>
-      ) : null}
+      <ElectionFlowStepper current={1} className="mt-3" />
 
       {/* Figma 1700:6638。見出しの下でそのまま炎を動かして選ぶ */}
       <View className="flex-1 overflow-hidden">

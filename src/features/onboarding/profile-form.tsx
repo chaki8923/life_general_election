@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BirthDateField } from "@/components/ui/birth-date-field";
 import { FlowButton } from "@/components/ui/flow-button";
 import { FlowHeader } from "@/components/ui/flow-header";
-import { FlowStepper } from "@/components/ui/flow-stepper";
+import { ElectionFlowStepper } from "@/features/election/election-flow-stepper";
 import { GENDERS } from "@/constants/options";
 import { toAgeRange } from "@/features/onboarding/age-range";
 import { markElectionHandoff } from "@/features/onboarding/handoff";
@@ -89,7 +89,7 @@ export function ProfileForm() {
       >
         {/* ステッパーと見出しまでは白地、カードから下が薄いグレー地 */}
         <View className="bg-white px-5 pb-3">
-          <FlowStepper current={0} showProfileStep />
+          <ElectionFlowStepper current={0} alwaysShow />
           <Text className="mt-3 text-center font-flow text-[18px] leading-[27px] text-flow-ink">
             {"まずはあなたについて\n教えて下さい"}
           </Text>
